@@ -1,0 +1,1 @@
+self.__NEXT_FONT_MANIFEST="{\"pages\":{},\"app\":{\"/Users/mukelakatungu/trainer-aide-demo/app/layout\":[\"static/media/95c8264a6767742a-s.p.woff2\",\"static/media/4de1fea1a954a5b6-s.p.woff2\",\"static/media/6d664cce900333ee-s.p.woff2\"]},\"appUsingSizeAdjust\":true,\"pagesUsingSizeAdjust\":false}"

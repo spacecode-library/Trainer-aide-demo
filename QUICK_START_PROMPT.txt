@@ -1,0 +1,97 @@
+===============================================
+COPY THIS ENTIRE MESSAGE TO THE NEW AGENT
+===============================================
+
+Hey! I need you to build a standalone demo of a Trainer Aide feature for a fitness platform. This is a complete redesign that needs to be better than the existing implementation and reference projects.
+
+📍 PROJECT LOCATION:
+/Users/mukelakatungu/trainer-aide-demo
+
+📚 CRITICAL: READ THESE FILES FIRST (in order):
+1. ./AGENT_INSTRUCTIONS.md - Your complete development guide (READ THIS FIRST!)
+2. ./TRAINER_AIDE_DEMO_REQUIREMENTS.md - Detailed technical specifications
+3. ./README.md - Quick project overview
+4. Trainer aide explaination: /Users/mukelakatungu/trainer-aide-demo/Trainer Aid - Features + User Flow.txt
+
+🎯 WHAT YOU'RE BUILDING:
+A high-quality, frontend-only demo with THREE user roles:
+- Studio Owner: Create workout templates
+- Trainer: Run training sessions using templates (with 3 different sign-off modes)
+- Client: View session history
+
+🎨 DESIGN REQUIREMENTS (CRITICAL):
+✅ MUST USE: Solid colors only (#a71075, #45f2ff, #00bafc, #0085c4)
+✅ MUST HAVE: Clean white cards, consistent spacing, mobile-first design
+❌ ABSOLUTELY NO: Gradients anywhere (backgrounds, buttons, borders)
+❌ DON'T COPY: The old Wondrous design (it's what we're replacing!)
+
+📱 MOBILE IS CRITICAL:
+- Trainers use this in the gym on phones
+- 44x44px minimum touch targets
+- Swipe gestures for navigation
+- Perfect mobile UX, not just "responsive"
+
+🏗️ TECH STACK:
+- Next.js 14 (App Router)
+- TypeScript (strict mode)
+- Tailwind CSS
+- shadcn/ui components
+- Zustand for state
+- LocalStorage for demo data persistence
+
+🔑 MOST IMPORTANT FEATURES:
+1. **Session Runner** with 3 sign-off modes:
+   - Full Session: Complete all at once
+   - Per Block: Sign off after each block
+   - Per Exercise: Check off each exercise individually
+2. **30-minute timer** that auto-completes
+3. **RPE tracking** (Rate of Perceived Exertion 1-10)
+4. **Template Builder** for Studio Owner (flexible, intuitive)
+5. **Mobile-optimized** for on-the-go trainers
+
+📊 REFERENCE PROJECTS (Learn from but don't copy):
+- wellness-frontend: /Users/mukelakatungu/wellness-frontend/src
+  → Study: Clean layouts, component organization
+- class-dash-demo: /Users/mukelakatungu/class-dash-demo/src/app/demo
+  → Study: Simple cards, no gradients, professional UI
+- Current implementation: /Users/mukelakatungu/wondrous-store-platform/src/app/trainer-aide/
+  → Study the structure but DON'T copy the design (has gradients)
+
+🚀 START HERE:
+1. Read AGENT_INSTRUCTIONS.md completely (it has everything!)
+2. Navigate to: cd /Users/mukelakatungu/trainer-aide-demo
+3. Initialize: npx create-next-app@latest . --typescript --tailwind --app
+4. Follow the 7-day workflow in the instructions
+5. Use the mock data provided in the requirements doc
+
+✅ SUCCESS CRITERIA:
+- Zero gradients anywhere
+- All 3 sign-off modes work perfectly
+- Timer works correctly (30 min countdown)
+- Mobile experience is excellent
+- Better looking than both reference projects
+- All data persists in LocalStorage
+
+⏱️ TIMELINE: ~7 days
+- Days 1-2: Setup, layout, mock data
+- Day 3: Studio Owner features
+- Days 4-5: Trainer features (Session Runner is complex!)
+- Day 6: Client features
+- Day 7: Mobile optimization & polish
+
+❓ QUESTIONS?
+Everything is documented in AGENT_INSTRUCTIONS.md. If you need clarification:
+1. Check AGENT_INSTRUCTIONS.md first
+2. Check TRAINER_AIDE_DEMO_REQUIREMENTS.md second
+3. Then ask specific questions
+
+🎯 GOAL:
+Build a demo that makes the client say "This is EXACTLY what I wanted!"
+
+Let's build something amazing! Start by reading AGENT_INSTRUCTIONS.md, then begin with the setup phase.
+
+Ready to start? 💪
+
+===============================================
+END OF PROMPT
+===============================================

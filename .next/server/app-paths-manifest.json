@@ -1,0 +1,8 @@
+{
+  "/settings/page": "app/settings/page.js",
+  "/studio-owner/templates/builder/page": "app/studio-owner/templates/builder/page.js",
+  "/page": "app/page.js",
+  "/studio-owner/page": "app/studio-owner/page.js",
+  "/studio-owner/templates/page": "app/studio-owner/templates/page.js",
+  "/studio-owner/services/page": "app/studio-owner/services/page.js"
+}

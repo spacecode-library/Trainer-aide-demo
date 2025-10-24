@@ -1,0 +1,2932 @@
+﻿​​Wondrous Platform - Developer Guide
+Technical Implementation for Session & Class-Based Studios
+Version: 1.0 (Developer Reference)
+Stack: Next.js 14 (App Router) + Supabase + Vercel
+Integrations: Stripe Connect, Infobip SMS, Elastic Email
+________________
+
+
+Table of Contents
+1. System Overview
+2. Core Concepts & Terminology
+3. Database Schema
+4. User Roles & Permissions Matrix
+5. Booking Models (Session vs Class)
+6. User Flows by Role
+7. Multi-Location Architecture
+8. API Endpoints & Routes
+9. Key Features to Build
+10. Integration Points
+________________
+
+
+1. System Overview
+Platform Purpose
+Wondrous is a studio management system supporting:
+* Session-based studios: Personal training, 1-on-1 services (booking by session)
+* Class-based studios: Yoga, group fitness (booking by class with capacity)
+* Hybrid studios: Both session and class offerings
+* Multi-location: Studios with 2+ physical locations
+Core Philosophy
+* Mobile-first: Every feature works perfectly on phone
+* Minimal clicks: Max 3 clicks for common actions
+* Smart defaults: AI/logic reduces manual work
+* Flexible: Same platform serves solo trainers and multi-location brands
+________________
+
+
+2. Core Concepts & Terminology
+Studio Types
+typescript
+enum StudioType {
+  SESSION_BASED = 'session_based',    // Personal training, 1-on-1
+  CLASS_BASED = 'class_based',        // Yoga, group fitness
+  HYBRID = 'hybrid'                   // Both
+}
+Booking Models
+typescript
+enum BookingMode {
+  SELF_BOOKING = 'self_booking',           // Client books themselves
+  INSTRUCTOR_LED = 'instructor_led',       // Instructor creates bookings
+  ADMIN_ONLY = 'admin_only',               // Only staff can book
+  HYBRID = 'hybrid'                        // Mix of above
+}
+Key Difference:
+* Session-based: Often instructor-led (trainer manages their schedule)
+* Class-based: Typically self-booking (clients pick from schedule)
+* Configurable per service: Some services self-book, others instructor-led
+Services vs Bookings
+* Service: Template (e.g., "Personal Training Session", "Vinyasa Yoga Class")
+* Booking: Instance of a service (e.g., "Tom's PT session on Mon 28 Oct at 7am")
+________________
+
+
+3. Database Schema
+Core Tables (Supabase)
+sql
+-- Organizations (top-level brand)
+CREATE TABLE organizations (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  name VARCHAR(255) NOT NULL,
+  subscription_tier VARCHAR(50),
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+
+-- Locations (studios within organization)
+CREATE TABLE locations (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  organization_id UUID REFERENCES organizations(id),
+  name VARCHAR(255) NOT NULL,
+  address JSONB,
+  timezone VARCHAR(50),
+  operating_hours JSONB,
+  settings JSONB, -- location-specific overrides
+  is_active BOOLEAN DEFAULT true
+);
+
+
+-- Users (all user types)
+CREATE TABLE users (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  email VARCHAR(255) UNIQUE NOT NULL,
+  full_name VARCHAR(255),
+  role VARCHAR(50) NOT NULL, -- owner, instructor, client, etc.
+  organization_id UUID REFERENCES organizations(id),
+  primary_location_id UUID REFERENCES locations(id),
+  accessible_locations UUID[], -- array of location IDs they can access
+  booking_permissions VARCHAR(50), -- standard, vip, restricted
+  settings JSONB,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+
+-- Services (what studio offers)
+CREATE TABLE services (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  organization_id UUID REFERENCES organizations(id),
+  name VARCHAR(255) NOT NULL,
+  type VARCHAR(50), -- session, class
+  description TEXT,
+  duration_minutes INTEGER,
+  capacity INTEGER, -- null for sessions, number for classes
+  price_per_unit DECIMAL(10,2),
+  available_at_locations UUID[], -- which locations offer this
+  booking_mode VARCHAR(50), -- self_booking, instructor_led, etc.
+  self_booking_enabled BOOLEAN DEFAULT true,
+  instructor_booking_enabled BOOLEAN DEFAULT true,
+  admin_booking_enabled BOOLEAN DEFAULT true,
+  settings JSONB
+);
+
+
+-- Bookings (actual appointments)
+CREATE TABLE bookings (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  service_id UUID REFERENCES services(id),
+  client_id UUID REFERENCES users(id),
+  instructor_id UUID REFERENCES users(id),
+  location_id UUID REFERENCES locations(id),
+  start_time TIMESTAMPTZ NOT NULL,
+  end_time TIMESTAMPTZ NOT NULL,
+  status VARCHAR(50), -- pending, confirmed, completed, cancelled
+  booking_method VARCHAR(50), -- self_booked, instructor_created, admin_created
+  spots_booked INTEGER DEFAULT 1,
+  notes TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+
+-- Classes (recurring schedule for class-based)
+CREATE TABLE classes (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  service_id UUID REFERENCES services(id),
+  instructor_id UUID REFERENCES users(id),
+  location_id UUID REFERENCES locations(id),
+  day_of_week INTEGER, -- 0-6 (Sunday-Saturday)
+  start_time TIME,
+  end_time TIME,
+  capacity INTEGER,
+  is_recurring BOOLEAN DEFAULT true,
+  recurrence_rule JSONB, -- for complex patterns
+  valid_from DATE,
+  valid_until DATE
+);
+
+
+-- Instructor Availability (for session-based)
+CREATE TABLE instructor_availability (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  instructor_id UUID REFERENCES users(id),
+  location_id UUID REFERENCES locations(id),
+  day_of_week INTEGER,
+  start_time TIME,
+  end_time TIME,
+  allows_self_booking BOOLEAN DEFAULT true, -- instructor can override
+  is_recurring BOOLEAN DEFAULT true
+);
+
+
+-- Booking Requests (for instructor-led model)
+CREATE TABLE booking_requests (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  client_id UUID REFERENCES users(id),
+  instructor_id UUID REFERENCES users(id),
+  service_id UUID REFERENCES services(id),
+  location_id UUID REFERENCES locations(id),
+  preferred_times JSONB, -- array of datetime options
+  client_notes TEXT,
+  status VARCHAR(50), -- pending, accepted, declined, expired
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+
+-- Packages & Credits
+CREATE TABLE packages (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  organization_id UUID REFERENCES organizations(id),
+  name VARCHAR(255),
+  credits INTEGER,
+  price DECIMAL(10,2),
+  valid_days INTEGER,
+  valid_at_locations UUID[] -- null = all locations
+);
+
+
+CREATE TABLE client_credits (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  client_id UUID REFERENCES users(id),
+  package_id UUID REFERENCES packages(id),
+  credits_remaining INTEGER,
+  expires_at TIMESTAMPTZ
+);
+Key Indexes
+sql
+-- Performance critical indexes
+CREATE INDEX idx_bookings_client ON bookings(client_id, start_time);
+CREATE INDEX idx_bookings_instructor ON bookings(instructor_id, start_time);
+CREATE INDEX idx_bookings_location_time ON bookings(location_id, start_time);
+CREATE INDEX idx_services_org_locations ON services(organization_id, available_at_locations);
+CREATE INDEX idx_users_org_role ON users(organization_id, role);
+________________
+
+
+4. User Roles & Permissions Matrix
+Role Definitions
+typescript
+enum UserRole {
+  ORG_OWNER = 'org_owner',           // Full access across all locations we also call them Studio_owner and they will nearly always train or reach clients themselves 
+  LOCATION_MANAGER = 'location_manager', // Manages specific location(s) or Deputy manager
+  INSTRUCTOR = 'instructor',         // Teaches/trains
+  TRAINER = 'trainer',               // Same as instructor (PT term)
+  RECEPTIONIST = 'receptionist',     // Front desk, bookings, check-in
+  FINANCE_MANAGER = 'finance_manager', // Financial reports only
+  CLIENT = 'client'                  // End user
+}
+Permissions Matrix
+Action
+	Client
+	Instructor
+	Receptionist
+	Location Mgr
+	Org Owner
+	Bookings
+	
+
+	
+
+	
+
+	
+
+	
+
+	View own bookings
+	✅
+	✅
+	✅
+	✅
+	✅
+	Create own booking
+	✅*
+	❌
+	❌
+	❌
+	✅
+	Create for client
+	❌
+	✅**
+	✅
+	✅
+	✅
+	Cancel own booking
+	✅***
+	✅
+	❌
+	✅
+	✅
+	Cancel any booking
+	❌
+	❌
+	✅***
+	✅
+	✅
+	View all bookings
+	❌
+	✅****
+	✅
+	✅
+	✅
+	Services
+	
+
+	
+
+	
+
+	
+
+	
+
+	View services
+	✅
+	✅
+	✅
+	✅
+	✅
+	Create service
+	❌
+	❌
+	❌
+	✅
+	✅
+	Modify pricing
+	❌
+	❌
+	❌
+	✅
+	✅
+	Clients
+	
+
+	
+
+	
+
+	
+
+	
+
+	View own profile
+	✅
+	✅
+	✅
+	✅
+	✅
+	View client list
+	❌
+	✅****
+	✅
+	✅
+	✅
+	Edit client data
+	❌
+	❌
+	✅*****
+	✅
+	✅
+	Financial
+	
+
+	
+
+	
+
+	
+
+	
+
+	Process payment
+	✅
+	❌
+	✅
+	✅
+	✅
+	Issue refund
+	❌
+	❌
+	✅******
+	✅
+	✅
+	View reports
+	❌
+	❌
+	❌
+	✅
+	✅
+	Schedule
+	
+
+	
+
+	
+
+	
+
+	
+
+	View schedule
+	✅
+	✅
+	✅
+	✅
+	✅
+	Modify schedule
+	❌
+	✅*******
+	✅
+	✅
+	✅
+	Locations
+	
+
+	
+
+	
+
+	
+
+	
+
+	View locations
+	✅
+	✅
+	✅
+	✅
+	✅
+	Create location
+	❌
+	❌
+	❌
+	❌
+	✅
+	Modify location
+	❌
+	❌
+	❌
+	✅
+	✅
+	Footnotes:
+* * Only if self_booking_enabled for service
+* ** Only if instructor_booking_enabled for service
+* *** Within cancellation policy window
+* **** Only for their assigned clients
+* ***** Limited fields (not financial)
+* ****** Up to configured limit (e.g., £50)
+* ******* Only their own schedule/classes
+Permission Check Helpers
+typescript
+// /lib/permissions.ts
+
+
+export async function canUserBook(
+  userId: string,
+  serviceId: string,
+  instructorId?: string
+): Promise<{ allowed: boolean; reason?: string }> {
+  const user = await getUser(userId);
+  const service = await getService(serviceId);
+  
+  // Check service booking mode
+  if (!service.self_booking_enabled) {
+    return { 
+      allowed: false, 
+      reason: 'Service requires instructor confirmation' 
+    };
+  }
+  
+  // Check client permissions
+  if (user.booking_permissions === 'restricted') {
+    return { allowed: false, reason: 'Contact studio to book' };
+  }
+  
+  // VIP clients can always book
+  if (user.booking_permissions === 'vip') {
+    return { allowed: true };
+  }
+  
+  // Check instructor preference
+  if (instructorId) {
+    const availability = await getInstructorAvailability(instructorId);
+    if (!availability.allows_self_booking) {
+      return { 
+        allowed: false, 
+        reason: 'Instructor manages their schedule' 
+      };
+    }
+  }
+  
+  return { allowed: true };
+}
+
+
+export function canAccessLocation(
+  user: User,
+  locationId: string
+): boolean {
+  if (user.role === 'org_owner') return true;
+  return user.accessible_locations?.includes(locationId) ?? false;
+}
+________________
+
+
+5. Booking Models (Session vs Class)
+Session-Based Booking Flow
+typescript
+// /app/api/bookings/session/route.ts
+
+
+interface CreateSessionBookingRequest {
+  serviceId: string;
+  clientId: string;
+  instructorId: string;
+  locationId: string;
+  startTime: string; // ISO datetime
+  bookingMethod: 'self_booked' | 'instructor_created' | 'admin_created';
+  notes?: string;
+}
+
+
+export async function POST(request: Request) {
+  const body: CreateSessionBookingRequest = await request.json();
+  const user = await getCurrentUser();
+  
+  // 1. Check permissions
+  if (body.bookingMethod === 'self_booked') {
+    const canBook = await canUserBook(user.id, body.serviceId, body.instructorId);
+    if (!canBook.allowed) {
+      return Response.json({ error: canBook.reason }, { status: 403 });
+    }
+  }
+  
+  // 2. Check instructor availability
+  const isAvailable = await checkInstructorAvailability(
+    body.instructorId,
+    body.startTime,
+    body.serviceId
+  );
+  
+  if (!isAvailable) {
+    return Response.json({ error: 'Time slot not available' }, { status: 400 });
+  }
+  
+  // 3. Check client credits/payment
+  const hasCredits = await checkClientCredits(body.clientId, body.serviceId);
+  if (!hasCredits) {
+    return Response.json({ error: 'Insufficient credits' }, { status: 402 });
+  }
+  
+  // 4. Create booking
+  const booking = await supabase
+    .from('bookings')
+    .insert({
+      service_id: body.serviceId,
+      client_id: body.clientId,
+      instructor_id: body.instructorId,
+      location_id: body.locationId,
+      start_time: body.startTime,
+      end_time: calculateEndTime(body.startTime, service.duration_minutes),
+      status: body.bookingMethod === 'self_booked' ? 'confirmed' : 'pending',
+      booking_method: body.bookingMethod,
+      notes: body.notes
+    })
+    .select()
+    .single();
+  
+  // 5. Deduct credit
+  await deductClientCredit(body.clientId, body.serviceId);
+  
+  // 6. Send notifications
+  await sendBookingConfirmation(booking);
+  
+  return Response.json({ booking });
+}
+Class-Based Booking Flow
+typescript
+// /app/api/bookings/class/route.ts
+
+
+interface CreateClassBookingRequest {
+  classId: string; // Recurring class instance
+  locationId: string;
+  startTime: string; // Specific date/time of class instance
+  spotsRequested?: number; // Default 1
+}
+
+
+export async function POST(request: Request) {
+  const body: CreateClassBookingRequest = await request.json();
+  const user = await getCurrentUser();
+  
+  // 1. Get class details
+  const classInstance = await getClass(body.classId);
+  const service = await getService(classInstance.service_id);
+  
+  // 2. Check capacity
+  const currentBookings = await getClassBookingCount(
+    body.classId,
+    body.startTime
+  );
+  
+  const spotsRequested = body.spotsRequested || 1;
+  const spotsAvailable = classInstance.capacity - currentBookings;
+  
+  if (spotsAvailable < spotsRequested) {
+    // Add to waitlist
+    return await addToWaitlist(user.id, body.classId, body.startTime);
+  }
+  
+  // 3. Check permissions
+  const canBook = await canUserBook(user.id, service.id);
+  if (!canBook.allowed) {
+    return Response.json({ error: canBook.reason }, { status: 403 });
+  }
+  
+  // 4. Check credits/payment
+  const hasCredits = await checkClientCredits(user.id, service.id);
+  if (!hasCredits) {
+    return Response.json({ error: 'Insufficient credits' }, { status: 402 });
+  }
+  
+  // 5. Create booking
+  const booking = await supabase
+    .from('bookings')
+    .insert({
+      service_id: service.id,
+      client_id: user.id,
+      instructor_id: classInstance.instructor_id,
+      location_id: body.locationId,
+      start_time: body.startTime,
+      end_time: calculateEndTime(body.startTime, service.duration_minutes),
+      status: 'confirmed',
+      booking_method: 'self_booked',
+      spots_booked: spotsRequested
+    })
+    .select()
+    .single();
+  
+  // 6. Deduct credit
+  await deductClientCredit(user.id, service.id);
+  
+  // 7. Send confirmation
+  await sendBookingConfirmation(booking);
+  
+  return Response.json({ booking });
+}
+Instructor-Led Booking Request Flow
+typescript
+// /app/api/booking-requests/route.ts
+
+
+// Step 1: Client creates request
+export async function POST(request: Request) {
+  const { serviceId, instructorId, preferredTimes, notes } = await request.json();
+  const user = await getCurrentUser();
+  
+  const bookingRequest = await supabase
+    .from('booking_requests')
+    .insert({
+      client_id: user.id,
+      service_id: serviceId,
+      instructor_id: instructorId,
+      preferred_times: preferredTimes, // Array of ISO datetimes
+      client_notes: notes,
+      status: 'pending'
+    })
+    .select()
+    .single();
+  
+  // Notify instructor
+  await sendInstructorNotification(instructorId, bookingRequest);
+  
+  return Response.json({ bookingRequest });
+}
+
+
+// Step 2: Instructor accepts/declines
+// /app/api/booking-requests/[id]/respond/route.ts
+export async function POST(
+  request: Request,
+  { params }: { params: { id: string } }
+) {
+  const { action, selectedTime } = await request.json(); // action: 'accept' | 'decline'
+  const user = await getCurrentUser();
+  
+  const bookingRequest = await getBookingRequest(params.id);
+  
+  if (bookingRequest.instructor_id !== user.id) {
+    return Response.json({ error: 'Unauthorized' }, { status: 403 });
+  }
+  
+  if (action === 'accept') {
+    // Create actual booking
+    const booking = await supabase
+      .from('bookings')
+      .insert({
+        service_id: bookingRequest.service_id,
+        client_id: bookingRequest.client_id,
+        instructor_id: user.id,
+        start_time: selectedTime,
+        status: 'confirmed',
+        booking_method: 'instructor_created'
+      })
+      .select()
+      .single();
+    
+    // Update request status
+    await supabase
+      .from('booking_requests')
+      .update({ status: 'accepted' })
+      .eq('id', params.id);
+    
+    // Notify client
+    await sendClientConfirmation(booking);
+    
+    return Response.json({ booking });
+  } else {
+    // Decline
+    await supabase
+      .from('booking_requests')
+      .update({ status: 'declined' })
+      .eq('id', params.id);
+    
+    await sendClientDeclineNotification(bookingRequest);
+    
+    return Response.json({ message: 'Request declined' });
+  }
+}
+```
+
+
+---
+
+
+## 6. User Flows by Role
+
+
+### CLIENT Flow (Session-Based Self-Booking)
+```
+1. Browse Services
+   GET /api/services?type=session&locationId={locationId}
+   → Returns available session types
+   
+2. View Trainer Availability
+   GET /api/instructors/{instructorId}/availability?date={date}
+   → Returns available time slots
+   
+3. Book Session
+   POST /api/bookings/session
+   {
+     serviceId: "...",
+     instructorId: "...",
+     startTime: "2024-10-28T07:00:00Z",
+     locationId: "..."
+   }
+   
+4. Receive Confirmation
+   → Email via Elastic Email
+   → SMS via Infobip
+   → In-app notification
+   
+5. View Booking
+   GET /api/bookings?clientId={userId}
+   → Shows upcoming sessions
+```
+
+
+### CLIENT Flow (Class-Based Self-Booking)
+```
+1. Browse Schedule
+   GET /api/classes?locationId={locationId}&date={date}
+   → Returns class schedule for location/date
+   
+2. View Class Details
+   GET /api/classes/{classId}
+   → Capacity, instructor, description
+   
+3. Book Class
+   POST /api/bookings/class
+   {
+     classId: "...",
+     startTime: "2024-10-28T18:00:00Z"
+   }
+   
+4. If Full → Waitlist
+   POST /api/waitlist
+   → Client notified if spot opens
+   
+5. Check-In (Day of)
+   POST /api/bookings/{bookingId}/checkin
+   → GPS verification (optional)
+   → QR code scan (optional)
+```
+
+
+### INSTRUCTOR Flow (Session-Based Instructor-Led)
+```
+1. View Schedule
+   GET /api/instructors/me/schedule?date={date}
+   → Today's sessions + pending requests
+   
+2. Review Booking Requests
+   GET /api/booking-requests?instructorId={userId}&status=pending
+   → List of client requests
+   
+3. Accept Request
+   POST /api/booking-requests/{id}/respond
+   {
+     action: "accept",
+     selectedTime: "2024-10-28T07:00:00Z"
+   }
+   → Creates confirmed booking
+   
+4. Or: Proactively Book Client
+   POST /api/bookings/session
+   {
+     clientId: "...",
+     serviceId: "...",
+     startTime: "...",
+     bookingMethod: "instructor_created"
+   }
+   
+5. Mark Attendance
+   POST /api/bookings/{bookingId}/complete
+   {
+     attended: true,
+     notes: "Great progress on squats"
+   }
+```
+
+
+### INSTRUCTOR Flow (Class-Based)
+```
+1. View Class Schedule
+   GET /api/instructors/me/classes?date={date}
+   → Classes they're teaching
+   
+2. View Class Roster
+   GET /api/classes/{classId}/bookings?date={specificDate}
+   → Who's booked for today's class
+   
+3. Mark Attendance (Batch)
+   POST /api/classes/{classId}/attendance
+   {
+     date: "2024-10-28",
+     attendees: ["clientId1", "clientId2"],
+     absent: ["clientId3"]
+   }
+   
+4. Add Class Notes
+   POST /api/classes/{classId}/notes
+   {
+     date: "2024-10-28",
+     notes: "Focused on arm balances today"
+   }
+```
+
+
+### STUDIO OWNER Flow
+```
+1. Dashboard Overview
+   GET /api/dashboard
+   → Revenue, bookings, churn alerts (all locations)
+   
+2. Create Service
+   POST /api/services
+   {
+     name: "Personal Training",
+     type: "session",
+     duration_minutes: 60,
+     price_per_unit: 50,
+     booking_mode: "instructor_led",
+     available_at_locations: ["loc1", "loc2"]
+   }
+   
+3. Create Location
+   POST /api/locations
+   {
+     name: "Wondrous - Westside",
+     address: {...},
+     operating_hours: {...}
+   }
+   
+4. View Multi-Location Report
+   GET /api/reports/locations
+   → Comparison across all locations
+   
+5. Manage Instructor
+   POST /api/users/{instructorId}/locations
+   {
+     accessible_locations: ["loc1", "loc3"]
+   }
+   → Assign instructor to work multiple locations
+________________
+
+
+7. Multi-Location Architecture
+Location Context in Requests
+typescript
+// Middleware to inject location context
+// /middleware.ts
+
+
+export async function middleware(request: NextRequest) {
+  const user = await getCurrentUser();
+  const locationId = request.headers.get('x-location-id') || 
+                     request.cookies.get('selected-location')?.value;
+  
+  // Validate user can access location
+  if (locationId && !canAccessLocation(user, locationId)) {
+    return NextResponse.json(
+      { error: 'Location access denied' },
+      { status: 403 }
+    );
+  }
+  
+  // Add to headers for downstream use
+  const response = NextResponse.next();
+  if (locationId) {
+    response.headers.set('x-location-id', locationId);
+  }
+  
+  return response;
+}
+Location-Scoped Queries
+typescript
+// Always scope queries by accessible locations
+
+
+async function getClientBookings(clientId: string, locationId?: string) {
+  const query = supabase
+    .from('bookings')
+    .select('*')
+    .eq('client_id', clientId);
+  
+  if (locationId) {
+    query.eq('location_id', locationId);
+  } else {
+    // Get all locations client can access
+    const client = await getUser(clientId);
+    query.in('location_id', client.accessible_locations || []);
+  }
+  
+  return query;
+}
+
+
+// Example: Instructor viewing their schedule across locations
+async function getInstructorSchedule(
+  instructorId: string,
+  date: string,
+  locationIds?: string[]
+) {
+  const query = supabase
+    .from('bookings')
+    .select(`
+      *,
+      service:services(*),
+      client:users!client_id(*),
+      location:locations(*)
+    `)
+    .eq('instructor_id', instructorId)
+    .gte('start_time', startOfDay(date))
+    .lte('start_time', endOfDay(date));
+  
+  if (locationIds && locationIds.length > 0) {
+    query.in('location_id', locationIds);
+  }
+  
+  return query.order('start_time');
+}
+```
+
+
+---
+
+
+## 8. API Routes Structure
+
+
+### Recommended Next.js 14 App Router Structure
+```
+/app/api/
+├── auth/
+│   ├── login/route.ts
+│   ├── signup/route.ts
+│   └── verify/route.ts
+│
+├── bookings/
+│   ├── route.ts                    # GET (list), POST (create)
+│   ├── [id]/
+│   │   ├── route.ts                # GET, PATCH, DELETE
+│   │   ├── checkin/route.ts        # POST - mark attendance
+│   │   ├── cancel/route.ts         # POST - cancel booking
+│   │   └── reschedule/route.ts     # POST - reschedule
+│   ├── session/route.ts            # POST - session-specific booking
+│   └── class/route.ts              # POST - class-specific booking
+│
+├── booking-requests/
+│   ├── route.ts                    # GET, POST
+│   └── [id]/
+│       └── respond/route.ts        # POST - accept/decline
+│
+├── services/
+│   ├── route.ts                    # GET, POST
+│   └── [id]/
+│       ├── route.ts                # GET, PATCH, DELETE
+│       └── availability/route.ts   # GET - available slots
+│
+├── classes/
+│   ├── route.ts                    # GET - schedule
+│   ├── [id]/
+│   │   ├── route.ts                # GET, PATCH, DELETE
+│   │   ├── bookings/route.ts       # GET - roster for class
+│   │   ├── attendance/route.ts     # POST - batch attendance
+│   │   └── waitlist/route.ts       # GET, POST
+│
+├── instructors/
+│   ├── route.ts                    # GET - list instructors
+│   ├── [id]/
+│   │   ├── route.ts                # GET - instructor profile
+│   │   ├── availability/route.ts   # GET, POST - availability slots
+│   │   ├── schedule/route.ts       # GET - instructor's schedule
+│   │   └── clients/route.ts        # GET - assigned clients
+│   └── me/
+│       ├── schedule/route.ts       # GET - my schedule
+│       ├── bookings/route.ts       # GET - my bookings
+│       └── requests/route.ts       # GET - pending requests
+│
+├── clients/
+│   ├── route.ts                    # GET, POST
+│   ├── [id]/
+│   │   ├── route.ts                # GET, PATCH
+│   │   ├── bookings/route.ts       # GET - booking history
+│   │   ├── credits/route.ts        # GET - credit balance
+│   │   └── parq/route.ts           # GET, POST - health screening
+│   └── me/
+│       └── route.ts                # GET - my profile
+│
+├── locations/
+│   ├── route.ts                    # GET, POST
+│   ├── [id]/
+│   │   ├── route.ts                # GET, PATCH
+│   │   ├── schedule/route.ts       # GET - location schedule
+│   │   ├── services/route.ts       # GET - services at location
+│   │   └── instructors/route.ts    # GET - staff at location
+│
+├── payments/
+│   ├── create-intent/route.ts      # POST - Stripe payment intent
+│   ├── confirm/route.ts            # POST - confirm payment
+│   ├── refund/route.ts             # POST - process refund
+│   └── webhooks/stripe/route.ts    # POST - Stripe webhooks
+│
+├── packages/
+│   ├── route.ts                    # GET - available packages
+│   └── purchase/route.ts           # POST - buy package
+│
+└── dashboard/
+    ├── route.ts                    # GET - overview stats
+    ├── revenue/route.ts            # GET - revenue analytics
+    └── churn/route.ts              # GET - churn alerts
+________________
+
+
+9. Key Features to Build
+Phase 1: MVP (Core Booking)
+Priority 1 - Booking Engine
+typescript
+// Features needed:
+- ✅ Create booking (session)
+- ✅ Create booking (class)
+- ✅ Check availability
+- ✅ Cancel booking
+- ✅ View booking history
+- ✅ Booking confirmation emails/SMS
+Priority 2 - User Management
+typescript
+- ✅ User registration (client, instructor)
+- ✅ Role-based permissions
+- ✅ Instructor availability management
+- ✅ Client profile + PARQ
+Priority 3 - Service Configuration
+typescript
+- ✅ Create services (session vs class)
+- ✅ Set booking mode per service
+- ✅ Pricing configuration
+- ✅
+Retry
+D
+Continue
+✅ Duration and capacity settings
+* ✅ Location assignment for services
+
+
+**Priority 4 - Schedule Management**
+```typescript
+- ✅ Class recurring schedule
+- ✅ Instructor availability blocks
+- ✅ Calendar view (day/week/month)
+- ✅ Conflict detection
+```
+
+
+**Priority 5 - Payment Integration**
+```typescript
+- ✅ Stripe Connect setup
+- ✅ Payment processing
+- ✅ Credits/packages system
+- ✅ Refund handling
+```
+
+
+### Phase 2: Enhanced Features
+
+
+**Instructor-Led Booking**
+```typescript
+// /components/booking-request-queue.tsx
+
+
+export function BookingRequestQueue() {
+  const { data: requests } = useQuery({
+    queryKey: ['booking-requests', 'pending'],
+    queryFn: async () => {
+      const res = await fetch('/api/booking-requests?status=pending');
+      return res.json();
+    }
+  });
+
+
+  const acceptRequest = async (requestId: string, timeSlot: string) => {
+    await fetch(`/api/booking-requests/${requestId}/respond`, {
+      method: 'POST',
+      body: JSON.stringify({ action: 'accept', selectedTime: timeSlot })
+    });
+  };
+
+
+  return (
+    <div className="space-y-4">
+      {requests?.map(request => (
+        <BookingRequestCard 
+          key={request.id}
+          request={request}
+          onAccept={acceptRequest}
+        />
+      ))}
+    </div>
+  );
+}
+```
+
+
+**Waitlist Management**
+```typescript
+// /lib/waitlist.ts
+
+
+export async function addToWaitlist(
+  clientId: string,
+  classId: string,
+  targetDate: string
+) {
+  const position = await getWaitlistPosition(classId, targetDate);
+  
+  const waitlistEntry = await supabase
+    .from('waitlist')
+    .insert({
+      client_id: clientId,
+      class_id: classId,
+      target_date: targetDate,
+      position: position + 1,
+      status: 'active'
+    })
+    .select()
+    .single();
+  
+  // Send confirmation
+  await sendWaitlistConfirmation(clientId, waitlistEntry);
+  
+  return waitlistEntry;
+}
+
+
+export async function promoteFromWaitlist(
+  classId: string,
+  targetDate: string
+) {
+  // Get next person on waitlist
+  const nextInLine = await supabase
+    .from('waitlist')
+    .select('*')
+    .eq('class_id', classId)
+    .eq('target_date', targetDate)
+    .eq('status', 'active')
+    .order('position', { ascending: true })
+    .limit(1)
+    .single();
+  
+  if (!nextInLine) return null;
+  
+  // Mark as offered
+  await supabase
+    .from('waitlist')
+    .update({ 
+      status: 'offered',
+      offered_at: new Date().toISOString(),
+      expires_at: addMinutes(new Date(), 30).toISOString() // 30 min to accept
+    })
+    .eq('id', nextInLine.id);
+  
+  // Send notification
+  await sendWaitlistSpotAvailable(nextInLine);
+  
+  return nextInLine;
+}
+```
+
+
+**Multi-Location Support**
+```typescript
+// /components/location-switcher.tsx
+
+
+export function LocationSwitcher() {
+  const user = useUser();
+  const [selectedLocation, setSelectedLocation] = useLocationStore();
+  
+  const { data: locations } = useQuery({
+    queryKey: ['locations', user?.id],
+    queryFn: async () => {
+      const res = await fetch('/api/locations');
+      return res.json();
+    }
+  });
+  
+  const accessibleLocations = locations?.filter(loc => 
+    user?.accessible_locations?.includes(loc.id) || 
+    user?.role === 'org_owner'
+  );
+  
+  return (
+    <Select value={selectedLocation} onValueChange={setSelectedLocation}>
+      <SelectTrigger className="w-[200px]">
+        <SelectValue placeholder="Select location" />
+      </SelectTrigger>
+      <SelectContent>
+        {user?.role === 'org_owner' && (
+          <SelectItem value="all">All Locations</SelectItem>
+        )}
+        {accessibleLocations?.map(loc => (
+          <SelectItem key={loc.id} value={loc.id}>
+            📍 {loc.name}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+}
+```
+
+
+**Check-In System**
+```typescript
+// /app/api/bookings/[id]/checkin/route.ts
+
+
+export async function POST(
+  request: Request,
+  { params }: { params: { id: string } }
+) {
+  const user = await getCurrentUser();
+  const { gps } = await request.json();
+  
+  const booking = await getBooking(params.id);
+  
+  // Verify check-in window (e.g., 30 min before to 15 min after start)
+  const now = new Date();
+  const startTime = new Date(booking.start_time);
+  const checkInWindow = {
+    start: subMinutes(startTime, 30),
+    end: addMinutes(startTime, 15)
+  };
+  
+  if (now < checkInWindow.start || now > checkInWindow.end) {
+    return Response.json(
+      { error: 'Outside check-in window' },
+      { status: 400 }
+    );
+  }
+  
+  // Optional: Verify GPS proximity
+  if (gps) {
+    const location = await getLocation(booking.location_id);
+    const distance = calculateDistance(gps, location.coordinates);
+    
+    if (distance > 0.5) { // 0.5km = 500m radius
+      return Response.json(
+        { error: 'Not at studio location' },
+        { status: 400 }
+      );
+    }
+  }
+  
+  // Mark as checked in
+  await supabase
+    .from('bookings')
+    .update({ 
+      status: 'checked_in',
+      checked_in_at: new Date().toISOString()
+    })
+    .eq('id', params.id);
+  
+  return Response.json({ success: true });
+}
+```
+
+
+---
+
+
+## 10. Integration Points
+
+
+### Stripe Connect Integration
+```typescript
+// /lib/stripe.ts
+import Stripe from 'stripe';
+
+
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+  apiVersion: '2023-10-16'
+});
+
+
+// Connect studio to Stripe
+export async function createConnectedAccount(
+  organizationId: string,
+  email: string
+) {
+  const account = await stripe.accounts.create({
+    type: 'standard',
+    email,
+    metadata: { organization_id: organizationId }
+  });
+  
+  await supabase
+    .from('organizations')
+    .update({ stripe_account_id: account.id })
+    .eq('id', organizationId);
+  
+  return account;
+}
+
+
+// Create payment intent for booking
+export async function createBookingPayment(
+  bookingId: string,
+  amount: number,
+  connectedAccountId: string
+) {
+  const paymentIntent = await stripe.paymentIntents.create({
+    amount: Math.round(amount * 100), // Convert to cents
+    currency: 'gbp',
+    application_fee_amount: Math.round(amount * 0.029 * 100), // 2.9% platform fee
+    transfer_data: {
+      destination: connectedAccountId
+    },
+    metadata: {
+      booking_id: bookingId
+    }
+  });
+  
+  return paymentIntent;
+}
+
+
+// Process refund
+export async function refundBooking(
+  paymentIntentId: string,
+  amount?: number
+) {
+  const refund = await stripe.refunds.create({
+    payment_intent: paymentIntentId,
+    amount: amount ? Math.round(amount * 100) : undefined, // Partial or full
+    metadata: { refund_reason: 'booking_cancelled' }
+  });
+  
+  return refund;
+}
+
+
+// Webhook handler
+// /app/api/payments/webhooks/stripe/route.ts
+export async function POST(request: Request) {
+  const body = await request.text();
+  const signature = request.headers.get('stripe-signature')!;
+  
+  const event = stripe.webhooks.constructEvent(
+    body,
+    signature,
+    process.env.STRIPE_WEBHOOK_SECRET!
+  );
+  
+  switch (event.type) {
+    case 'payment_intent.succeeded':
+      await handlePaymentSuccess(event.data.object);
+      break;
+    case 'payment_intent.payment_failed':
+      await handlePaymentFailure(event.data.object);
+      break;
+    case 'charge.refunded':
+      await handleRefund(event.data.object);
+      break;
+  }
+  
+  return Response.json({ received: true });
+}
+
+
+async function handlePaymentSuccess(paymentIntent: Stripe.PaymentIntent) {
+  const bookingId = paymentIntent.metadata.booking_id;
+  
+  // Update booking status
+  await supabase
+    .from('bookings')
+    .update({ 
+      payment_status: 'paid',
+      payment_intent_id: paymentIntent.id
+    })
+    .eq('id', bookingId);
+  
+  // Send confirmation
+  const booking = await getBooking(bookingId);
+  await sendBookingConfirmation(booking);
+}
+```
+
+
+### Infobip SMS Integration
+```typescript
+// /lib/sms.ts
+
+
+interface SendSMSParams {
+  to: string; // Phone number with country code
+  message: string;
+  messageType?: 'transactional' | 'marketing';
+}
+
+
+export async function sendSMS({ to, message, messageType = 'transactional' }: SendSMSParams) {
+  const response = await fetch('https://api.infobip.com/sms/2/text/advanced', {
+    method: 'POST',
+    headers: {
+      'Authorization': `App ${process.env.INFOBIP_API_KEY}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      messages: [{
+        from: process.env.INFOBIP_SENDER_ID || 'Wondrous',
+        destinations: [{ to }],
+        text: message,
+        notifyUrl: `${process.env.NEXT_PUBLIC_APP_URL}/api/sms/delivery-report`,
+        notifyContentType: 'application/json'
+      }]
+    })
+  });
+  
+  const data = await response.json();
+  
+  // Log SMS for tracking
+  await supabase.from('sms_logs').insert({
+    recipient: to,
+    message,
+    message_type: messageType,
+    external_id: data.messages[0]?.messageId,
+    status: data.messages[0]?.status?.name,
+    sent_at: new Date().toISOString()
+  });
+  
+  return data;
+}
+
+
+// Pre-built templates
+export async function sendBookingConfirmationSMS(booking: Booking) {
+  const client = await getUser(booking.client_id);
+  const service = await getService(booking.service_id);
+  const location = await getLocation(booking.location_id);
+  
+  const message = `Hi ${client.full_name}! Your ${service.name} is confirmed for ${formatDateTime(booking.start_time)} at ${location.name}. See you there! Reply CANCEL to cancel.`;
+  
+  await sendSMS({
+    to: client.phone,
+    message,
+    messageType: 'transactional'
+  });
+}
+
+
+export async function sendBookingReminderSMS(booking: Booking, hoursUntil: number) {
+  const client = await getUser(booking.client_id);
+  const service = await getService(booking.service_id);
+  const location = await getLocation(booking.location_id);
+  
+  const message = `Reminder: Your ${service.name} starts in ${hoursUntil} hours at ${location.name}. Can't make it? Cancel in the app.`;
+  
+  await sendSMS({
+    to: client.phone,
+    message,
+    messageType: 'transactional'
+  });
+}
+
+
+export async function sendWaitlistSpotAvailableSMS(waitlistEntry: any) {
+  const client = await getUser(waitlistEntry.client_id);
+  const classInfo = await getClass(waitlistEntry.class_id);
+  
+  const message = `Great news ${client.full_name}! A spot opened in ${classInfo.name} on ${formatDate(waitlistEntry.target_date)}. Book now in the app - you have 30 minutes!`;
+  
+  await sendSMS({
+    to: client.phone,
+    message,
+    messageType: 'transactional'
+  });
+}
+```
+
+
+### Elastic Email Integration
+```typescript
+// /lib/email.ts
+
+
+interface SendEmailParams {
+  to: string;
+  subject: string;
+  template: string;
+  variables: Record<string, any>;
+  category?: string;
+}
+
+
+export async function sendEmail({ to, subject, template, variables, category }: SendEmailParams) {
+  const response = await fetch('https://api.elasticemail.com/v2/email/send', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded'
+    },
+    body: new URLSearchParams({
+      apikey: process.env.ELASTIC_EMAIL_API_KEY!,
+      to,
+      subject,
+      template,
+      merge_global: JSON.stringify(variables),
+      category: category || 'transactional'
+    })
+  });
+  
+  const data = await response.json();
+  
+  // Log email
+  await supabase.from('email_logs').insert({
+    recipient: to,
+    subject,
+    template,
+    category,
+    external_id: data.messageid,
+    status: 'sent',
+    sent_at: new Date().toISOString()
+  });
+  
+  return data;
+}
+
+
+// Email templates (create these in Elastic Email dashboard)
+export async function sendBookingConfirmationEmail(booking: Booking) {
+  const client = await getUser(booking.client_id);
+  const service = await getService(booking.service_id);
+  const instructor = await getUser(booking.instructor_id);
+  const location = await getLocation(booking.location_id);
+  
+  await sendEmail({
+    to: client.email,
+    subject: `Booking Confirmed - ${service.name}`,
+    template: 'booking-confirmation', // Template ID in Elastic Email
+    variables: {
+      client_name: client.full_name,
+      service_name: service.name,
+      instructor_name: instructor.full_name,
+      date: formatDate(booking.start_time),
+      time: formatTime(booking.start_time),
+      location_name: location.name,
+      location_address: location.address,
+      booking_id: booking.id,
+      cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/bookings/${booking.id}/cancel`
+    },
+    category: 'booking-confirmation'
+  });
+}
+
+
+export async function sendWelcomeEmail(user: User, organization: Organization) {
+  await sendEmail({
+    to: user.email,
+    subject: `Welcome to ${organization.name}!`,
+    template: 'welcome-client',
+    variables: {
+      client_name: user.full_name,
+      studio_name: organization.name,
+      login_url: `${process.env.NEXT_PUBLIC_APP_URL}/login`,
+      browse_classes_url: `${process.env.NEXT_PUBLIC_APP_URL}/classes`
+    },
+    category: 'onboarding'
+  });
+}
+
+
+// Automated email campaigns (via cron job)
+// /app/api/cron/email-reminders/route.ts
+export async function GET() {
+  // Find bookings starting in 24 hours
+  const tomorrow = addHours(new Date(), 24);
+  const bookings = await supabase
+    .from('bookings')
+    .select('*')
+    .gte('start_time', tomorrow.toISOString())
+    .lte('start_time', addHours(tomorrow, 1).toISOString())
+    .eq('status', 'confirmed');
+  
+  for (const booking of bookings.data || []) {
+    await sendBookingReminderEmail(booking);
+    await sendBookingReminderSMS(booking, 24);
+  }
+  
+  return Response.json({ processed: bookings.data?.length || 0 });
+}
+```
+
+
+---
+
+
+## 11. Frontend Components Structure
+
+
+### Key React Components
+```typescript
+// /components/booking/
+├── booking-calendar.tsx          // Calendar view with availability
+├── booking-form.tsx              // Multi-step booking form
+├── booking-card.tsx              // Individual booking display
+├── booking-list.tsx              // List of bookings
+├── booking-request-card.tsx      // For instructor-led requests
+└── quick-book-button.tsx         // One-click booking for regulars
+
+
+// /components/schedule/
+├── weekly-schedule.tsx           // Week view of classes/sessions
+├── daily-schedule.tsx            // Day view
+├── instructor-availability.tsx   // Availability management
+└── class-roster.tsx              // Who's attending a class
+
+
+// /components/clients/
+├── client-list.tsx               // List of clients
+├── client-profile.tsx            // Client detail view
+├── client-search.tsx             // Search/filter clients
+└── parq-form.tsx                 // Health screening form
+
+
+// /components/dashboard/
+├── dashboard-overview.tsx        // Stats and metrics
+├── revenue-widget.tsx            // Revenue tracking
+├── churn-alerts.tsx              // At-risk clients
+└── quick-actions.tsx             // Common tasks
+
+
+// /components/location/
+├── location-switcher.tsx         // Switch between locations
+├── location-selector.tsx         // Select location for booking
+└── multi-location-calendar.tsx   // View schedule across locations
+```
+
+
+### Example Component: Booking Calendar
+```typescript
+// /components/booking/booking-calendar.tsx
+'use client';
+
+
+import { useState } from 'react';
+import { Calendar } from '@/components/ui/calendar';
+import { useQuery } from '@tanstack/react-query';
+
+
+interface BookingCalendarProps {
+  serviceId: string;
+  instructorId?: string;
+  locationId: string;
+  onSelectSlot: (datetime: Date) => void;
+}
+
+
+export function BookingCalendar({
+  serviceId,
+  instructorId,
+  locationId,
+  onSelectSlot
+}: BookingCalendarProps) {
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  
+  // Fetch available slots for selected date
+  const { data: slots, isLoading } = useQuery({
+    queryKey: ['availability', serviceId, instructorId, selectedDate, locationId],
+    queryFn: async () => {
+      const params = new URLSearchParams({
+        service_id: serviceId,
+        date: selectedDate.toISOString(),
+        location_id: locationId,
+        ...(instructorId && { instructor_id: instructorId })
+      });
+      
+      const res = await fetch(`/api/services/${serviceId}/availability?${params}`);
+      return res.json();
+    }
+  });
+  
+  return (
+    <div className="space-y-4">
+      <Calendar
+        mode="single"
+        selected={selectedDate}
+        onSelect={(date) => date && setSelectedDate(date)}
+        disabled={(date) => date < new Date() || date > addMonths(new Date(), 2)}
+        className="rounded-md border"
+      />
+      
+      <div className="space-y-2">
+        <h3 className="font-semibold">Available Times</h3>
+        
+        {isLoading ? (
+          <div>Loading slots...</div>
+        ) : slots?.length === 0 ? (
+          <div className="text-muted-foreground">No slots available</div>
+        ) : (
+          <div className="grid grid-cols-3 gap-2">
+            {slots?.map((slot: any) => (
+              <button
+                key={slot.start_time}
+                onClick={() => onSelectSlot(new Date(slot.start_time))}
+                className="rounded-md border p-3 hover:bg-accent text-sm"
+              >
+                {formatTime(slot.start_time)}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+```
+
+
+### Example Component: Instructor Schedule
+```typescript
+// /components/schedule/instructor-schedule.tsx
+'use client';
+
+
+import { useQuery } from '@tanstack/react-query';
+import { format, startOfWeek, addDays } from 'date-fns';
+
+
+export function InstructorSchedule({ instructorId }: { instructorId: string }) {
+  const [weekStart, setWeekStart] = useState(startOfWeek(new Date(), { weekStartsOn: 1 }));
+  
+  const { data: bookings } = useQuery({
+    queryKey: ['instructor-schedule', instructorId, weekStart],
+    queryFn: async () => {
+      const res = await fetch(
+        `/api/instructors/${instructorId}/schedule?start=${weekStart.toISOString()}`
+      );
+      return res.json();
+    }
+  });
+  
+  const days = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
+  
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-bold">Your Schedule</h2>
+        <div className="flex gap-2">
+          <button onClick={() => setWeekStart(addDays(weekStart, -7))}>
+            ← Previous Week
+          </button>
+          <button onClick={() => setWeekStart(addDays(weekStart, 7))}>
+            Next Week →
+          </button>
+        </div>
+      </div>
+      
+      <div className="grid grid-cols-7 gap-2">
+        {days.map((day) => {
+          const dayBookings = bookings?.filter((b: any) =>
+            isSameDay(new Date(b.start_time), day)
+          ) || [];
+          
+          return (
+            <div key={day.toISOString()} className="border rounded-lg p-4">
+              <div className="font-semibold mb-2">
+                {format(day, 'EEE d')}
+              </div>
+              
+              <div className="space-y-2">
+                {dayBookings.map((booking: any) => (
+                  <div
+                    key={booking.id}
+                    className="p-2 bg-blue-50 rounded text-sm"
+                  >
+                    <div className="font-medium">
+                      {format(new Date(booking.start_time), 'HH:mm')}
+                    </div>
+                    <div>{booking.client.full_name}</div>
+                    <div className="text-xs text-muted-foreground">
+                      {booking.service.name}
+                    </div>
+                  </div>
+                ))}
+                
+                {dayBookings.length === 0 && (
+                  <div className="text-sm text-muted-foreground">
+                    No sessions
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+```
+
+
+---
+
+
+## 12. State Management
+
+
+### Recommended Approach: Zustand + React Query
+```typescript
+// /lib/stores/location-store.ts
+import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
+
+
+interface LocationStore {
+  selectedLocationId: string | null;
+  setSelectedLocation: (locationId: string) => void;
+  viewAllLocations: boolean;
+  setViewAllLocations: (viewAll: boolean) => void;
+}
+
+
+export const useLocationStore = create<LocationStore>()(
+  persist(
+    (set) => ({
+      selectedLocationId: null,
+      setSelectedLocation: (locationId) => set({ selectedLocationId: locationId }),
+      viewAllLocations: false,
+      setViewAllLocations: (viewAll) => set({ viewAllLocations: viewAll })
+    }),
+    {
+      name: 'location-storage'
+    }
+  )
+);
+
+
+// /lib/stores/user-store.ts
+export const useUserStore = create<UserStore>((set) => ({
+  user: null,
+  setUser: (user) => set({ user }),
+  clearUser: () => set({ user: null })
+}));
+
+
+// Usage in components
+function MyComponent() {
+  const { selectedLocationId, setSelectedLocation } = useLocationStore();
+  const { user } = useUserStore();
+  
+  // React Query for server state
+  const { data: bookings } = useQuery({
+    queryKey: ['bookings', selectedLocationId],
+    queryFn: () => fetchBookings(selectedLocationId)
+  });
+}
+```
+
+
+---
+
+
+## 13. Critical Business Logic
+
+
+### Availability Calculation
+```typescript
+// /lib/availability.ts
+
+
+export async function getAvailableSlots(
+  serviceId: string,
+  instructorId: string,
+  locationId: string,
+  date: Date
+): Promise<TimeSlot[]> {
+  const service = await getService(serviceId);
+  const dayOfWeek = date.getDay();
+  
+  // Get instructor's availability for this day
+  const availability = await supabase
+    .from('instructor_availability')
+    .select('*')
+    .eq('instructor_id', instructorId)
+    .eq('location_id', locationId)
+    .eq('day_of_week', dayOfWeek)
+    .single();
+  
+  if (!availability.data) return [];
+  
+  // Get existing bookings for this day
+  const existingBookings = await supabase
+    .from('bookings')
+    .select('start_time, end_time')
+    .eq('instructor_id', instructorId)
+    .eq('location_id', locationId)
+    .gte('start_time', startOfDay(date).toISOString())
+    .lte('start_time', endOfDay(date).toISOString());
+  
+  // Generate time slots
+  const slots: TimeSlot[] = [];
+  let currentTime = parseTime(availability.data.start_time);
+  const endTime = parseTime(availability.data.end_time);
+  
+  while (currentTime < endTime) {
+    const slotStart = setTimeOnDate(date, currentTime);
+    const slotEnd = addMinutes(slotStart, service.duration_minutes);
+    
+    // Check if slot conflicts with existing booking
+    const hasConflict = existingBookings.data?.some(booking =>
+      doTimeSlotsOverlap(
+        slotStart,
+        slotEnd,
+        new Date(booking.start_time),
+        new Date(booking.end_time)
+      )
+    );
+    
+    if (!hasConflict && slotStart > new Date()) {
+      slots.push({
+        start_time: slotStart.toISOString(),
+        end_time: slotEnd.toISOString(),
+        available: true
+      });
+    }
+    
+    // Move to next slot (every 30 min by default, configurable)
+    currentTime = addMinutes(currentTime, 30);
+  }
+  
+  return slots;
+}
+
+
+function doTimeSlotsOverlap(
+  start1: Date,
+  end1: Date,
+  start2: Date,
+  end2: Date
+): boolean {
+  return start1 < end2 && end1 > start2;
+}
+```
+
+
+### Capacity Management (Classes)
+```typescript
+// /lib/capacity.ts
+
+
+export async function getClassCapacity(
+  classId: string,
+  targetDate: string
+): Promise<CapacityInfo> {
+  const classInfo = await getClass(classId);
+  
+  // Count bookings for this specific date/time
+  const { count: bookedSpots } = await supabase
+    .from('bookings')
+    .select('spots_booked', { count: 'exact', head: false })
+    .eq('service_id', classInfo.service_id)
+    .eq('location_id', classInfo.location_id)
+    .eq('instructor_id', classInfo.instructor_id)
+    .gte('start_time', targetDate)
+    .lt('start_time', addMinutes(new Date(targetDate), 1).toISOString())
+    .eq('status', 'confirmed');
+  
+  const totalBooked = bookedSpots || 0;
+  const spotsAvailable = classInfo.capacity - totalBooked;
+  
+  // Count waitlist
+  const { count: waitlistCount } = await supabase
+    .from('waitlist')
+    .select('*', { count: 'exact', head: true })
+    .eq('class_id', classId)
+    .eq('target_date', targetDate)
+    .eq('status', 'active');
+  
+  return {
+    capacity: classInfo.capacity,
+    booked: totalBooked,
+    available: spotsAvailable,
+    waitlist: waitlistCount || 0,
+    isFull: spotsAvailable <= 0
+  };
+}
+```
+
+
+### Credits & Packages
+```typescript
+// /lib/credits.ts
+
+
+export async function deductClientCredit(
+  clientId: string,
+  serviceId: string
+): Promise<boolean> {
+  // Get client's active credits
+  const credits = await supabase
+    .from('client_credits')
+    .select('*')
+    .eq('client_id', clientId)
+    .gt('credits_remaining', 0)
+    .gt('expires_at', new Date().toISOString())
+    .order('expires_at', { ascending: true }) // Use oldest first
+    .limit(1)
+    .single();
+  
+  if (!credits.data) {
+    throw new Error('No valid credits available');
+  }
+  
+  // Deduct one credit
+  await supabase
+    .from('client_credits')
+    .update({
+      credits_remaining: credits.data.credits_remaining - 1
+    })
+    .eq('id', credits.data.id);
+  
+  // Log transaction
+  await supabase
+    .from('credit_transactions')
+    .insert({
+      client_id: clientId,
+      package_id: credits.data.package_id,
+      type: 'deduction',
+      amount: -1,
+      balance_after: credits.data.credits_remaining - 1,
+      reason: `Booking service ${serviceId}`
+    });
+  
+  return true;
+}
+
+
+export async function checkClientCredits(
+  clientId: string,
+  serviceId: string
+): Promise<boolean> {
+  const { count } = await supabase
+    .from('client_credits')
+    .select('*', { count: 'exact', head: true })
+    .eq('client_id', clientId)
+    .gt('credits_remaining', 0)
+    .gt('expires_at', new Date().toISOString());
+  
+  return (count || 0) > 0;
+}
+```
+
+
+---
+
+
+## 14. Testing Scenarios
+
+
+### Critical User Journeys to Test
+
+
+**Session-Based Self-Booking:**
+```
+1. Client logs in
+2. Browse personal training services
+3. Select trainer
+4. View trainer's availability
+5. Select time slot
+6. Confirm booking (use credit)
+7. Receive confirmation email + SMS
+8. View booking in "My Bookings"
+```
+
+
+**Instructor-Led Booking Request:** this is Equals Results ER
+```
+1. Client logs in OR in case of ER sees intro offer signs up pays £39 and then owner sends SMS confirms what studio, day and time they want and then matches them to instructor and confirms first appointment via SMS
+2. Request session with trainer
+3. Provide preferred times
+4. Trainer receives notification
+5. Trainer reviews request
+6. Trainer accepts and confirms time
+7. Client receives confirmation
+8. Booking appears in both schedules
+```
+
+
+**Class Booking with Waitlist:**
+1. Client browses class schedule
+2. Attempts to book full class
+3. Added to waitlist
+4. Another client cancels
+5. Waitlist client promoted (30 min to confirm
+Retry
+D
+Continue
+) 6. Client receives SMS/email notification 7. Client confirms booking within 30 minutes 8. Booking confirmed, removed from waitlist
+
+
+**Multi-Location Instructor Schedule:**
+```
+1. Instructor logs in
+2. Views schedule across all locations
+3. Location A: 2 sessions today
+4. Location B: 1 session tomorrow
+5. Travel time calculated between locations
+6. Can filter by single location
+7. Check-in at Location A (GPS verified)
+8. Mark attendance for sessions
+```
+
+
+**Studio Owner Dashboard:**
+```
+1. Owner logs in
+2. View all locations overview
+3. Switch to single location detail
+4. Create new service at Location B
+5. Assign instructor to work at Location B
+6. View cross-location reports
+7. Identify churn risk clients
+```
+
+
+---
+
+
+## 15. Environment Variables
+```bash
+# .env.local
+
+
+# App
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+NEXT_PUBLIC_APP_ENV=development
+
+
+# Supabase
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
+SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+
+
+# Stripe
+STRIPE_SECRET_KEY=sk_test_...
+STRIPE_PUBLISHABLE_KEY=pk_test_...
+STRIPE_WEBHOOK_SECRET=whsec_...
+
+
+# Infobip (SMS)
+INFOBIP_API_KEY=your_infobip_key
+INFOBIP_BASE_URL=https://api.infobip.com
+INFOBIP_SENDER_ID=Wondrous
+
+
+# Elastic Email
+ELASTIC_EMAIL_API_KEY=your_elastic_email_key
+ELASTIC_EMAIL_FROM=noreply@wondrous.com
+
+
+# Optional: AI Features (Future)
+OPENAI_API_KEY=sk-...
+```
+
+
+---
+
+
+## 16. Deployment & Performance
+
+
+### Vercel Configuration
+```json
+// vercel.json
+{
+  "buildCommand": "npm run build",
+  "devCommand": "npm run dev",
+  "installCommand": "npm install",
+  "framework": "nextjs",
+  "regions": ["lhr1"], // London region
+  "env": {
+    "NEXT_PUBLIC_APP_URL": "https://app.wondrous.com"
+  },
+  "crons": [
+    {
+      "path": "/api/cron/email-reminders",
+      "schedule": "0 * * * *" // Every hour
+    },
+    {
+      "path": "/api/cron/waitlist-expiry",
+      "schedule": "*/15 * * * *" // Every 15 minutes
+    }
+  ]
+}
+```
+
+
+### Performance Optimization
+```typescript
+// /lib/cache.ts
+import { unstable_cache } from 'next/cache';
+
+
+// Cache service data (changes infrequently)
+export const getCachedServices = unstable_cache(
+  async (organizationId: string) => {
+    const { data } = await supabase
+      .from('services')
+      .select('*')
+      .eq('organization_id', organizationId);
+    return data;
+  },
+  ['services'],
+  { revalidate: 3600, tags: ['services'] } // 1 hour cache
+);
+
+
+// Cache location data
+export const getCachedLocations = unstable_cache(
+  async (organizationId: string) => {
+    const { data } = await supabase
+      .from('locations')
+      .select('*')
+      .eq('organization_id', organizationId)
+      .eq('is_active', true);
+    return data;
+  },
+  ['locations'],
+  { revalidate: 3600, tags: ['locations'] }
+);
+
+
+// Invalidate cache when data changes
+export async function invalidateServiceCache() {
+  revalidateTag('services');
+}
+```
+
+
+### Database Indexes (Already in Schema)
+```sql
+-- Critical for performance
+CREATE INDEX idx_bookings_start_time ON bookings(start_time);
+CREATE INDEX idx_bookings_client_status ON bookings(client_id, status);
+CREATE INDEX idx_bookings_instructor_status ON bookings(instructor_id, status);
+CREATE INDEX idx_bookings_location_date ON bookings(location_id, start_time);
+
+
+-- For availability queries
+CREATE INDEX idx_instructor_availability_lookup 
+  ON instructor_availability(instructor_id, location_id, day_of_week);
+
+
+-- For class capacity queries
+CREATE INDEX idx_bookings_class_capacity 
+  ON bookings(service_id, location_id, start_time) 
+  WHERE status = 'confirmed';
+```
+
+
+---
+
+
+## 17. Error Handling Patterns
+
+
+### API Error Responses
+```typescript
+// /lib/api-response.ts
+
+
+export class ApiError extends Error {
+  constructor(
+    public statusCode: number,
+    message: string,
+    public code?: string
+  ) {
+    super(message);
+    this.name = 'ApiError';
+  }
+}
+
+
+export function errorResponse(error: unknown) {
+  if (error instanceof ApiError) {
+    return Response.json(
+      {
+        error: error.message,
+        code: error.code
+      },
+      { status: error.statusCode }
+    );
+  }
+  
+  console.error('Unexpected error:', error);
+  
+  return Response.json(
+    {
+      error: 'An unexpected error occurred',
+      code: 'INTERNAL_ERROR'
+    },
+    { status: 500 }
+  );
+}
+
+
+// Usage in route handlers
+export async function POST(request: Request) {
+  try {
+    // ... booking logic
+    
+    if (!hasCredits) {
+      throw new ApiError(402, 'Insufficient credits', 'NO_CREDITS');
+    }
+    
+    return Response.json({ booking });
+  } catch (error) {
+    return errorResponse(error);
+  }
+}
+```
+
+
+### Frontend Error Handling
+```typescript
+// /lib/api-client.ts
+
+
+export async function apiRequest<T>(
+  endpoint: string,
+  options?: RequestInit
+): Promise<T> {
+  const response = await fetch(`/api${endpoint}`, {
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options?.headers
+    }
+  });
+  
+  const data = await response.json();
+  
+  if (!response.ok) {
+    throw new ApiError(
+      response.status,
+      data.error || 'Request failed',
+      data.code
+    );
+  }
+  
+  return data;
+}
+
+
+// Usage in components
+async function handleBooking() {
+  try {
+    const booking = await apiRequest('/bookings', {
+      method: 'POST',
+      body: JSON.stringify(bookingData)
+    });
+    
+    toast.success('Booking confirmed!');
+    router.push(`/bookings/${booking.id}`);
+  } catch (error) {
+    if (error instanceof ApiError) {
+      if (error.code === 'NO_CREDITS') {
+        toast.error('You need to purchase credits first');
+        router.push('/packages');
+      } else {
+        toast.error(error.message);
+      }
+    } else {
+      toast.error('Something went wrong. Please try again.');
+    }
+  }
+}
+```
+
+
+---
+
+
+## 18. Security Checklist
+
+
+### Row-Level Security (RLS) in Supabase
+```sql
+-- Enable RLS on all tables
+ALTER TABLE bookings ENABLE ROW LEVEL SECURITY;
+ALTER TABLE users ENABLE ROW LEVEL SECURITY;
+ALTER TABLE services ENABLE ROW LEVEL SECURITY;
+-- ... etc for all tables
+
+
+-- Example: Bookings RLS Policies
+
+
+-- Clients can view their own bookings
+CREATE POLICY "Clients can view own bookings"
+  ON bookings FOR SELECT
+  USING (
+    auth.uid() = client_id 
+    OR auth.uid() = instructor_id
+  );
+
+
+-- Instructors can view their assigned bookings
+CREATE POLICY "Instructors can view assigned bookings"
+  ON bookings FOR SELECT
+  USING (
+    auth.uid() IN (
+      SELECT id FROM users 
+      WHERE role IN ('instructor', 'trainer') 
+      AND id = bookings.instructor_id
+    )
+  );
+
+
+-- Location managers can view location bookings
+CREATE POLICY "Location managers can view location bookings"
+  ON bookings FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1 FROM users
+      WHERE users.id = auth.uid()
+      AND users.role = 'location_manager'
+      AND bookings.location_id = ANY(users.accessible_locations)
+    )
+  );
+
+
+-- Org owners can view all bookings
+CREATE POLICY "Org owners can view all bookings"
+  ON bookings FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1 FROM users
+      WHERE users.id = auth.uid()
+      AND users.role = 'org_owner'
+      AND users.organization_id = bookings.organization_id
+    )
+  );
+
+
+-- Only staff can create bookings for others
+CREATE POLICY "Staff can create bookings"
+  ON bookings FOR INSERT
+  WITH CHECK (
+    auth.uid() IN (
+      SELECT id FROM users 
+      WHERE role IN ('org_owner', 'location_manager', 'instructor', 'receptionist')
+    )
+    OR auth.uid() = client_id -- Clients can create own bookings
+  );
+```
+
+
+### API Route Protection
+```typescript
+// /lib/auth.ts
+
+
+export async function requireAuth(request: Request) {
+  const session = await getSession(request);
+  
+  if (!session) {
+    throw new ApiError(401, 'Unauthorized', 'NO_SESSION');
+  }
+  
+  return session.user;
+}
+
+
+export async function requireRole(
+  request: Request,
+  allowedRoles: UserRole[]
+) {
+  const user = await requireAuth(request);
+  
+  if (!allowedRoles.includes(user.role)) {
+    throw new ApiError(403, 'Forbidden', 'INSUFFICIENT_PERMISSIONS');
+  }
+  
+  return user;
+}
+
+
+// Usage
+export async function DELETE(
+  request: Request,
+  { params }: { params: { id: string } }
+) {
+  // Only org owners and location managers can delete services
+  const user = await requireRole(request, ['org_owner', 'location_manager']);
+  
+  // ... deletion logic
+}
+```
+
+
+### Input Validation
+```typescript
+// /lib/validation.ts
+import { z } from 'zod';
+
+
+export const createBookingSchema = z.object({
+  serviceId: z.string().uuid(),
+  clientId: z.string().uuid(),
+  instructorId: z.string().uuid().optional(),
+  locationId: z.string().uuid(),
+  startTime: z.string().datetime(),
+  notes: z.string().max(500).optional()
+});
+
+
+// Usage in route
+export async function POST(request: Request) {
+  const body = await request.json();
+  
+  // Validate input
+  const validatedData = createBookingSchema.parse(body);
+  
+  // ... proceed with validated data
+}
+```
+
+
+---
+
+
+## 19. Quick Reference: Key Differences
+
+
+### Session vs Class Comparison
+
+
+| Aspect | Session-Based | Class-Based |
+|--------|---------------|-------------|
+| **Capacity** | 1 (typically) | Multiple (e.g., 20) |
+| **Scheduling** | Ad-hoc or recurring | Recurring schedule |
+| **Booking** | Often instructor-led | Usually self-booking |
+| **Who Books** | Trainer or client | Client |
+| **Flexibility** | High (any time) | Low (fixed schedule) |
+| **Database** | Individual bookings | Class template + instances |
+| **Waitlist** | Rare | Common (when full) |
+| **Check-in** | 1-on-1 confirmation | Batch processing |
+
+
+### Booking Mode Decision Tree
+```
+Is this a 1-on-1 service?
+├─ YES → Session-based
+│   ├─ Does trainer manage schedule tightly?
+│   │   ├─ YES → Instructor-led booking
+│   │   └─ NO → Self-booking
+│   └─ Is this first session/assessment?
+│       └─ YES → Consider self-booking for easy entry
+│
+└─ NO → Class-based
+    ├─ Is capacity limited?
+    │   ├─ YES → Self-booking + waitlist
+    │   └─ NO → Self-booking
+    └─ Premium/private class?
+        └─ YES → Consider instructor-led
+```
+
+
+---
+
+
+## 20. Implementation Priority Order
+
+
+### Week 1-2: Foundation
+```
+✅ Database schema setup in Supabase
+✅ Auth system (login, signup, roles)
+✅ Basic API routes (services, users)
+✅ Simple service creation UI
+```
+
+
+### Week 3-4: Core Booking (Session)
+```
+✅ Instructor availability management
+✅ Session booking API (self-booking)
+✅ Booking confirmation flow
+✅ Email/SMS integration (basic)
+✅ Client booking list view
+```
+
+
+### Week 5-6: Core Booking (Class)
+```
+✅ Class schedule setup
+✅ Recurring class templates
+✅ Class booking with capacity
+✅ Instructor class roster view
+✅ Basic waitlist functionality
+```
+
+
+### Week 7-8: Instructor-Led Booking
+```
+✅ Booking request system
+✅ Instructor request queue UI
+✅ Accept/decline workflow
+✅ Notifications for requests
+✅ Auto-escalation for old requests
+```
+
+
+### Week 9-10: Multi-Location
+```
+✅ Location management
+✅ Location switcher UI
+✅ Cross-location booking
+✅ Location-specific availability
+✅ Multi-location reporting
+```
+
+
+### Week 11-12: Payments & Credits
+```
+✅ Stripe Connect integration
+✅ Payment processing
+✅ Package/credit system
+✅ Refund handling
+✅ Payment receipts
+```
+
+
+---
+
+
+## 21. Common Pitfalls to Avoid
+
+
+### Timezone Issues
+```typescript
+// ❌ WRONG - Using local time
+const startTime = new Date('2024-10-28T07:00:00');
+
+
+// ✅ CORRECT - Always use ISO strings with timezone
+const startTime = new Date('2024-10-28T07:00:00Z'); // UTC
+const startTime = new Date('2024-10-28T07:00:00+01:00'); // BST
+
+
+// Store location timezone
+const location = await getLocation(locationId);
+const localTime = formatInTimeZone(
+  startTime,
+  location.timezone,
+  'HH:mm'
+);
+```
+
+
+### Race Conditions (Double Booking)
+```typescript
+// ❌ WRONG - Check then insert (race condition)
+const isAvailable = await checkAvailability(time);
+if (isAvailable) {
+  await createBooking(time); // Could conflict!
+}
+
+
+// ✅ CORRECT - Use transaction or unique constraint
+await supabase.rpc('create_booking_safe', {
+  instructor_id: instructorId,
+  start_time: startTime,
+  // ... other params
+});
+
+
+-- In database:
+CREATE UNIQUE INDEX idx_no_double_booking 
+  ON bookings(instructor_id, start_time)
+  WHERE status != 'cancelled';
+```
+
+
+### Permission Checks
+```typescript
+// ❌ WRONG - Only checking on frontend
+if (user.role === 'client') {
+  // show booking button
+}
+
+
+// ✅ CORRECT - Always validate on backend
+export async function POST(request: Request) {
+  const user = await getCurrentUser();
+  const { clientId } = await request.json();
+  
+  // Verify user can book for this client
+  if (user.role === 'client' && user.id !== clientId) {
+    throw new ApiError(403, 'Cannot book for another client');
+  }
+  
+  // ... proceed
+}
+```
+
+
+### Capacity Miscalculation
+```typescript
+// ❌ WRONG - Not accounting for cancellations
+const { count } = await supabase
+  .from('bookings')
+  .select('*', { count: 'exact' })
+  .eq('class_id', classId);
+
+
+// ✅ CORRECT - Only count confirmed bookings
+const { count } = await supabase
+  .from('bookings')
+  .select('*', { count: 'exact' })
+  .eq('class_id', classId)
+  .eq('status', 'confirmed');
+```
+
+
+---
+
+
+## 22. Testing Queries
+
+
+### Useful SQL Queries for Testing
+```sql
+-- Find all bookings for a specific day
+SELECT 
+  b.id,
+  b.start_time,
+  b.status,
+  s.name as service_name,
+  c.full_name as client_name,
+  i.full_name as instructor_name,
+  l.name as location_name
+FROM bookings b
+JOIN services s ON b.service_id = s.id
+JOIN users c ON b.client_id = c.id
+JOIN users i ON b.instructor_id = i.id
+JOIN locations l ON b.location_id = l.id
+WHERE DATE(b.start_time) = '2024-10-28'
+ORDER BY b.start_time;
+
+
+-- Check instructor schedule conflicts
+SELECT 
+  instructor_id,
+  start_time,
+  end_time,
+  COUNT(*) as concurrent_bookings
+FROM bookings
+WHERE status = 'confirmed'
+GROUP BY instructor_id, start_time, end_time
+HAVING COUNT(*) > 1;
+
+
+-- Find classes at capacity
+SELECT 
+  c.id,
+  s.name,
+  c.capacity,
+  COUNT(b.id) as bookings,
+  c.capacity - COUNT(b.id) as spots_remaining
+FROM classes c
+JOIN services s ON c.service_id = s.id
+LEFT JOIN bookings b ON b.service_id = c.service_id 
+  AND DATE(b.start_time) = CURRENT_DATE
+  AND b.status = 'confirmed'
+GROUP BY c.id, s.name, c.capacity
+HAVING COUNT(b.id) >= c.capacity;
+
+
+-- Multi-location client analysis
+SELECT 
+  c.id,
+  c.full_name,
+  COUNT(DISTINCT b.location_id) as locations_visited,
+  COUNT(b.id) as total_bookings,
+  SUM(CASE WHEN b.status = 'completed' THEN 1 ELSE 0 END) as completed
+FROM users c
+JOIN bookings b ON c.id = b.client_id
+WHERE c.role = 'client'
+GROUP BY c.id, c.full_name
+HAVING COUNT(DISTINCT b.location_id) > 1
+ORDER BY locations_visited DESC;
+```
+
+
+---
+
+
+## 23. Next Steps After MVP
+
+
+### Post-Launch Features (Priority Order)
+
+
+1. **Enhanced Dashboard**
+   - Revenue charts
+   - Booking trends
+   - Instructor performance metrics
+   - Churn risk indicators
+
+
+2. **Advanced Scheduling**
+   - Recurring booking templates
+   - Bulk booking operations
+   - Schedule optimization suggestions
+
+
+3. **Marketing Tools**
+   - Email campaign builder
+   - SMS marketing campaigns
+   - Automated drip sequences
+   - Referral tracking
+
+
+4. **Reporting**
+   - Custom report builder
+   - Export to Excel/PDF
+   - Scheduled reports
+   - Financial reconciliation
+
+
+5. **Mobile Enhancements**
+   - Native mobile app (React Native)
+   - Offline mode
+   - Push notifications
+   - Biometric login
+
+
+---
+
+
+## 24. Support & Documentation
+
+
+### Developer Resources
+
+
+**Supabase Docs:**
+- https://supabase.com/docs
+- Focus on: Auth, Database, RLS, Edge Functions
+
+
+**Next.js 14 App Router:**
+- https://nextjs.org/docs
+- Focus on: Route Handlers, Server Actions, Caching
+
+
+**Stripe Connect:**
+- https://stripe.com/docs/connect
+- Focus on: Standard accounts, Payment intents, Webhooks
+
+
+**Infobip SMS:**
+- https://www.infobip.com/docs/api
+- Focus on: Send SMS API, Delivery reports
+
+
+**Elastic Email:**
+- https://elasticemail.com/developers
+- Focus on: SMTP API, Templates, Campaigns
+
+
+---
+
+
+## Conclusion
+
+
+This guide provides everything needed to build the core Wondrous platform with:
+
+
+- ✅ **Clear user roles** and what each can do
+- ✅ **Session vs class booking** logic and flows
+- ✅ **Instructor-led vs self-booking** implementation
+- ✅ **Multi-location architecture** from the ground up
+- ✅ **Database schema** optimized for performance
+- ✅ **API structure** following Next.js 14 best practices
+- ✅ **Integration patterns** for Stripe, Infobip, Elastic Email
+- ✅ **Security considerations** with RLS and permissions
+
+
+**Key Takeaways:**
+1. Session-based = 1-on-1, instructor-led common
+2. Class-based = group, self-booking common
+3. Multi-location = location_id on everything, permission checks
+4. Always validate permissions server-side
+5. Use transactions for critical operations
+6. Cache aggressively, invalidate smartly
+
+
+**Start with:** Core booking flow for one service type, then expand.
