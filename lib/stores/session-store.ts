@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { Session, SessionBlock, SessionExercise } from '@/lib/types';
 import { MOCK_SESSIONS } from '@/lib/mock-data';
+import { useTimerStore } from './timer-store';
 
 interface SessionState {
   sessions: Session[];
@@ -45,6 +46,14 @@ export const useSessionStore = create<SessionState>()(
       },
 
       startSession: (sessionData) => {
+        const state = get();
+
+        // Check if there's already an active session
+        const activeSession = state.sessions.find(s => s.id === state.activeSessionId && !s.completed);
+        if (activeSession) {
+          throw new Error('Cannot start a new session. Please complete or cancel the current active session first.');
+        }
+
         const newSession: Session = {
           ...sessionData,
           id: `session_${Date.now()}_${Math.random().toString(36).substring(7)}`,
@@ -89,6 +98,9 @@ export const useSessionStore = create<SessionState>()(
           ),
           activeSessionId: state.activeSessionId === sessionId ? null : state.activeSessionId,
         }));
+
+        // Clear the timer when session is completed
+        useTimerStore.getState().clearTimer();
       },
 
       deleteSession: (sessionId) => set((state) => ({

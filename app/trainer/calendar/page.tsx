@@ -6,9 +6,10 @@ import { ChevronLeft, ChevronRight, Plus, Clock, User, X, Search, Calendar as Ca
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
+import { useUserStore } from "@/lib/stores/user-store";
+import { useCalendarStore } from "@/lib/stores/calendar-store";
 import {
   SERVICE_TYPES,
-  CALENDAR_SESSIONS,
   CALENDAR_CLIENTS,
   WORKOUT_TEMPLATES,
   getServiceType,
@@ -37,14 +38,21 @@ type ViewMode = "day" | "week";
 type CalendarTab = "schedule" | "requests";
 
 export default function TrainerCalendar() {
+  // Store hooks
+  const currentUser = useUserStore((state) => state.currentUser);
+  const { sessions, initializeSessions, addSession, updateSession, removeSession } = useCalendarStore();
+  const { toast } = useToast();
+
+  // Client-side only flag to prevent hydration mismatch
+  const [isMounted, setIsMounted] = useState(false);
+
+  // Local state
   const [currentDate, setCurrentDate] = useState(new Date());
   const [viewMode, setViewMode] = useState<ViewMode>("day");
   const [calendarTab, setCalendarTab] = useState<CalendarTab>("schedule");
-  const [sessions, setSessions] = useState<CalendarSession[]>(CALENDAR_SESSIONS);
   const [clients, setClients] = useState<CalendarClient[]>(CALENDAR_CLIENTS);
   const [bookingRequests, setBookingRequests] = useState<BookingRequest[]>(MOCK_BOOKING_REQUESTS);
   const [trainerAvailability] = useState(DEFAULT_TRAINER_AVAILABILITY);
-  const { toast } = useToast();
 
   // Inline booking panel state (NO MODALS)
   const [showBookingPanel, setShowBookingPanel] = useState(false);
@@ -60,26 +68,43 @@ export default function TrainerCalendar() {
     notes: "",
   });
 
+  // Reschedule state (INLINE, NO MODALS)
+  const [reschedulingSessionId, setReschedulingSessionId] = useState<string | null>(null);
+  const [rescheduleDate, setRescheduleDate] = useState<string>("");
+  const [rescheduleTime, setRescheduleTime] = useState<string>("");
+
+  // Mark as mounted on client
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  // Initialize sessions from store
+  useEffect(() => {
+    initializeSessions();
+  }, [initializeSessions]);
+
   // Soft hold expiry enforcement
   useEffect(() => {
     const checkExpiredHolds = () => {
       const now = new Date();
       let hasExpired = false;
 
-      const updatedSessions = sessions.map((session) => {
+      sessions.forEach((session) => {
+        const holdExpiryDate = session.holdExpiry instanceof Date
+          ? session.holdExpiry
+          : session.holdExpiry ? new Date(session.holdExpiry) : null;
+
         if (
           session.status === "soft-hold" &&
-          session.holdExpiry &&
-          now > session.holdExpiry
+          holdExpiryDate &&
+          now > holdExpiryDate
         ) {
           hasExpired = true;
-          return { ...session, status: "cancelled" as const };
+          updateSession(session.id, { status: "cancelled" as const });
         }
-        return session;
       });
 
       if (hasExpired) {
-        setSessions(updatedSessions);
         toast({
           variant: "warning",
           title: "Soft Holds Expired",
@@ -95,7 +120,9 @@ export default function TrainerCalendar() {
     const interval = setInterval(checkExpiredHolds, 60000);
 
     return () => clearInterval(interval);
-  }, [sessions, toast]);
+    // Only depend on sessions length to avoid infinite loops
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sessions.length]);
 
   // Navigation
   const navigateDay = (direction: number) => {
@@ -143,7 +170,18 @@ export default function TrainerCalendar() {
 
   // Handle session click
   const handleSessionClick = (sessionId: string) => {
-    setExpandedSessionId(expandedSessionId === sessionId ? null : sessionId);
+    // If clicking from week view, switch to day view and navigate to that session's date
+    if (viewMode === "week") {
+      const session = sessions.find(s => s.id === sessionId);
+      if (session) {
+        setCurrentDate(new Date(session.datetime));
+        setViewMode("day");
+        setExpandedSessionId(sessionId);
+      }
+    } else {
+      // In day view, just toggle expansion
+      setExpandedSessionId(expandedSessionId === sessionId ? null : sessionId);
+    }
   };
 
   // Close booking panel
@@ -213,7 +251,7 @@ export default function TrainerCalendar() {
     };
 
     // Update sessions
-    setSessions([...sessions, newSession]);
+    addSession(newSession);
 
     // Deduct credits
     setClients(
@@ -239,11 +277,7 @@ export default function TrainerCalendar() {
     const session = sessions.find((s) => s.id === sessionId);
     if (!session) return;
 
-    setSessions(
-      sessions.map((s) =>
-        s.id === sessionId ? { ...s, status: "checked-in" } : s
-      )
-    );
+    updateSession(sessionId, { status: "checked-in" });
 
     toast({
       title: "Session Started",
@@ -266,11 +300,7 @@ export default function TrainerCalendar() {
     const session = sessions.find((s) => s.id === sessionId);
     if (!session) return;
 
-    setSessions(
-      sessions.map((s) =>
-        s.id === sessionId ? { ...s, status: "completed" } : s
-      )
-    );
+    updateSession(sessionId, { status: "completed" });
 
     toast({
       title: "Session Completed",
@@ -306,11 +336,7 @@ export default function TrainerCalendar() {
     const session = sessions.find((s) => s.id === sessionId);
     if (!session) return;
 
-    setSessions(
-      sessions.map((s) =>
-        s.id === sessionId ? { ...s, status: "late" } : s
-      )
-    );
+    updateSession(sessionId, { status: "late" });
 
     toast({
       variant: "warning",
@@ -330,11 +356,7 @@ export default function TrainerCalendar() {
     if (!serviceType || !client) return;
 
     // Update session status
-    setSessions(
-      sessions.map((s) =>
-        s.id === sessionId ? { ...s, status: "no-show" } : s
-      )
-    );
+    updateSession(sessionId, { status: "no-show" });
 
     // Refund credit
     setClients(
@@ -363,7 +385,7 @@ export default function TrainerCalendar() {
     if (!serviceType || !client) return;
 
     // Remove session
-    setSessions(sessions.filter((s) => s.id !== sessionId));
+    removeSession(sessionId);
 
     // Refund credit
     setClients(
@@ -379,6 +401,74 @@ export default function TrainerCalendar() {
       description: `${session.clientName} - Credit refunded`,
     });
 
+    setExpandedSessionId(null);
+  };
+
+  // Reschedule session (INLINE, NO MODALS)
+  const handleRescheduleSession = (sessionId: string) => {
+    const session = sessions.find((s) => s.id === sessionId);
+    if (!session) return;
+
+    // Pre-fill with current session datetime
+    const currentDate = new Date(session.datetime);
+    const dateStr = currentDate.toISOString().split('T')[0];
+    const timeStr = `${String(currentDate.getHours()).padStart(2, '0')}:${String(currentDate.getMinutes()).padStart(2, '0')}`;
+
+    setReschedulingSessionId(sessionId);
+    setRescheduleDate(dateStr);
+    setRescheduleTime(timeStr);
+  };
+
+  // Submit reschedule
+  const submitReschedule = (sessionId: string) => {
+    const session = sessions.find((s) => s.id === sessionId);
+    if (!session) return;
+
+    if (!rescheduleDate || !rescheduleTime) {
+      toast({
+        variant: "destructive",
+        title: "Invalid Date/Time",
+        description: "Please select a valid date and time",
+      });
+      return;
+    }
+
+    // Create new datetime
+    const newDatetime = new Date(`${rescheduleDate}T${rescheduleTime}`);
+
+    // Check availability
+    if (!isWithinAvailability(newDatetime, trainerAvailability)) {
+      toast({
+        variant: "destructive",
+        title: "Outside Availability",
+        description: "Trainer is not available at this time",
+      });
+      return;
+    }
+
+    const serviceType = getServiceType(session.serviceTypeId);
+    if (!serviceType) return;
+
+    // Check conflicts (excluding current session)
+    const otherSessions = sessions.filter((s) => s.id !== sessionId);
+    if (!isTimeAvailable(newDatetime, serviceType.duration, otherSessions)) {
+      toast({
+        variant: "destructive",
+        title: "Time Conflict",
+        description: "This time slot is already booked",
+      });
+      return;
+    }
+
+    // Update session datetime
+    updateSession(sessionId, { datetime: newDatetime });
+
+    toast({
+      title: "Session Rescheduled",
+      description: `${session.clientName} rescheduled to ${formatDate(newDatetime)} at ${formatTime(newDatetime)}`,
+    });
+
+    setReschedulingSessionId(null);
     setExpandedSessionId(null);
   };
 
@@ -426,7 +516,7 @@ export default function TrainerCalendar() {
       workoutId: null,
     };
 
-    setSessions([...sessions, newSession]);
+    addSession(newSession);
 
     // Deduct credits
     setClients(
@@ -479,15 +569,15 @@ export default function TrainerCalendar() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Mobile Header */}
-      <div className="lg:hidden sticky top-14 z-20 bg-wondrous-blue text-white p-4 shadow-lg">
+      {/* Mobile Header - Fixed */}
+      <div className="lg:hidden fixed top-14 left-0 right-0 z-20 bg-wondrous-blue text-white p-4 shadow-lg">
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-3">
             <div className="w-11 h-11 rounded-full bg-white/20 flex items-center justify-center">
               <Dumbbell className="text-white" size={24} />
             </div>
             <div>
-              <div className="font-bold text-base">Brett Waldock</div>
+              <div className="font-bold text-base">{currentUser.firstName} {currentUser.lastName}</div>
               <div className="text-xs opacity-90">Personal Trainer</div>
             </div>
           </div>
@@ -497,107 +587,121 @@ export default function TrainerCalendar() {
         </div>
       </div>
 
-      {/* View Toggle & Navigation - Sticky with Glassmorphism */}
-      <div className="sticky top-[136px] lg:top-0 z-10 p-3 backdrop-blur-xl bg-white/95 border-b border-wondrous-grey-light shadow-sm">
-        <div className="max-w-7xl mx-auto">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex gap-2">
-              <button
-                onClick={() => navigateDay(-1)}
-                className="w-9 h-9 rounded-lg hover:opacity-80 flex items-center justify-center font-bold text-sm bg-wondrous-grey-light text-wondrous-grey-dark"
-              >
-                <ChevronLeft size={18} />
-              </button>
-              <button
-                onClick={() => navigateDay(1)}
-                className="w-9 h-9 rounded-lg hover:opacity-80 flex items-center justify-center font-bold text-sm bg-wondrous-grey-light text-wondrous-grey-dark"
-              >
-                <ChevronRight size={18} />
-              </button>
-              <button
-                onClick={goToToday}
-                className="px-3 h-9 rounded-lg text-xs font-semibold hover:opacity-80 bg-wondrous-grey-light text-wondrous-grey-dark"
-              >
-                Today
-              </button>
+      {/* Calendar Controls - Fixed Header (Mobile & Desktop Optimized) */}
+      <div className="fixed top-[136px] lg:top-0 left-0 right-0 lg:left-64 z-10 bg-white shadow-md">
+        {/* View Toggle & Navigation */}
+        <div className="p-2 lg:p-4 border-b border-wondrous-grey-light lg:px-8">
+          <div className="lg:max-w-7xl lg:mx-auto">
+            <div className="flex items-center justify-between mb-2 lg:mb-3">
+              <div className="flex gap-1.5 lg:gap-2">
+                <button
+                  onClick={() => navigateDay(-1)}
+                  className="w-8 h-8 lg:w-9 lg:h-9 rounded-lg hover:opacity-80 flex items-center justify-center font-bold text-sm bg-wondrous-grey-light text-wondrous-grey-dark active:scale-95 transition-transform"
+                  aria-label="Previous day"
+                >
+                  <ChevronLeft size={16} className="lg:w-[18px] lg:h-[18px]" />
+                </button>
+                <button
+                  onClick={() => navigateDay(1)}
+                  className="w-8 h-8 lg:w-9 lg:h-9 rounded-lg hover:opacity-80 flex items-center justify-center font-bold text-sm bg-wondrous-grey-light text-wondrous-grey-dark active:scale-95 transition-transform"
+                  aria-label="Next day"
+                >
+                  <ChevronRight size={16} className="lg:w-[18px] lg:h-[18px]" />
+                </button>
+                <button
+                  onClick={goToToday}
+                  className="px-2.5 lg:px-3 h-8 lg:h-9 rounded-lg text-[11px] lg:text-xs font-semibold hover:opacity-80 bg-wondrous-grey-light text-wondrous-grey-dark active:scale-95 transition-transform"
+                  aria-label="Go to today"
+                >
+                  Today
+                </button>
+              </div>
+              <div className="font-bold text-xs lg:text-sm text-wondrous-grey-dark font-heading">
+                {viewMode === "day" ? (isMounted ? formatDate(currentDate) : "Loading...") : `Week View`}
+              </div>
             </div>
-            <div className="font-bold text-sm text-wondrous-grey-dark font-heading">
-              {viewMode === "day" ? formatDate(currentDate) : `Week View`}
+
+            <div className="flex gap-1.5 lg:gap-2">
+              <button
+                onClick={() => setViewMode("day")}
+                className={cn(
+                  "flex-1 py-1.5 lg:py-2 rounded-lg text-[11px] lg:text-xs font-semibold transition-all active:scale-95",
+                  viewMode === "day"
+                    ? "bg-wondrous-blue text-white"
+                    : "bg-wondrous-grey-light text-wondrous-grey-dark"
+                )}
+                aria-label="Day view"
+                aria-pressed={viewMode === "day"}
+              >
+                Day View
+              </button>
+              <button
+                onClick={() => setViewMode("week")}
+                className={cn(
+                  "flex-1 py-1.5 lg:py-2 rounded-lg text-[11px] lg:text-xs font-semibold transition-all active:scale-95",
+                  viewMode === "week"
+                    ? "bg-wondrous-blue text-white"
+                    : "bg-wondrous-grey-light text-wondrous-grey-dark"
+                )}
+                aria-label="Week view"
+                aria-pressed={viewMode === "week"}
+              >
+                Week View
+              </button>
             </div>
           </div>
+        </div>
 
-          <div className="flex gap-2">
-            <button
-              onClick={() => setViewMode("day")}
-              className={cn(
-                "flex-1 py-2 rounded-lg text-xs font-semibold transition-all",
-                viewMode === "day"
-                  ? "bg-wondrous-blue text-white"
-                  : "bg-wondrous-grey-light text-wondrous-grey-dark"
-              )}
-            >
-              Day View
-            </button>
-            <button
-              onClick={() => setViewMode("week")}
-              className={cn(
-                "flex-1 py-2 rounded-lg text-xs font-semibold transition-all",
-                viewMode === "week"
-                  ? "bg-wondrous-blue text-white"
-                  : "bg-wondrous-grey-light text-wondrous-grey-dark"
-              )}
-            >
-              Week View
-            </button>
+        {/* Schedule/Requests Tabs */}
+        <div className="border-b border-wondrous-grey-light bg-white lg:px-8">
+          <div className="lg:max-w-7xl lg:mx-auto px-2 lg:px-0">
+            <div className="flex gap-2 lg:gap-4">
+              <button
+                onClick={() => setCalendarTab("schedule")}
+                className={cn(
+                  "flex items-center gap-1.5 lg:gap-2 px-3 lg:px-4 py-2.5 lg:py-3 text-xs lg:text-sm font-semibold transition-all relative active:scale-95",
+                  calendarTab === "schedule"
+                    ? "text-wondrous-blue"
+                    : "text-gray-500 hover:text-wondrous-grey-dark"
+                )}
+                aria-label="Schedule tab"
+                aria-selected={calendarTab === "schedule"}
+              >
+                <CalendarIcon size={16} className="lg:w-[18px] lg:h-[18px]" />
+                <span className="relative z-10">Schedule</span>
+                {calendarTab === "schedule" && (
+                  <div className="absolute bottom-0 left-0 right-0 h-0.5 lg:h-1 bg-wondrous-blue -z-0" />
+                )}
+              </button>
+              <button
+                onClick={() => setCalendarTab("requests")}
+                className={cn(
+                  "flex items-center gap-1.5 lg:gap-2 px-3 lg:px-4 py-2.5 lg:py-3 text-xs lg:text-sm font-semibold transition-all relative active:scale-95",
+                  calendarTab === "requests"
+                    ? "text-wondrous-blue"
+                    : "text-gray-500 hover:text-wondrous-grey-dark"
+                )}
+                aria-label="Requests tab"
+                aria-selected={calendarTab === "requests"}
+              >
+                <Inbox size={16} className="lg:w-[18px] lg:h-[18px]" />
+                <span className="relative z-10">Requests</span>
+                {pendingRequestsCount > 0 && (
+                  <span className="bg-wondrous-orange text-white text-[10px] lg:text-xs font-bold px-1.5 lg:px-2 py-0.5 rounded-full min-w-[18px] lg:min-w-[20px] text-center">
+                    {pendingRequestsCount}
+                  </span>
+                )}
+                {calendarTab === "requests" && (
+                  <div className="absolute bottom-0 left-0 right-0 h-0.5 lg:h-1 bg-wondrous-blue -z-0" />
+                )}
+              </button>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Schedule/Requests Tabs with Glassmorphism */}
-      <div className="backdrop-blur-md bg-white/90 border-b border-wondrous-grey-light sticky top-[200px] lg:top-[60px] z-10">
-        <div className="max-w-7xl mx-auto px-3 lg:px-6">
-          <div className="flex gap-4">
-            <button
-              onClick={() => setCalendarTab("schedule")}
-              className={cn(
-                "flex items-center gap-2 px-4 py-3 text-sm font-semibold transition-all relative",
-                calendarTab === "schedule"
-                  ? "text-wondrous-blue"
-                  : "text-gray-500 hover:text-wondrous-grey-dark"
-              )}
-            >
-              <CalendarIcon size={18} />
-              <span className="relative z-10">Schedule</span>
-              {calendarTab === "schedule" && (
-                <div className="absolute bottom-0 left-0 right-0 h-1 bg-wondrous-blue -z-0" />
-              )}
-            </button>
-            <button
-              onClick={() => setCalendarTab("requests")}
-              className={cn(
-                "flex items-center gap-2 px-4 py-3 text-sm font-semibold transition-all relative",
-                calendarTab === "requests"
-                  ? "text-wondrous-blue"
-                  : "text-gray-500 hover:text-wondrous-grey-dark"
-              )}
-            >
-              <Inbox size={18} />
-              <span className="relative z-10">Requests</span>
-              {pendingRequestsCount > 0 && (
-                <span className="bg-wondrous-orange text-white text-xs font-bold px-2 py-0.5 rounded-full">
-                  {pendingRequestsCount}
-                </span>
-              )}
-              {calendarTab === "requests" && (
-                <div className="absolute bottom-0 left-0 right-0 h-1 bg-wondrous-blue -z-0" />
-              )}
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Main Content */}
-      <div className="max-w-7xl mx-auto p-4 lg:p-8 space-y-6">
+      {/* Main Content - Scrollable with proper spacing */}
+      <div className="max-w-7xl mx-auto p-4 lg:p-8 space-y-6 mt-[260px] lg:mt-[160px]">
         {/* SCHEDULE TAB */}
         {calendarTab === "schedule" && (
           <>
@@ -705,8 +809,67 @@ export default function TrainerCalendar() {
                             className="border-t border-wondrous-grey-light bg-gray-50"
                           >
                             <div className="p-4 space-y-3">
-                              {/* Session Completion Form - INLINE */}
-                              {completingSessionId === session.id ? (
+                              {/* Reschedule Form - INLINE */}
+                              {reschedulingSessionId === session.id ? (
+                                <div className="space-y-3">
+                                  <div className="text-sm font-bold text-wondrous-grey-dark">
+                                    Reschedule Session
+                                  </div>
+
+                                  {/* Date Input */}
+                                  <div>
+                                    <label className="text-xs font-semibold text-wondrous-grey-dark mb-2 flex items-center gap-1">
+                                      <CalendarIcon size={14} />
+                                      New Date
+                                    </label>
+                                    <Input
+                                      type="date"
+                                      value={rescheduleDate}
+                                      onChange={(e) => setRescheduleDate(e.target.value)}
+                                      className="mt-1"
+                                    />
+                                  </div>
+
+                                  {/* Time Input */}
+                                  <div>
+                                    <label className="text-xs font-semibold text-wondrous-grey-dark mb-2 flex items-center gap-1">
+                                      <Clock size={14} />
+                                      New Time
+                                    </label>
+                                    <Input
+                                      type="time"
+                                      value={rescheduleTime}
+                                      onChange={(e) => setRescheduleTime(e.target.value)}
+                                      className="mt-1"
+                                    />
+                                  </div>
+
+                                  {/* Submit Buttons */}
+                                  <div className="grid grid-cols-2 gap-2">
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setReschedulingSessionId(null);
+                                      }}
+                                    >
+                                      Cancel
+                                    </Button>
+                                    <Button
+                                      size="sm"
+                                      className="bg-wondrous-blue hover:bg-wondrous-blue/90 text-white flex items-center gap-1"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        submitReschedule(session.id);
+                                      }}
+                                    >
+                                      <Check size={14} />
+                                      Confirm Reschedule
+                                    </Button>
+                                  </div>
+                                </div>
+                              ) : completingSessionId === session.id ? (
                                 <div className="space-y-3">
                                   <div className="text-sm font-bold text-wondrous-grey-dark">
                                     Complete Session
@@ -850,8 +1013,8 @@ export default function TrainerCalendar() {
                                 </>
                               )}
 
-                              {/* Secondary Actions - Only for non-completed sessions */}
-                              {session.status !== "completed" && completingSessionId !== session.id && (
+                              {/* Secondary Actions - Only for non-completed sessions and not rescheduling */}
+                              {session.status !== "completed" && completingSessionId !== session.id && reschedulingSessionId !== session.id && (
                               <div className="grid grid-cols-3 gap-2">
                                 <Button
                                   size="sm"
@@ -883,10 +1046,7 @@ export default function TrainerCalendar() {
                                   className="text-xs flex items-center gap-1"
                                   onClick={(e) => {
                                     e.stopPropagation();
-                                    toast({
-                                      title: "Reschedule",
-                                      description: "Feature coming soon",
-                                    });
+                                    handleRescheduleSession(session.id);
                                   }}
                                 >
                                   <CalendarX size={12} />
@@ -895,8 +1055,8 @@ export default function TrainerCalendar() {
                               </div>
                               )}
 
-                              {/* Cancel Button - Only for non-completed sessions */}
-                              {session.status !== "completed" && completingSessionId !== session.id && (
+                              {/* Cancel Button - Only for non-completed sessions and not rescheduling */}
+                              {session.status !== "completed" && completingSessionId !== session.id && reschedulingSessionId !== session.id && (
                               <Button
                                 size="sm"
                                 variant="outline"
@@ -1458,7 +1618,7 @@ export default function TrainerCalendar() {
                                   workoutId: null,
                                   holdExpiry: holdExpiry,
                                 };
-                                setSessions([...sessions, newSession]);
+                                addSession(newSession);
                                 toast({
                                   title: "Soft Hold Created",
                                   description: `Hold expires in 24 hours • ${client.name}`,

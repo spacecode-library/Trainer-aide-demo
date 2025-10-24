@@ -6,6 +6,7 @@ import { MobileNav } from "@/components/layout/MobileNav";
 import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
 import { StoreInitializer } from "@/components/providers/StoreInitializer";
 import { Toaster } from "@/components/ui/toaster";
+import { GlobalSessionTimer } from "@/components/session/GlobalSessionTimer";
 
 const bodoniModa = Bodoni_Moda({
   subsets: ["latin"],
@@ -44,6 +45,7 @@ export default function RootLayout({
             {children}
           </main>
           <MobileBottomNav />
+          <GlobalSessionTimer />
         </div>
         <Toaster />
       </body>

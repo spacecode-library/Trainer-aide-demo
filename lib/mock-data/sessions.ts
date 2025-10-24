@@ -124,6 +124,18 @@ function createCompletedSession(
 // ========================================
 // MOCK SESSIONS
 // ========================================
+// IMPORTANT: All mock sessions are completed sessions.
+// The app enforces that trainers can only have ONE active session at a time.
+// When a session is started (via startSession), it becomes the active session
+// and prevents starting new sessions until it's completed.
+// This constraint ensures:
+// 1. Trainers focus on one client at a time
+// 2. Timer state is unambiguous (only one timer can be active)
+// 3. Session data integrity (no overlapping sessions)
+// This mock data structure will inform the real API design where:
+// - POST /api/sessions will check for existing active sessions
+// - GET /api/sessions/active will return the single active session
+// - PATCH /api/sessions/:id/complete will clear the active session
 
 export const MOCK_SESSIONS: Session[] = [
   // Completed session 1

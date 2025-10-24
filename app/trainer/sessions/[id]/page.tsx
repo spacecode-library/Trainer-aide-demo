@@ -139,7 +139,7 @@ export default function SessionRunner() {
   // Render based on sign-off mode
   const renderFullSessionMode = () => {
     return (
-      <div className="space-y-6">
+      <div className="space-y-4 lg:space-y-6 px-4 lg:px-0">
         {session.blocks.map((block, blockIdx) => (
           <Card key={block.id}>
             <CardHeader>
@@ -287,7 +287,7 @@ export default function SessionRunner() {
     if (!currentBlock) return null;
 
     return (
-      <div className="space-y-6">
+      <div className="space-y-4 lg:space-y-6 px-4 lg:px-0">
         {/* Block Progress */}
         <Card className="bg-gray-50">
           <CardContent className="p-4">
@@ -452,7 +452,7 @@ export default function SessionRunner() {
     );
 
     return (
-      <div className="space-y-6">
+      <div className="space-y-4 lg:space-y-6 px-4 lg:px-0">
         {/* Exercise Progress */}
         <Card className="bg-gray-50">
           <CardContent className="p-4">
@@ -579,12 +579,12 @@ export default function SessionRunner() {
   };
 
   return (
-    <div className="p-4 lg:p-8 max-w-5xl mx-auto pb-20">
-      {/* Timer - Sticky at top */}
-      <SessionTimer onTimeUp={handleTimeUp} />
+    <div className="lg:p-8 max-w-5xl mx-auto pb-24 lg:pb-8">
+      {/* Timer - Fixed at top on mobile, sticky on desktop */}
+      <SessionTimer sessionId={sessionId} onTimeUp={handleTimeUp} />
 
-      {/* Header */}
-      <div className="mb-6">
+      {/* Header - Add top padding on mobile to account for fixed timer below top nav */}
+      <div className="pt-36 lg:pt-0 px-4 lg:px-0 mb-4 lg:mb-6">
         <div className="flex items-center gap-2 mb-2 text-sm text-gray-600 dark:text-gray-400">
           <FileText size={16} />
           <span>{session.template.name}</span>

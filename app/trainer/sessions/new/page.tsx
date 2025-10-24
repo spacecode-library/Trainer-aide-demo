@@ -99,18 +99,26 @@ function StartNewSessionContent() {
       })),
     }));
 
-    const sessionId = startSession({
-      trainerId: currentUser.id,
-      clientId: selectedClient?.id,
-      client: selectedClient || undefined,
-      templateId: selectedTemplate.id,
-      template: selectedTemplate,
-      sessionName: `${selectedTemplate.name} - ${selectedClient ? `${selectedClient.firstName} ${selectedClient.lastName}` : 'Walk-in'}`,
-      signOffMode: selectedSignOffMode,
-      blocks: sessionBlocks,
-    });
+    try {
+      const sessionId = startSession({
+        trainerId: currentUser.id,
+        clientId: selectedClient?.id,
+        client: selectedClient || undefined,
+        templateId: selectedTemplate.id,
+        template: selectedTemplate,
+        sessionName: `${selectedTemplate.name} - ${selectedClient ? `${selectedClient.firstName} ${selectedClient.lastName}` : 'Walk-in'}`,
+        signOffMode: selectedSignOffMode,
+        blocks: sessionBlocks,
+      });
 
-    router.push(`/trainer/sessions/${sessionId}`);
+      router.push(`/trainer/sessions/${sessionId}`);
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Cannot Start Session",
+        description: error instanceof Error ? error.message : "An error occurred while starting the session.",
+      });
+    }
   };
 
   return (
