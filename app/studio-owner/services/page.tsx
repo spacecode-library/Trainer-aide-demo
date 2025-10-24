@@ -75,7 +75,7 @@ export default function ServicesPage() {
                   What are Services?
                 </h3>
                 <p className="text-xs lg:text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
-                  Services define session types (e.g., "30min PT Session"). They specify duration, type (1-on-1, duet, group), and credits.
+                  Services define session types (e.g., &quot;30min PT Session&quot;). They specify duration, type (1-on-1, duet, group), and credits.
                   Different from <span className="font-medium">Templates</span>, which are workout programs with exercises.
                 </p>
               </div>

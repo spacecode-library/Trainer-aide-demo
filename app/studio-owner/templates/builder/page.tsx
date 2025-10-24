@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useTemplateStore } from '@/lib/stores/template-store';
 import { getExerciseById } from '@/lib/mock-data';
@@ -16,7 +16,7 @@ import { WorkoutTemplate, WorkoutBlock, TemplateExercise, Exercise, TemplateType
 import { Plus, Trash2, ChevronUp, ChevronDown, Save, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
-export default function TemplateBuilder() {
+function TemplateBuilderContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const templateId = searchParams.get('id');
@@ -452,5 +452,13 @@ export default function TemplateBuilder() {
         filterCardioOnly={requireCardio}
       />
     </div>
+  );
+}
+
+export default function TemplateBuilder() {
+  return (
+    <Suspense fallback={<div className="p-4 lg:p-8 max-w-7xl mx-auto">Loading...</div>}>
+      <TemplateBuilderContent />
+    </Suspense>
   );
 }
