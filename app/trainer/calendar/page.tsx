@@ -647,7 +647,7 @@ export default function TrainerCalendar() {
                     : "text-gray-500 hover:text-wondrous-grey-dark"
                 )}
                 aria-label="Schedule tab"
-                aria-selected={calendarTab === "schedule"}
+                aria-pressed={calendarTab === "schedule"}
               >
                 <CalendarIcon size={16} className="lg:w-[18px] lg:h-[18px]" />
                 <span className="relative z-10">Schedule</span>
@@ -664,7 +664,7 @@ export default function TrainerCalendar() {
                     : "text-gray-500 hover:text-wondrous-grey-dark"
                 )}
                 aria-label="Requests tab"
-                aria-selected={calendarTab === "requests"}
+                aria-pressed={calendarTab === "requests"}
               >
                 <Inbox size={16} className="lg:w-[18px] lg:h-[18px]" />
                 <span className="relative z-10">Requests</span>

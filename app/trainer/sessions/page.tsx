@@ -142,11 +142,11 @@ export default function MySessions() {
 
             // For regular sessions, calculate progress
             const completedExercises = !isCalendarSession ? session.blocks.reduce(
-              (sum, block) => sum + block.exercises.filter((ex) => ex.completed).length,
+              (sum: number, block: any) => sum + block.exercises.filter((ex: any) => ex.completed).length,
               0
             ) : 0;
             const totalExercises = !isCalendarSession ? session.blocks.reduce(
-              (sum, block) => sum + block.exercises.length,
+              (sum: number, block: any) => sum + block.exercises.length,
               0
             ) : 0;
             const progressPercentage = totalExercises > 0 ? (completedExercises / totalExercises) * 100 : 0;
