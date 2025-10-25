@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Bodoni_Moda, Lato } from "next/font/google";
+import { Bodoni_Moda, Lato, Montserrat } from "next/font/google";
 import "./globals.css";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { MobileNav } from "@/components/layout/MobileNav";
@@ -22,6 +22,13 @@ const lato = Lato({
   display: "swap",
 });
 
+const montserrat = Montserrat({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800"],
+  variable: "--font-montserrat",
+  display: "swap",
+});
+
 export const metadata: Metadata = {
   title: "Trainer Aide Demo | Wondrous",
   description: "Standalone demo of the Trainer Aide feature for Wondrous fitness platform",
@@ -35,7 +42,7 @@ export default function RootLayout({
   return (
     <html lang="en" className="overflow-x-hidden">
       <body
-        className={`${lato.variable} ${bodoniModa.variable} antialiased bg-gray-50 font-sans overflow-x-hidden`}
+        className={`${lato.variable} ${bodoniModa.variable} ${montserrat.variable} antialiased bg-gray-50 font-sans overflow-x-hidden`}
       >
         <StoreInitializer />
         <div className="min-h-screen overflow-x-hidden pb-20 lg:pb-0">

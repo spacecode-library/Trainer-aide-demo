@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronLeft, ChevronRight, Plus, Clock, User, X, Search, Calendar as CalendarIcon, Inbox, CheckCircle, XCircle, MessageSquare, AlertCircle, Play, AlertTriangle, UserX, CalendarX, Check, TrendingUp, Repeat, StickyNote, Dumbbell, Bell, CalendarDays, Timer, CreditCard } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, Clock, User, X, Search, Calendar as CalendarIcon, Inbox, CheckCircle, XCircle, MessageSquare, AlertCircle, Play, AlertTriangle, UserX, CalendarX, Check, TrendingUp, Repeat, StickyNote, Dumbbell, Bell, CalendarDays, Timer, CreditCard, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
@@ -569,26 +569,8 @@ export default function TrainerCalendar() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Mobile Header - Fixed */}
-      <div className="lg:hidden fixed top-14 left-0 right-0 z-20 bg-wondrous-blue text-white p-4 shadow-lg">
-        <div className="flex items-center justify-between mb-2">
-          <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-full bg-white/20 flex items-center justify-center">
-              <Dumbbell className="text-white" size={24} />
-            </div>
-            <div>
-              <div className="font-bold text-base">{currentUser.firstName} {currentUser.lastName}</div>
-              <div className="text-xs opacity-90">Personal Trainer</div>
-            </div>
-          </div>
-          <button className="bg-white/20 w-9 h-9 rounded-full flex items-center justify-center hover:bg-white/30 transition-colors">
-            <Bell className="text-white" size={18} />
-          </button>
-        </div>
-      </div>
-
       {/* Calendar Controls - Fixed Header (Mobile & Desktop Optimized) */}
-      <div className="fixed top-[136px] lg:top-0 left-0 right-0 lg:left-64 z-10 bg-white shadow-md">
+      <div className="fixed top-14 lg:top-0 left-0 right-0 lg:left-64 z-10 bg-white shadow-md">
         {/* View Toggle & Navigation */}
         <div className="p-2 lg:p-4 border-b border-wondrous-grey-light lg:px-8">
           <div className="lg:max-w-7xl lg:mx-auto">
@@ -701,7 +683,7 @@ export default function TrainerCalendar() {
       </div>
 
       {/* Main Content - Scrollable with proper spacing */}
-      <div className="max-w-7xl mx-auto p-4 lg:p-8 space-y-6 mt-[260px] lg:mt-[160px]">
+      <div className="max-w-7xl mx-auto p-4 lg:p-8 space-y-6 mt-[140px] lg:mt-[140px]">
         {/* SCHEDULE TAB */}
         {calendarTab === "schedule" && (
           <>
@@ -1585,7 +1567,7 @@ export default function TrainerCalendar() {
                       {hasEnoughCredits ? (
                         <Button
                           size="sm"
-                          className="w-full bg-wondrous-blue hover:bg-wondrous-blue/90 flex items-center justify-center gap-1"
+                          className="w-full bg-wondrous-magenta hover:bg-wondrous-magenta/90 flex items-center justify-center gap-1"
                           onClick={() => {
                             if (selectedSlot && selectedServiceType) {
                               handleCreateBooking(client.id, selectedServiceType, selectedSlot);
@@ -1635,12 +1617,13 @@ export default function TrainerCalendar() {
                             className="bg-green-600 hover:bg-green-700 flex items-center justify-center gap-1"
                             onClick={() => {
                               toast({
-                                title: "Top Up Credits",
-                                description: "Feature coming soon",
+                                title: "Top Up Email Sent",
+                                description: "Credit top-up email sent to client",
                               });
                             }}
+                            title="Send credit top-up email to client"
                           >
-                            <CreditCard size={16} />
+                            <Mail size={16} />
                             Top Up
                           </Button>
                         </div>

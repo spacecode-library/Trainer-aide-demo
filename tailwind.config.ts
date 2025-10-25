@@ -73,9 +73,9 @@ const config: Config = {
       },
       fontFamily: {
         sans: ["var(--font-lato)", "system-ui", "sans-serif"],
-        heading: ["var(--font-bodoni)", "Georgia", "serif"],
+        heading: ["var(--font-montserrat)", "system-ui", "sans-serif"], // Montserrat for modern fitness vibe
         body: ["var(--font-lato)", "system-ui", "sans-serif"],
-        display: ["var(--font-bodoni)", "Georgia", "serif"], // Bodoni for logos/display
+        display: ["var(--font-bodoni)", "Georgia", "serif"], // Bodoni for logos/display only
       },
       borderRadius: {
         lg: "var(--radius)",

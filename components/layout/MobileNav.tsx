@@ -65,12 +65,12 @@ export function MobileNav() {
       <header className="lg:hidden fixed top-0 left-0 right-0 backdrop-blur-xl bg-white/95 dark:bg-gray-800/95 border-b border-gray-100 dark:border-gray-700 shadow-sm z-30">
         <div className="flex items-center justify-between px-4 py-3">
           <div className="flex items-center gap-2">
-            <div className="relative w-40 h-10">
+            <div className="relative w-56 h-12">
               <Image
                 src="/images/all-wondrous-logo.svg"
                 alt="All Wondrous"
                 fill
-                sizes="160px"
+                sizes="224px"
                 className="object-contain object-left"
                 priority
               />
