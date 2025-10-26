@@ -71,21 +71,21 @@ export function SessionCompletionModal({
 
         <div className="space-y-6 py-4">
           {/* Session Summary */}
-          <div className="bg-gray-50 rounded-lg p-4 space-y-2">
-            <h3 className="font-semibold text-gray-900 mb-3">Session Summary</h3>
+          <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 space-y-2">
+            <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-3">Session Summary</h3>
             <div className="flex justify-between text-sm">
-              <span className="text-gray-600">Workout:</span>
-              <span className="font-medium text-gray-900">{sessionName}</span>
+              <span className="text-gray-600 dark:text-gray-400">Workout:</span>
+              <span className="font-medium text-gray-900 dark:text-gray-100">{sessionName}</span>
             </div>
             {clientName && (
               <div className="flex justify-between text-sm">
-                <span className="text-gray-600">Client:</span>
-                <span className="font-medium text-gray-900">{clientName}</span>
+                <span className="text-gray-600 dark:text-gray-400">Client:</span>
+                <span className="font-medium text-gray-900 dark:text-gray-100">{clientName}</span>
               </div>
             )}
             <div className="flex justify-between text-sm">
-              <span className="text-gray-600">Duration:</span>
-              <span className="font-medium text-gray-900 flex items-center gap-1">
+              <span className="text-gray-600 dark:text-gray-400">Duration:</span>
+              <span className="font-medium text-gray-900 dark:text-gray-100 flex items-center gap-1">
                 <Clock size={14} />
                 {formatDuration(duration)}
               </span>
@@ -119,7 +119,7 @@ export function SessionCompletionModal({
           </div>
 
           {/* Trainer Declaration */}
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg p-4">
             <label className="flex items-start gap-3 cursor-pointer">
               <input
                 type="checkbox"
@@ -128,8 +128,8 @@ export function SessionCompletionModal({
                 className="w-5 h-5 text-wondrous-primary mt-0.5 flex-shrink-0 rounded border-gray-300 focus:ring-wondrous-primary"
               />
               <div>
-                <p className="font-medium text-gray-900 mb-1">Trainer Declaration *</p>
-                <p className="text-sm text-gray-600">
+                <p className="font-medium text-gray-900 dark:text-gray-100 mb-1">Trainer Declaration *</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
                   I confirm that this session was conducted in accordance with studio standards and safety
                   protocols. All exercises were performed with proper form and supervision.
                 </p>

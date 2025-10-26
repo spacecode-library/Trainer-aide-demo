@@ -50,7 +50,7 @@ export function GlobalSessionTimer() {
       className="fixed bottom-20 lg:bottom-8 right-4 z-40 cursor-pointer"
       onClick={handleClick}
     >
-      <div className="bg-white dark:bg-gray-800 border-2 border-wondrous-primary dark:border-wondrous-primary-dark shadow-lg rounded-lg p-3 hover:shadow-xl transition-shadow">
+      <div className="bg-white dark:bg-gray-800 border-2 border-wondrous-primary dark:border-wondrous-primary shadow-lg rounded-lg p-3 hover:shadow-xl transition-shadow">
         <div className="flex items-center gap-3">
           <Clock className="text-wondrous-primary flex-shrink-0" size={20} />
           <div>
@@ -59,7 +59,7 @@ export function GlobalSessionTimer() {
               {String(minutes).padStart(2, '0')}:{String(seconds).padStart(2, '0')}
             </p>
           </div>
-          <ArrowRight size={16} className="text-gray-400" />
+          <ArrowRight size={16} className="text-gray-400 dark:text-gray-500" />
         </div>
         <div className="mt-2">
           <p className="text-xs text-gray-700 dark:text-gray-300 truncate max-w-[200px]">

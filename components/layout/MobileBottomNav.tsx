@@ -137,9 +137,9 @@ export function MobileBottomNav() {
       className="lg:hidden fixed bottom-0 left-0 right-0 z-50"
     >
       {/* Gradient backdrop */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/5 to-transparent pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/5 dark:from-white/5 to-transparent pointer-events-none" />
 
-      <div className="relative bg-white/90 backdrop-blur-xl border-t border-wondrous-grey-light shadow-[0_-4px_20px_rgba(0,0,0,0.08)]">
+      <div className="relative bg-white/90 dark:bg-gray-800/95 backdrop-blur-xl border-t border-wondrous-grey-light dark:border-gray-700 shadow-[0_-4px_20px_rgba(0,0,0,0.08)]">
         {/* Safe area padding for devices with home indicator */}
         <div
           className="px-3 sm:px-4 pt-2 pb-1"
@@ -165,7 +165,7 @@ export function MobileBottomNav() {
                       className={`p-2 sm:p-2.5 rounded-2xl transition-all duration-200 ${
                         isActive
                           ? "bg-wondrous-magenta text-white shadow-lg shadow-wondrous-magenta/30"
-                          : "text-gray-500 group-hover:text-wondrous-grey-dark group-active:bg-gray-100/80"
+                          : "text-gray-500 dark:text-gray-400 group-hover:text-wondrous-grey-dark dark:group-hover:text-gray-300 group-active:bg-gray-100/80 dark:group-active:bg-gray-700"
                       }`}
                     >
                       <Icon
@@ -181,7 +181,7 @@ export function MobileBottomNav() {
                     className={`text-[10px] sm:text-xs font-semibold transition-all duration-200 truncate max-w-full ${
                       isActive
                         ? "text-wondrous-magenta scale-105"
-                        : "text-gray-500 group-hover:text-wondrous-grey-dark"
+                        : "text-gray-500 dark:text-gray-400 group-hover:text-wondrous-grey-dark dark:group-hover:text-gray-300"
                     }`}
                   >
                     {item.label}

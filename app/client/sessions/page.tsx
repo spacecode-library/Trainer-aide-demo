@@ -68,7 +68,7 @@ export default function ClientSessionHistory() {
                           <TrendingUp size={14} />
                           Overall RPE: {session.overallRpe}/10
                         </span>
-                        <span className="capitalize text-xs bg-gray-100 px-2 py-1 rounded">
+                        <span className="capitalize text-xs bg-gray-100 dark:bg-gray-700 dark:text-gray-300 px-2 py-1 rounded">
                           {session.signOffMode.replace('_', ' ')}
                         </span>
                       </div>
@@ -98,23 +98,23 @@ export default function ClientSessionHistory() {
                   <CardContent className="pt-0 border-t">
                     {/* Trainer Notes */}
                     {session.notes && (
-                      <div className="bg-blue-50 rounded-lg p-4 mb-4 mt-4">
-                        <h4 className="font-semibold text-gray-900 mb-2 flex items-center gap-2">
+                      <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 mb-4 mt-4">
+                        <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-2 flex items-center gap-2">
                           <FileText size={16} />
                           Trainer Notes
                         </h4>
-                        <p className="text-sm text-gray-700 italic">&quot;{session.notes}&quot;</p>
+                        <p className="text-sm text-gray-700 dark:text-gray-300 italic">&quot;{session.notes}&quot;</p>
                       </div>
                     )}
 
                     {/* Workout Details */}
                     <div className="space-y-4 mt-4">
-                      <h4 className="font-semibold text-gray-900">Workout Details</h4>
+                      <h4 className="font-semibold text-gray-900 dark:text-gray-100">Workout Details</h4>
 
                       {session.blocks.map((block) => (
-                        <div key={block.id} className="bg-gray-50 rounded-lg p-4">
+                        <div key={block.id} className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
                           <div className="flex items-center justify-between mb-3">
-                            <h5 className="font-semibold text-gray-900">{block.name}</h5>
+                            <h5 className="font-semibold text-gray-900 dark:text-gray-100">{block.name}</h5>
                             {block.completed && (
                               <Badge variant="success" className="text-xs">
                                 Completed
@@ -130,7 +130,7 @@ export default function ClientSessionHistory() {
                               return (
                                 <div
                                   key={exercise.id}
-                                  className="bg-white rounded-lg p-3 border border-gray-200"
+                                  className="bg-white dark:bg-gray-600 rounded-lg p-3 border border-gray-200 dark:border-gray-500"
                                 >
                                   <div className="flex items-start gap-3">
                                     <div className="w-8 h-8 rounded-full bg-wondrous-blue-light flex items-center justify-center flex-shrink-0">
@@ -140,7 +140,7 @@ export default function ClientSessionHistory() {
                                     </div>
                                     <div className="flex-1">
                                       <div className="flex items-center gap-2 mb-2">
-                                        <span className="font-medium text-gray-900">{exerciseData.name}</span>
+                                        <span className="font-medium text-gray-900 dark:text-gray-100">{exerciseData.name}</span>
                                         <Badge variant="outline" className="capitalize text-xs">
                                           {exercise.muscleGroup}
                                         </Badge>
@@ -149,8 +149,8 @@ export default function ClientSessionHistory() {
                                       {/* Target vs Actual */}
                                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
                                         <div>
-                                          <p className="text-xs font-medium text-gray-500 mb-1">Target</p>
-                                          <p className="text-gray-700">
+                                          <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Target</p>
+                                          <p className="text-gray-700 dark:text-gray-300">
                                             {exercise.muscleGroup === 'cardio' ? (
                                               <>
                                                 {Math.floor((exercise.cardioDuration || 0) / 60)} min •
@@ -170,8 +170,8 @@ export default function ClientSessionHistory() {
 
                                         {exercise.completed && exercise.muscleGroup !== 'cardio' && exercise.muscleGroup !== 'stretch' && (
                                           <div>
-                                            <p className="text-xs font-medium text-gray-500 mb-1">Actual Performance</p>
-                                            <p className="text-gray-900 font-medium">
+                                            <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Actual Performance</p>
+                                            <p className="text-gray-900 dark:text-gray-100 font-medium">
                                               {exercise.actualResistance || exercise.resistanceValue}kg •
                                               {exercise.actualReps} reps
                                               {exercise.rpe && (
@@ -186,8 +186,8 @@ export default function ClientSessionHistory() {
 
                                         {exercise.completed && (exercise.muscleGroup === 'cardio' || exercise.muscleGroup === 'stretch') && exercise.rpe && (
                                           <div>
-                                            <p className="text-xs font-medium text-gray-500 mb-1">Intensity</p>
-                                            <p className="text-gray-900 font-medium">
+                                            <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Intensity</p>
+                                            <p className="text-gray-900 dark:text-gray-100 font-medium">
                                               <span className="text-wondrous-primary">RPE {exercise.rpe}/10</span>
                                             </p>
                                           </div>
@@ -204,27 +204,27 @@ export default function ClientSessionHistory() {
                     </div>
 
                     {/* Overall Summary */}
-                    <div className="bg-gray-50 rounded-lg p-4 mt-4">
-                      <h4 className="font-semibold text-gray-900 mb-3">Session Summary</h4>
+                    <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 mt-4">
+                      <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-3">Session Summary</h4>
                       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
                         <div>
-                          <p className="text-gray-600 mb-1">Total Blocks</p>
-                          <p className="font-semibold text-gray-900">{session.blocks.length}</p>
+                          <p className="text-gray-600 dark:text-gray-400 mb-1">Total Blocks</p>
+                          <p className="font-semibold text-gray-900 dark:text-gray-100">{session.blocks.length}</p>
                         </div>
                         <div>
-                          <p className="text-gray-600 mb-1">Total Exercises</p>
-                          <p className="font-semibold text-gray-900">
+                          <p className="text-gray-600 dark:text-gray-400 mb-1">Total Exercises</p>
+                          <p className="font-semibold text-gray-900 dark:text-gray-100">
                             {session.blocks.reduce((sum, b) => sum + b.exercises.length, 0)}
                           </p>
                         </div>
                         <div>
-                          <p className="text-gray-600 mb-1">Duration</p>
-                          <p className="font-semibold text-gray-900">
+                          <p className="text-gray-600 dark:text-gray-400 mb-1">Duration</p>
+                          <p className="font-semibold text-gray-900 dark:text-gray-100">
                             {session.duration ? formatDuration(session.duration) : 'N/A'}
                           </p>
                         </div>
                         <div>
-                          <p className="text-gray-600 mb-1">Overall RPE</p>
+                          <p className="text-gray-600 dark:text-gray-400 mb-1">Overall RPE</p>
                           <p className="font-semibold text-wondrous-primary">{session.overallRpe}/10</p>
                         </div>
                       </div>

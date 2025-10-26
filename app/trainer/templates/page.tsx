@@ -34,8 +34,8 @@ export default function TrainerTemplates() {
     <div className="p-4 lg:p-8 max-w-7xl mx-auto">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-heading-1 mb-2">Workout Templates</h1>
-        <p className="text-body-sm text-gray-600">
+        <h1 className="text-heading-1 mb-2 dark:text-gray-100">Workout Templates</h1>
+        <p className="text-body-sm text-gray-600 dark:text-gray-400">
           Browse assigned workout templates. Contact your studio owner to request changes.
         </p>
       </div>
@@ -96,8 +96,8 @@ export default function TrainerTemplates() {
                           {template.type === 'standard' ? 'Standard' : 'Resistance Only'}
                         </Badge>
                       </div>
-                      <p className="text-sm text-gray-600 mb-3">{template.description}</p>
-                      <div className="flex items-center gap-4 text-xs text-gray-500">
+                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">{template.description}</p>
+                      <div className="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400">
                         <span>{template.blocks.length} Blocks</span>
                         <span>{totalExercises} Exercises</span>
                       </div>
@@ -135,8 +135,8 @@ export default function TrainerTemplates() {
                   <CardContent className="pt-0 border-t">
                     <div className="space-y-4 mt-4">
                       {template.blocks.map((block) => (
-                        <div key={block.id} className="bg-gray-50 rounded-lg p-4">
-                          <h3 className="font-semibold text-gray-900 mb-3">{block.name}</h3>
+                        <div key={block.id} className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
+                          <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-3">{block.name}</h3>
                           <div className="space-y-2">
                             {block.exercises.map((templateExercise) => {
                               const exercise = getExerciseById(templateExercise.exerciseId);
@@ -145,7 +145,7 @@ export default function TrainerTemplates() {
                               return (
                                 <div
                                   key={templateExercise.id}
-                                  className="bg-white rounded-lg p-3 border border-gray-200"
+                                  className="bg-white dark:bg-gray-700 rounded-lg p-3 border border-gray-200 dark:border-gray-600"
                                 >
                                   <div className="flex items-start gap-3">
                                     <div className="w-8 h-8 rounded-full bg-wondrous-blue-light flex items-center justify-center flex-shrink-0">
@@ -155,12 +155,12 @@ export default function TrainerTemplates() {
                                     </div>
                                     <div className="flex-1">
                                       <div className="flex items-center gap-2 mb-1">
-                                        <span className="font-medium text-gray-900">{exercise.name}</span>
+                                        <span className="font-medium text-gray-900 dark:text-gray-100">{exercise.name}</span>
                                         <Badge variant="outline" className="capitalize text-xs">
                                           {templateExercise.muscleGroup}
                                         </Badge>
                                       </div>
-                                      <div className="text-sm text-gray-600">
+                                      <div className="text-sm text-gray-600 dark:text-gray-400">
                                         {templateExercise.muscleGroup === 'cardio' ? (
                                           <span>
                                             {Math.floor((templateExercise.cardioDuration || 0) / 60)} min •
@@ -186,8 +186,8 @@ export default function TrainerTemplates() {
                       ))}
                     </div>
 
-                    <div className="mt-4 pt-4 border-t">
-                      <p className="text-xs text-gray-500 italic">
+                    <div className="mt-4 pt-4 border-t dark:border-gray-700">
+                      <p className="text-xs text-gray-500 dark:text-gray-400 italic">
                         This template is read-only. Contact your studio owner to request modifications.
                       </p>
                     </div>

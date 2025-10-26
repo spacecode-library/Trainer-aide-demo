@@ -95,7 +95,7 @@ export default function TrainerDashboard() {
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-heading-2 dark:text-gray-100">Quick Actions</h2>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
+        <div className="grid grid-cols-3 gap-3 md:gap-4">
           <Link href="/trainer/sessions/new" className="group">
             <div className="relative overflow-hidden backdrop-blur-md bg-white/90 dark:bg-gray-800/90 border border-blue-200/50 dark:border-blue-800/50 rounded-xl lg:rounded-2xl p-4 lg:p-6 hover:shadow-lg active:scale-[0.98] transition-all duration-200 cursor-pointer">
               <div className="absolute top-0 right-0 w-24 h-24 lg:w-32 lg:h-32 bg-gradient-to-bl from-blue-500/10 to-transparent opacity-50" />
@@ -147,7 +147,7 @@ export default function TrainerDashboard() {
               const sessionDate = session.datetime instanceof Date ? session.datetime : new Date(session.datetime);
               return (
                 <Card key={session.id} className="hover:shadow-md transition-shadow">
-                  <CardContent className="p-4">
+                  <CardContent className="p-5 lg:p-6">
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex-1">
                         <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-1">
@@ -170,8 +170,8 @@ export default function TrainerDashboard() {
           </div>
         ) : (
           <Card className="p-8">
-            <div className="text-center text-gray-500">
-              <Calendar className="mx-auto mb-4 text-gray-400" size={48} />
+            <div className="text-center text-gray-500 dark:text-gray-400">
+              <Calendar className="mx-auto mb-4 text-gray-400 dark:text-gray-500" size={48} />
               <p className="text-lg font-medium mb-2 dark:text-gray-300">No upcoming sessions</p>
               <p className="text-sm mb-4 dark:text-gray-400">Schedule your next session to get started</p>
               <Link href="/trainer/calendar">

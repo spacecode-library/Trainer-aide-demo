@@ -59,8 +59,8 @@ export default function MySessions() {
       <div className="mb-8">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h1 className="text-heading-1 mb-2">My Sessions</h1>
-            <p className="text-body-sm text-gray-600">View and manage your training sessions</p>
+            <h1 className="text-heading-1 mb-2 dark:text-gray-100">My Sessions</h1>
+            <p className="text-body-sm text-gray-600 dark:text-gray-400">View and manage your training sessions</p>
           </div>
           <Link href="/trainer/sessions/new">
             <Button className="gap-2">
@@ -72,14 +72,14 @@ export default function MySessions() {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-2 mb-6 border-b border-gray-200">
+      <div className="flex gap-2 mb-6 border-b border-gray-200 dark:border-gray-700">
         <button
           onClick={() => setActiveTab('in_progress')}
           className={cn(
             'px-4 py-3 font-medium text-sm transition-colors relative',
             activeTab === 'in_progress'
               ? 'text-wondrous-primary'
-              : 'text-gray-600 hover:text-gray-900'
+              : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
           )}
         >
           In Progress
@@ -98,7 +98,7 @@ export default function MySessions() {
             'px-4 py-3 font-medium text-sm transition-colors relative',
             activeTab === 'upcoming'
               ? 'text-wondrous-primary'
-              : 'text-gray-600 hover:text-gray-900'
+              : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
           )}
         >
           Upcoming
@@ -117,12 +117,12 @@ export default function MySessions() {
             'px-4 py-3 font-medium text-sm transition-colors relative',
             activeTab === 'completed'
               ? 'text-wondrous-primary'
-              : 'text-gray-600 hover:text-gray-900'
+              : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
           )}
         >
           Completed
           {completedSessions.length > 0 && (
-            <span className="ml-2 px-2 py-0.5 bg-gray-300 text-gray-700 text-xs rounded-full">
+            <span className="ml-2 px-2 py-0.5 bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-200 text-xs rounded-full">
               {completedSessions.length}
             </span>
           )}
@@ -153,18 +153,19 @@ export default function MySessions() {
 
             return (
               <Card key={session.id} className="hover:shadow-md transition-shadow">
-                <CardContent className="p-4">
-                  <div className="flex items-start gap-4">
-                    {/* Icon - Hidden on mobile */}
+                <CardContent className="p-5 lg:p-6">
+                  <div className="flex items-start gap-3 lg:gap-4">
+                    {/* Icon - Now visible on mobile with smaller size */}
                     <div className={cn(
-                      'hidden lg:flex w-12 h-12 rounded-lg items-center justify-center flex-shrink-0',
-                      isCompleted ? 'bg-green-100' :
-                      isCalendarSession ? 'bg-orange-100' : 'bg-wondrous-blue-light'
+                      'flex w-10 h-10 lg:w-12 lg:h-12 rounded-lg items-center justify-center flex-shrink-0',
+                      isCompleted ? 'bg-green-100 dark:bg-green-900/30' :
+                      isCalendarSession ? 'bg-orange-100 dark:bg-orange-900/30' : 'bg-wondrous-blue-light dark:bg-wondrous-blue/20'
                     )}>
                       <Dumbbell
-                        className={isCompleted ? 'text-green-600' :
-                                  isCalendarSession ? 'text-orange-600' : 'text-wondrous-dark-blue'}
-                        size={24}
+                        className={isCompleted ? 'text-green-600 dark:text-green-400' :
+                                  isCalendarSession ? 'text-orange-600 dark:text-orange-400' : 'text-wondrous-dark-blue dark:text-wondrous-blue'}
+                        size={20}
+                        strokeWidth={2.5}
                       />
                     </div>
 

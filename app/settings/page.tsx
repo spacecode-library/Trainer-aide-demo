@@ -41,7 +41,7 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="p-4 lg:p-8 max-w-7xl mx-auto">
+    <div className="pt-6 px-4 pb-4 lg:p-8 max-w-7xl mx-auto">
       {/* Header - Hidden on mobile since bottom nav shows it */}
       <div className="mb-8 hidden lg:block">
         <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 font-heading mb-2">Settings</h1>

@@ -62,7 +62,7 @@ export function MobileNav() {
   return (
     <>
       {/* Mobile Header */}
-      <header className="lg:hidden fixed top-0 left-0 right-0 backdrop-blur-xl bg-white/95 dark:bg-gray-800/95 border-b border-gray-100 dark:border-gray-700 shadow-sm z-30">
+      <header className="lg:hidden fixed top-0 left-0 right-0 bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700 shadow-sm z-30">
         <div className="flex items-center justify-between px-4 py-3">
           <div className="flex items-center gap-2">
             <div className="relative w-56 h-12">

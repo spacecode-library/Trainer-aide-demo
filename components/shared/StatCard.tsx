@@ -53,7 +53,7 @@ export function StatCard({
 
   return (
     <Card className={cn(
-      "relative overflow-hidden backdrop-blur-md bg-white/90 border hover:shadow-lg active:scale-[0.98] transition-all duration-200",
+      "relative overflow-hidden backdrop-blur-md bg-white/90 dark:bg-gray-800/95 border dark:border-gray-600 hover:shadow-lg active:scale-[0.98] transition-all duration-200",
       colors.border,
       className
     )}>
@@ -67,7 +67,7 @@ export function StatCard({
         {/* Icon and Title Row */}
         <div className="flex items-start justify-between mb-3">
           <div className="flex-1 min-w-0">
-            <p className="text-xs sm:text-sm font-semibold text-gray-600 uppercase tracking-wide truncate">
+            <p className="text-xs sm:text-sm font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wide truncate">
               {title}
             </p>
           </div>
@@ -81,17 +81,17 @@ export function StatCard({
 
         {/* Value */}
         <div className="mb-1">
-          <p className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 tracking-tight">
+          <p className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 dark:text-gray-100 tracking-tight">
             {value}
           </p>
         </div>
 
         {/* Trend */}
         {trend && (
-          <p className="text-xs sm:text-sm text-gray-500 flex items-center gap-1">
+          <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1">
             <span className={cn(
               "font-semibold",
-              trend.value > 0 ? "text-green-600" : "text-red-600"
+              trend.value > 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
             )}>
               {trend.value > 0 ? '+' : ''}{trend.value}%
             </span>

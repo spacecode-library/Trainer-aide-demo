@@ -68,30 +68,30 @@
   }
 }
 
-/* Typography System - NO GRADIENTS */
+/* Typography System - WITH DARK MODE SUPPORT */
 @layer components {
   .text-heading-1 {
-    @apply text-3xl font-bold text-wondrous-grey-dark font-heading;
+    @apply text-3xl font-bold text-wondrous-grey-dark dark:text-gray-100 font-heading;
   }
 
   .text-heading-2 {
-    @apply text-2xl font-bold text-wondrous-grey-dark font-heading;
+    @apply text-2xl font-bold text-wondrous-grey-dark dark:text-gray-100 font-heading;
   }
 
   .text-heading-3 {
-    @apply text-xl font-semibold text-gray-900;
+    @apply text-xl font-semibold text-gray-900 dark:text-gray-100;
   }
 
   .text-body {
-    @apply text-base text-gray-700;
+    @apply text-base text-gray-700 dark:text-gray-300;
   }
 
   .text-body-sm {
-    @apply text-sm text-gray-600;
+    @apply text-sm text-gray-600 dark:text-gray-400;
   }
 
   .text-caption {
-    @apply text-xs text-gray-500;
+    @apply text-xs text-gray-500 dark:text-gray-400;
   }
 
   /* Button System - SOLID COLORS ONLY */
@@ -111,15 +111,15 @@
   }
 
   .btn-outline {
-    @apply px-4 py-2 bg-white text-wondrous-blue font-medium rounded-lg;
+    @apply px-4 py-2 bg-white dark:bg-gray-800 text-wondrous-blue dark:text-wondrous-blue font-medium rounded-lg;
     @apply border-2 border-wondrous-blue;
     @apply hover:bg-wondrous-blue hover:text-white;
     @apply transition-all duration-200;
   }
 
   .btn-ghost {
-    @apply px-4 py-2 bg-transparent text-gray-700 font-medium rounded-lg;
-    @apply hover:bg-gray-100;
+    @apply px-4 py-2 bg-transparent text-gray-700 dark:text-gray-300 font-medium rounded-lg;
+    @apply hover:bg-gray-100 dark:hover:bg-gray-700;
     @apply transition-all duration-200;
   }
 
@@ -131,9 +131,9 @@
     @apply px-6 py-3 text-lg;
   }
 
-  /* Card System - NO GRADIENTS */
+  /* Card System - WITH DARK MODE SUPPORT */
   .card {
-    @apply bg-white rounded-xl border border-gray-200 shadow-sm;
+    @apply bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm;
     @apply transition-shadow duration-200;
   }
 

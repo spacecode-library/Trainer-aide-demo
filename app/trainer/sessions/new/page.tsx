@@ -133,22 +133,22 @@ function StartNewSessionContent() {
 
       {/* Progress Steps */}
       <div className="flex items-center gap-2 mb-8">
-        <div className={`flex items-center gap-2 ${step >= 1 ? 'text-wondrous-primary' : 'text-gray-400'}`}>
-          <div className={`w-8 h-8 rounded-full flex items-center justify-center font-semibold ${step >= 1 ? 'bg-wondrous-primary text-white' : 'bg-gray-200'}`}>
+        <div className={`flex items-center gap-2 ${step >= 1 ? 'text-wondrous-primary' : 'text-gray-400 dark:text-gray-500'}`}>
+          <div className={`w-8 h-8 rounded-full flex items-center justify-center font-semibold ${step >= 1 ? 'bg-wondrous-primary text-white' : 'bg-gray-200 dark:bg-gray-600 dark:text-gray-300'}`}>
             1
           </div>
           <span className="text-sm font-medium hidden sm:inline">Template</span>
         </div>
-        <ChevronRight className="text-gray-400" size={20} />
-        <div className={`flex items-center gap-2 ${step >= 2 ? 'text-wondrous-primary' : 'text-gray-400'}`}>
-          <div className={`w-8 h-8 rounded-full flex items-center justify-center font-semibold ${step >= 2 ? 'bg-wondrous-primary text-white' : 'bg-gray-200'}`}>
+        <ChevronRight className="text-gray-400 dark:text-gray-500" size={20} />
+        <div className={`flex items-center gap-2 ${step >= 2 ? 'text-wondrous-primary' : 'text-gray-400 dark:text-gray-500'}`}>
+          <div className={`w-8 h-8 rounded-full flex items-center justify-center font-semibold ${step >= 2 ? 'bg-wondrous-primary text-white' : 'bg-gray-200 dark:bg-gray-600 dark:text-gray-300'}`}>
             2
           </div>
           <span className="text-sm font-medium hidden sm:inline">Client</span>
         </div>
-        <ChevronRight className="text-gray-400" size={20} />
-        <div className={`flex items-center gap-2 ${step >= 3 ? 'text-wondrous-primary' : 'text-gray-400'}`}>
-          <div className={`w-8 h-8 rounded-full flex items-center justify-center font-semibold ${step >= 3 ? 'bg-wondrous-primary text-white' : 'bg-gray-200'}`}>
+        <ChevronRight className="text-gray-400 dark:text-gray-500" size={20} />
+        <div className={`flex items-center gap-2 ${step >= 3 ? 'text-wondrous-primary' : 'text-gray-400 dark:text-gray-500'}`}>
+          <div className={`w-8 h-8 rounded-full flex items-center justify-center font-semibold ${step >= 3 ? 'bg-wondrous-primary text-white' : 'bg-gray-200 dark:bg-gray-600 dark:text-gray-300'}`}>
             3
           </div>
           <span className="text-sm font-medium hidden sm:inline">Sign-Off Mode</span>
@@ -186,7 +186,7 @@ function StartNewSessionContent() {
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-2">
-                        <h3 className="font-semibold text-gray-900">{template.name}</h3>
+                        <h3 className="font-semibold text-gray-900 dark:text-gray-100">{template.name}</h3>
                         <Badge variant={template.type === 'standard' ? 'default' : 'secondary'}>
                           {template.type === 'standard' ? 'Standard' : 'Resistance Only'}
                         </Badge>
@@ -255,8 +255,8 @@ function StartNewSessionContent() {
                   {selectedClient === null && <div className="w-2 h-2 rounded-full bg-white"></div>}
                 </div>
                 <div>
-                  <h3 className="font-semibold text-gray-900">Walk-in Client</h3>
-                  <p className="text-sm text-gray-600">No client assignment</p>
+                  <h3 className="font-semibold text-gray-900 dark:text-gray-100">Walk-in Client</h3>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">No client assignment</p>
                 </div>
               </div>
             </CardContent>
@@ -284,10 +284,10 @@ function StartNewSessionContent() {
                       {isSelected && <div className="w-2 h-2 rounded-full bg-white"></div>}
                     </div>
                     <div>
-                      <h3 className="font-semibold text-gray-900">
+                      <h3 className="font-semibold text-gray-900 dark:text-gray-100">
                         {client.firstName} {client.lastName}
                       </h3>
-                      <p className="text-sm text-gray-600">{client.email}</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">{client.email}</p>
                     </div>
                   </div>
                 </CardContent>
@@ -340,8 +340,8 @@ function StartNewSessionContent() {
                       {isSelected && <div className="w-2 h-2 rounded-full bg-white"></div>}
                     </div>
                     <div className="flex-1">
-                      <h3 className="font-semibold text-gray-900 mb-1">{mode.label}</h3>
-                      <p className="text-sm text-gray-600">{mode.description}</p>
+                      <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-1">{mode.label}</h3>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">{mode.description}</p>
                     </div>
                   </div>
                 </CardContent>
@@ -350,18 +350,18 @@ function StartNewSessionContent() {
           })}
 
           {/* Session Summary */}
-          <Card className="bg-gray-50 border-gray-200 mt-8">
+          <Card className="bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600 mt-8">
             <CardHeader>
               <CardTitle className="text-lg">Session Summary</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
               <div className="flex justify-between text-sm">
-                <span className="text-gray-600">Template:</span>
-                <span className="font-medium text-gray-900">{selectedTemplate?.name}</span>
+                <span className="text-gray-600 dark:text-gray-400">Template:</span>
+                <span className="font-medium text-gray-900 dark:text-gray-100">{selectedTemplate?.name}</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-gray-600">Client:</span>
-                <span className="font-medium text-gray-900">
+                <span className="text-gray-600 dark:text-gray-400">Client:</span>
+                <span className="font-medium text-gray-900 dark:text-gray-100">
                   {selectedClient ? `${selectedClient.firstName} ${selectedClient.lastName}` : 'Walk-in'}
                 </span>
               </div>

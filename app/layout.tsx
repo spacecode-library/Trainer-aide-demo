@@ -42,7 +42,7 @@ export default function RootLayout({
   return (
     <html lang="en" className="overflow-x-hidden">
       <body
-        className={`${lato.variable} ${bodoniModa.variable} ${montserrat.variable} antialiased bg-gray-50 font-sans overflow-x-hidden`}
+        className={`${lato.variable} ${bodoniModa.variable} ${montserrat.variable} antialiased bg-gray-50 dark:bg-gray-900 font-sans overflow-x-hidden`}
       >
         <StoreInitializer />
         <div className="min-h-screen overflow-x-hidden pb-20 lg:pb-0">

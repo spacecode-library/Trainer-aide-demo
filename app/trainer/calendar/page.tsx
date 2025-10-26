@@ -568,9 +568,9 @@ export default function TrainerCalendar() {
   );
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Calendar Controls - Fixed Header (Mobile & Desktop Optimized) */}
-      <div className="fixed top-14 lg:top-0 left-0 right-0 lg:left-64 z-10 bg-white shadow-md">
+      <div className="fixed top-[73px] lg:top-0 left-0 right-0 lg:left-64 z-10 bg-white dark:bg-gray-800 shadow-md border-t border-gray-100 dark:border-gray-700">
         {/* View Toggle & Navigation */}
         <div className="p-2 lg:p-4 border-b border-wondrous-grey-light lg:px-8">
           <div className="lg:max-w-7xl lg:mx-auto">
@@ -598,7 +598,7 @@ export default function TrainerCalendar() {
                   Today
                 </button>
               </div>
-              <div className="font-bold text-xs lg:text-sm text-wondrous-grey-dark font-heading">
+              <div className="font-bold text-xs lg:text-sm text-wondrous-grey-dark dark:text-gray-100 font-heading">
                 {viewMode === "day" ? (isMounted ? formatDate(currentDate) : "Loading...") : `Week View`}
               </div>
             </div>
@@ -683,7 +683,7 @@ export default function TrainerCalendar() {
       </div>
 
       {/* Main Content - Scrollable with proper spacing */}
-      <div className="max-w-7xl mx-auto p-4 lg:p-8 space-y-6 mt-[140px] lg:mt-[140px]">
+      <div className="max-w-7xl mx-auto p-4 lg:p-8 space-y-6 mt-[153px] lg:mt-[140px]">
         {/* SCHEDULE TAB */}
         {calendarTab === "schedule" && (
           <>
@@ -693,10 +693,10 @@ export default function TrainerCalendar() {
             {/* Session List */}
             <div className="space-y-4">
               {todaysSessions.length === 0 ? (
-                <div className="bg-white rounded-xl p-8 text-center text-gray-500 border-2 border-wondrous-grey-light">
-                  <CalendarDays size={48} className="mx-auto mb-3 text-gray-300" />
-                  <div className="text-sm font-medium text-wondrous-grey-dark">No sessions today</div>
-                  <div className="text-xs text-gray-400 mt-1">Your schedule is clear</div>
+                <div className="bg-white dark:bg-gray-800 rounded-xl p-8 text-center text-gray-500 dark:text-gray-400 border-2 border-wondrous-grey-light dark:border-gray-700">
+                  <CalendarDays size={48} className="mx-auto mb-3 text-gray-300 dark:text-gray-600" />
+                  <div className="text-sm font-medium text-wondrous-grey-dark dark:text-gray-200">No sessions today</div>
+                  <div className="text-xs text-gray-400 dark:text-gray-500 mt-1">Your schedule is clear</div>
                 </div>
               ) : (
                 todaysSessions.map((session) => {
@@ -712,7 +712,7 @@ export default function TrainerCalendar() {
                     <motion.div
                       key={session.id}
                       layout
-                      className="bg-white rounded-2xl shadow-md border border-gray-200 hover:shadow-xl cursor-pointer transition-all overflow-hidden"
+                      className="bg-white dark:bg-gray-800 rounded-2xl shadow-md border border-gray-200 dark:border-gray-700 hover:shadow-xl cursor-pointer transition-all overflow-hidden"
                       onClick={() => handleSessionClick(session.id)}
                     >
                       {/* Session Card Header */}
@@ -725,15 +725,15 @@ export default function TrainerCalendar() {
                             {client?.avatar}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <div className="font-bold text-lg text-wondrous-grey-dark mb-1">
+                            <div className="font-bold text-lg text-wondrous-grey-dark dark:text-gray-100 mb-1">
                               {session.clientName}
                             </div>
-                            <div className="flex items-center gap-3 text-sm text-gray-600">
+                            <div className="flex items-center gap-3 text-sm text-gray-600 dark:text-gray-400">
                               <span className="flex items-center gap-1">
                                 <Clock size={14} />
                                 {formatTime(session.datetime)}
                               </span>
-                              <span className="text-gray-400">•</span>
+                              <span className="text-gray-400 dark:text-gray-500">•</span>
                               <span>{serviceType?.duration} minutes</span>
                             </div>
                           </div>
@@ -788,19 +788,19 @@ export default function TrainerCalendar() {
                             animate={{ height: "auto", opacity: 1 }}
                             exit={{ height: 0, opacity: 0 }}
                             transition={{ duration: 0.2 }}
-                            className="border-t border-wondrous-grey-light bg-gray-50"
+                            className="border-t border-wondrous-grey-light dark:border-gray-700 bg-gray-50 dark:bg-gray-700"
                           >
                             <div className="p-4 space-y-3">
                               {/* Reschedule Form - INLINE */}
                               {reschedulingSessionId === session.id ? (
                                 <div className="space-y-3">
-                                  <div className="text-sm font-bold text-wondrous-grey-dark">
+                                  <div className="text-sm font-bold text-wondrous-grey-dark dark:text-gray-100">
                                     Reschedule Session
                                   </div>
 
                                   {/* Date Input */}
                                   <div>
-                                    <label className="text-xs font-semibold text-wondrous-grey-dark mb-2 flex items-center gap-1">
+                                    <label className="text-xs font-semibold text-wondrous-grey-dark dark:text-gray-200 mb-2 flex items-center gap-1">
                                       <CalendarIcon size={14} />
                                       New Date
                                     </label>
@@ -814,7 +814,7 @@ export default function TrainerCalendar() {
 
                                   {/* Time Input */}
                                   <div>
-                                    <label className="text-xs font-semibold text-wondrous-grey-dark mb-2 flex items-center gap-1">
+                                    <label className="text-xs font-semibold text-wondrous-grey-dark dark:text-gray-200 mb-2 flex items-center gap-1">
                                       <Clock size={14} />
                                       New Time
                                     </label>
@@ -853,13 +853,13 @@ export default function TrainerCalendar() {
                                 </div>
                               ) : completingSessionId === session.id ? (
                                 <div className="space-y-3">
-                                  <div className="text-sm font-bold text-wondrous-grey-dark">
+                                  <div className="text-sm font-bold text-wondrous-grey-dark dark:text-gray-100">
                                     Complete Session
                                   </div>
 
                                   {/* RPE Scale */}
                                   <div>
-                                    <label className="text-xs font-semibold text-wondrous-grey-dark mb-2 flex items-center gap-1">
+                                    <label className="text-xs font-semibold text-wondrous-grey-dark dark:text-gray-200 mb-2 flex items-center gap-1">
                                       <TrendingUp size={14} />
                                       RPE (Rate of Perceived Exertion)
                                     </label>
@@ -881,14 +881,14 @@ export default function TrainerCalendar() {
                                         </button>
                                       ))}
                                     </div>
-                                    <div className="text-xs text-gray-500 mt-1">
+                                    <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                                       1=Very Easy, 10=Maximum Effort
                                     </div>
                                   </div>
 
                                   {/* Notes */}
                                   <div>
-                                    <label className="text-xs font-semibold text-wondrous-grey-dark mb-2 flex items-center gap-1">
+                                    <label className="text-xs font-semibold text-wondrous-grey-dark dark:text-gray-200 mb-2 flex items-center gap-1">
                                       <StickyNote size={14} />
                                       Session Notes
                                     </label>
@@ -935,7 +935,7 @@ export default function TrainerCalendar() {
                                 <>
                                   {/* Quick Actions */}
                                   <div>
-                                    <div className="text-xs font-semibold mb-2 text-wondrous-grey-dark">
+                                    <div className="text-xs font-semibold mb-2 text-wondrous-grey-dark dark:text-gray-200">
                                       Quick Actions
                                     </div>
                                     <div className="grid grid-cols-2 gap-2">
@@ -1062,30 +1062,30 @@ export default function TrainerCalendar() {
             </div>
 
             {/* Availability Legend */}
-            <div className="bg-white rounded-xl p-4 shadow-md border-2 border-wondrous-grey-light">
-              <div className="text-xs font-semibold mb-3 text-wondrous-grey-dark flex items-center gap-2">
+            <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-md border-2 border-wondrous-grey-light dark:border-gray-700">
+              <div className="text-xs font-semibold mb-3 text-wondrous-grey-dark dark:text-gray-100 flex items-center gap-2">
                 <AlertCircle size={14} className="text-wondrous-blue" />
                 Availability Legend
               </div>
               <div className="flex flex-wrap gap-4 text-xs">
                 <div className="flex items-center gap-2">
                   <div className="w-5 h-5 rounded bg-white border-2 border-wondrous-blue shadow-sm"></div>
-                  <span className="text-wondrous-grey-dark font-medium">Available</span>
+                  <span className="text-wondrous-grey-dark dark:text-gray-200 font-medium">Available</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="w-5 h-5 rounded bg-red-50 border-2 border-red-300 shadow-sm"></div>
-                  <span className="text-wondrous-grey-dark font-medium">Conflict</span>
+                  <span className="text-wondrous-grey-dark dark:text-gray-200 font-medium">Conflict</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="w-5 h-5 rounded bg-gray-100 border-2 border-gray-300 opacity-50 shadow-sm"></div>
-                  <span className="text-wondrous-grey-dark font-medium">Not Available</span>
+                  <span className="text-wondrous-grey-dark dark:text-gray-200 font-medium">Not Available</span>
                 </div>
               </div>
             </div>
 
             {/* Quick Time Selector - INLINE (NO MODAL) */}
-            <div className="bg-white rounded-xl p-4 shadow-md border-2 border-wondrous-grey-light">
-              <div className="text-xs font-semibold mb-2 text-wondrous-grey-dark">
+            <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-md border-2 border-wondrous-grey-light dark:border-gray-700">
+              <div className="text-xs font-semibold mb-2 text-wondrous-grey-dark dark:text-gray-100">
                 Quick Book Time
               </div>
               <div className="grid grid-cols-4 gap-2 mb-2">
@@ -1130,7 +1130,7 @@ export default function TrainerCalendar() {
 
         {/* WEEK VIEW */}
         {viewMode === "week" && (
-          <div className="bg-white rounded-xl p-2 lg:p-4 overflow-x-auto border-2 border-wondrous-grey-light shadow-md">
+          <div className="bg-white dark:bg-gray-800 rounded-xl p-2 lg:p-4 overflow-x-auto border-2 border-wondrous-grey-light dark:border-gray-700 shadow-md">
             <div className="min-w-[600px] lg:min-w-[800px]">
               {/* Day Headers */}
               <div className="grid grid-cols-8 gap-0.5 lg:gap-1 mb-2">
@@ -1160,8 +1160,8 @@ export default function TrainerCalendar() {
               <div className="relative">
                 {/* Background grid */}
                 {hours.map((hour) => (
-                  <div key={hour} className="grid grid-cols-8 gap-0.5 lg:gap-1 min-h-[48px] lg:min-h-[64px] border-t-2 border-wondrous-grey-light">
-                    <div className="text-[10px] lg:text-xs font-medium text-right pr-1 lg:pr-2 pt-1 text-wondrous-grey-dark">
+                  <div key={hour} className="grid grid-cols-8 gap-0.5 lg:gap-1 min-h-[48px] lg:min-h-[64px] border-t-2 border-wondrous-grey-light dark:border-gray-700">
+                    <div className="text-[10px] lg:text-xs font-medium text-right pr-1 lg:pr-2 pt-1 text-wondrous-grey-dark dark:text-gray-300">
                       {hour}:00
                     </div>
                     {[0, 1, 2, 3, 4, 5, 6].map((dayIndex) => {
@@ -1176,8 +1176,8 @@ export default function TrainerCalendar() {
                           className={cn(
                             "rounded border transition-colors relative",
                             isAvailable
-                              ? "bg-gray-50 border-wondrous-grey-light hover:bg-blue-50 cursor-pointer"
-                              : "bg-gray-200 border-gray-300 cursor-not-allowed opacity-40"
+                              ? "bg-gray-50 dark:bg-gray-700 border-wondrous-grey-light dark:border-gray-600 hover:bg-blue-50 dark:hover:bg-gray-600 cursor-pointer"
+                              : "bg-gray-200 dark:bg-gray-600 border-gray-300 dark:border-gray-500 cursor-not-allowed opacity-40"
                           )}
                           onClick={() => isAvailable && handleQuickSlotClick(slotTime)}
                           title={!isAvailable ? "Trainer not available" : "Click to book"}
@@ -1248,7 +1248,7 @@ export default function TrainerCalendar() {
                               <span className="hidden md:inline">{session.clientName}</span>
                               <span className="md:hidden">{client?.avatar}</span>
                             </div>
-                            <div className="text-[8px] lg:text-[10px] text-gray-600 hidden sm:block">
+                            <div className="text-[8px] lg:text-[10px] text-gray-600 dark:text-gray-400 hidden sm:block">
                               {formatTime(session.datetime)}
                             </div>
                           </div>
@@ -1278,16 +1278,16 @@ export default function TrainerCalendar() {
           <div className="space-y-3">
             {/* Pending Requests */}
             <div>
-              <h3 className="text-base font-bold text-wondrous-grey-dark mb-3 flex items-center gap-2">
+              <h3 className="text-base font-bold text-wondrous-grey-dark dark:text-gray-100 mb-3 flex items-center gap-2">
                 <Inbox size={20} className="text-wondrous-orange" />
                 Pending Requests ({bookingRequests.filter((r) => r.status === "pending").length})
               </h3>
 
               {bookingRequests.filter((r) => r.status === "pending").length === 0 ? (
-                <div className="bg-white rounded-xl p-8 text-center text-gray-500 border-2 border-wondrous-grey-light">
-                  <Inbox size={48} className="mx-auto mb-2 text-gray-300" />
-                  <div className="text-sm font-medium">No pending requests</div>
-                  <div className="text-xs text-gray-400 mt-1">
+                <div className="bg-white dark:bg-gray-800 rounded-xl p-8 text-center text-gray-500 dark:text-gray-400 border-2 border-wondrous-grey-light dark:border-gray-700">
+                  <Inbox size={48} className="mx-auto mb-2 text-gray-300 dark:text-gray-600" />
+                  <div className="text-sm font-medium dark:text-gray-200">No pending requests</div>
+                  <div className="text-xs text-gray-400 dark:text-gray-500 mt-1">
                     All caught up!
                   </div>
                 </div>
@@ -1302,7 +1302,7 @@ export default function TrainerCalendar() {
                       return (
                         <div
                           key={request.id}
-                          className="bg-white rounded-xl shadow-md border-2 border-wondrous-grey-light p-4 hover:shadow-lg transition-shadow"
+                          className="bg-white dark:bg-gray-800 rounded-xl shadow-md border-2 border-wondrous-grey-light dark:border-gray-700 p-4 hover:shadow-lg transition-shadow"
                         >
                           {/* Client Info */}
                           <div className="flex items-center gap-3 mb-3">
@@ -1313,15 +1313,15 @@ export default function TrainerCalendar() {
                               <User size={24} className="text-white" />
                             </div>
                             <div className="flex-1">
-                              <div className="font-bold text-base text-wondrous-grey-dark">
+                              <div className="font-bold text-base text-wondrous-grey-dark dark:text-gray-100">
                                 {request.clientName}
                               </div>
-                              <div className="text-xs text-gray-600">
+                              <div className="text-xs text-gray-600 dark:text-gray-400">
                                 {request.clientCredits} credits available
                               </div>
                             </div>
                             <div className="text-right">
-                              <div className="text-xs text-gray-500">
+                              <div className="text-xs text-gray-500 dark:text-gray-400">
                                 {Math.floor(
                                   (Date.now() - request.createdAt.getTime()) /
                                     (1000 * 60 * 60)
@@ -1344,7 +1344,7 @@ export default function TrainerCalendar() {
                                 >
                                   {serviceType.name}
                                 </div>
-                                <div className="text-xs text-gray-600">
+                                <div className="text-xs text-gray-600 dark:text-gray-300">
                                   {serviceType.duration} minutes •{" "}
                                   {serviceType.creditsRequired} credits
                                 </div>
@@ -1354,17 +1354,17 @@ export default function TrainerCalendar() {
 
                           {/* Notes */}
                           {request.notes && (
-                            <div className="mb-3 p-3 bg-gray-50 rounded-lg border border-wondrous-grey-light">
+                            <div className="mb-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg border border-wondrous-grey-light dark:border-gray-600">
                               <div className="flex items-start gap-2">
-                                <MessageSquare size={14} className="text-gray-400 mt-0.5 flex-shrink-0" />
-                                <div className="text-xs text-gray-700">{request.notes}</div>
+                                <MessageSquare size={14} className="text-gray-400 dark:text-gray-500 mt-0.5 flex-shrink-0" />
+                                <div className="text-xs text-gray-700 dark:text-gray-300">{request.notes}</div>
                               </div>
                             </div>
                           )}
 
                           {/* Preferred Times */}
                           <div className="mb-3">
-                            <div className="text-xs font-semibold text-wondrous-grey-dark mb-2">
+                            <div className="text-xs font-semibold text-wondrous-grey-dark dark:text-gray-200 mb-2">
                               Preferred Times
                             </div>
                             <div className="grid grid-cols-2 gap-2">
@@ -1446,16 +1446,16 @@ export default function TrainerCalendar() {
             animate={{ y: 0 }}
             exit={{ y: "100%" }}
             transition={{ type: "spring", damping: 30, stiffness: 300 }}
-            className="fixed bottom-0 left-0 right-0 z-40 bg-white rounded-t-3xl shadow-2xl lg:hidden max-h-[85vh] overflow-y-auto border-t-4 border-wondrous-magenta"
+            className="fixed bottom-0 left-0 right-0 z-40 bg-white dark:bg-gray-800 rounded-t-3xl shadow-2xl lg:hidden max-h-[85vh] overflow-y-auto border-t-4 border-wondrous-magenta"
           >
             <div className="p-5">
               {/* Header */}
               <div className="flex items-center justify-between mb-4">
                 <div>
-                  <h3 className="text-xl font-bold text-wondrous-grey-dark">
+                  <h3 className="text-xl font-bold text-wondrous-grey-dark dark:text-gray-100">
                     Book Session
                   </h3>
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
                     {selectedSlot && formatTime(selectedSlot)}
                   </p>
                 </div>
@@ -1469,7 +1469,7 @@ export default function TrainerCalendar() {
 
               {/* Service Type Selection - INLINE */}
               <div className="mb-4">
-                <div className="text-xs font-semibold mb-2 text-wondrous-grey-dark">
+                <div className="text-xs font-semibold mb-2 text-wondrous-grey-dark dark:text-gray-200">
                   Session Type
                 </div>
                 <div className="grid grid-cols-1 gap-2">
@@ -1514,7 +1514,7 @@ export default function TrainerCalendar() {
 
               {/* Client Search - INLINE */}
               <div className="mb-3 relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500" size={16} />
                 <Input
                   type="text"
                   placeholder="Search clients..."
@@ -1536,7 +1536,7 @@ export default function TrainerCalendar() {
                   return (
                     <div
                       key={client.id}
-                      className="bg-gray-50 border-2 border-wondrous-grey-light rounded-xl p-3"
+                      className="bg-gray-50 dark:bg-gray-700 border-2 border-wondrous-grey-light dark:border-gray-600 rounded-xl p-3"
                     >
                       <div className="flex items-center gap-3 mb-2">
                         <div
@@ -1546,7 +1546,7 @@ export default function TrainerCalendar() {
                           {client.avatar}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <div className="font-semibold text-wondrous-grey-dark">
+                          <div className="font-semibold text-wondrous-grey-dark dark:text-gray-100">
                             {client.name}
                           </div>
                           <div
