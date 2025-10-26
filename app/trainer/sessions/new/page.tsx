@@ -171,7 +171,7 @@ function StartNewSessionContent() {
               <Card
                 key={template.id}
                 className={`cursor-pointer transition-all ${
-                  isSelected ? 'border-2 border-wondrous-primary bg-blue-50/30' : 'hover:border-wondrous-blue'
+                  isSelected ? 'border-2 border-wondrous-primary bg-blue-50/30 dark:bg-blue-900/20' : 'hover:border-wondrous-blue dark:hover:border-blue-400'
                 }`}
                 onClick={() => setSelectedTemplate(template)}
               >
@@ -241,7 +241,7 @@ function StartNewSessionContent() {
           {/* Walk-in Option */}
           <Card
             className={`cursor-pointer transition-all ${
-              selectedClient === null ? 'border-2 border-wondrous-primary bg-blue-50/30' : 'hover:border-wondrous-blue'
+              selectedClient === null ? 'border-2 border-wondrous-primary bg-blue-50/30 dark:bg-blue-900/20' : 'hover:border-wondrous-blue dark:hover:border-blue-400'
             }`}
             onClick={() => setSelectedClient(null)}
           >
@@ -270,7 +270,7 @@ function StartNewSessionContent() {
               <Card
                 key={client.id}
                 className={`cursor-pointer transition-all ${
-                  isSelected ? 'border-2 border-wondrous-primary bg-blue-50/30' : 'hover:border-wondrous-blue'
+                  isSelected ? 'border-2 border-wondrous-primary bg-blue-50/30 dark:bg-blue-900/20' : 'hover:border-wondrous-blue dark:hover:border-blue-400'
                 }`}
                 onClick={() => setSelectedClient(client)}
               >
@@ -326,7 +326,7 @@ function StartNewSessionContent() {
               <Card
                 key={mode.value}
                 className={`cursor-pointer transition-all ${
-                  isSelected ? 'border-2 border-wondrous-primary bg-blue-50/30' : 'hover:border-wondrous-blue'
+                  isSelected ? 'border-2 border-wondrous-primary bg-blue-50/30 dark:bg-blue-900/20' : 'hover:border-wondrous-blue dark:hover:border-blue-400'
                 }`}
                 onClick={() => setSelectedSignOffMode(mode.value)}
               >

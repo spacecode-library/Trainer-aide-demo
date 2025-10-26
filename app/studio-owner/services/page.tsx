@@ -2,16 +2,20 @@
 
 import { useState } from 'react';
 import { useServiceStore } from '@/lib/stores/service-store';
+import { useUserStore } from '@/lib/stores/user-store';
 import { Service, ServiceDuration, ServiceType } from '@/lib/types/service';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { EmptyState } from '@/components/shared/EmptyState';
+import { ServiceFormDialog } from '@/components/studio-owner/ServiceFormDialog';
 import { Clock, Plus, Edit, Power, PowerOff, Users, User, UsersRound } from 'lucide-react';
 import { cn } from '@/lib/utils/cn';
 
 export default function ServicesPage() {
-  const { services, updateService } = useServiceStore();
+  const { services, addService, updateService } = useServiceStore();
+  const { currentUser } = useUserStore();
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedService, setSelectedService] = useState<Service | null>(null);
 
   const activeServices = services.filter(s => s.isActive);
@@ -43,6 +47,35 @@ export default function ServicesPage() {
     updateService(serviceId, { isActive: !currentStatus });
   };
 
+  const handleAddNew = () => {
+    setSelectedService(null);
+    setIsDialogOpen(true);
+  };
+
+  const handleEdit = (service: Service) => {
+    setSelectedService(service);
+    setIsDialogOpen(true);
+  };
+
+  const handleSaveService = (service: Service) => {
+    // Update service with current user ID
+    const serviceWithUser = {
+      ...service,
+      createdBy: service.createdBy === 'user_owner_1' ? currentUser.id : service.createdBy,
+    };
+
+    if (selectedService) {
+      // Editing existing service
+      updateService(serviceWithUser.id, serviceWithUser);
+    } else {
+      // Adding new service
+      addService(serviceWithUser);
+    }
+
+    setIsDialogOpen(false);
+    setSelectedService(null);
+  };
+
   return (
     <div className="p-4 lg:p-8 max-w-7xl mx-auto pb-24 lg:pb-8">
       {/* Header */}
@@ -58,7 +91,10 @@ export default function ServicesPage() {
         </div>
 
         {/* Action Button - Full width on mobile */}
-        <Button className="w-full lg:w-auto mb-4 gap-2 bg-wondrous-magenta hover:bg-wondrous-magenta-dark">
+        <Button
+          onClick={handleAddNew}
+          className="w-full lg:w-auto mb-4 gap-2 bg-wondrous-magenta hover:bg-wondrous-magenta-dark"
+        >
           <Plus size={20} />
           <span>Add New Service</span>
         </Button>
@@ -147,6 +183,7 @@ export default function ServicesPage() {
                     <Button
                       variant="outline"
                       size="sm"
+                      onClick={() => handleEdit(service)}
                       className="flex-1 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700 text-xs"
                     >
                       <Edit size={14} className="mr-1" />
@@ -236,6 +273,17 @@ export default function ServicesPage() {
           </div>
         </div>
       )}
+
+      {/* Service Form Dialog */}
+      <ServiceFormDialog
+        open={isDialogOpen}
+        onClose={() => {
+          setIsDialogOpen(false);
+          setSelectedService(null);
+        }}
+        onSave={handleSaveService}
+        service={selectedService}
+      />
     </div>
   );
 }

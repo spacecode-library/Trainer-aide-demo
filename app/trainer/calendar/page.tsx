@@ -643,8 +643,8 @@ export default function TrainerCalendar() {
                 className={cn(
                   "flex items-center gap-1.5 lg:gap-2 px-3 lg:px-4 py-2.5 lg:py-3 text-xs lg:text-sm font-semibold transition-all relative active:scale-95",
                   calendarTab === "schedule"
-                    ? "text-wondrous-blue"
-                    : "text-gray-500 hover:text-wondrous-grey-dark"
+                    ? "text-wondrous-blue dark:text-blue-400"
+                    : "text-gray-500 dark:text-gray-400 hover:text-wondrous-grey-dark dark:hover:text-gray-300"
                 )}
                 aria-label="Schedule tab"
                 aria-pressed={calendarTab === "schedule"}
@@ -660,8 +660,8 @@ export default function TrainerCalendar() {
                 className={cn(
                   "flex items-center gap-1.5 lg:gap-2 px-3 lg:px-4 py-2.5 lg:py-3 text-xs lg:text-sm font-semibold transition-all relative active:scale-95",
                   calendarTab === "requests"
-                    ? "text-wondrous-blue"
-                    : "text-gray-500 hover:text-wondrous-grey-dark"
+                    ? "text-wondrous-blue dark:text-blue-400"
+                    : "text-gray-500 dark:text-gray-400 hover:text-wondrous-grey-dark dark:hover:text-gray-300"
                 )}
                 aria-label="Requests tab"
                 aria-pressed={calendarTab === "requests"}
@@ -738,7 +738,7 @@ export default function TrainerCalendar() {
                             </div>
                           </div>
                           <div className="text-right">
-                            <div className="text-3xl font-bold text-wondrous-blue font-heading">
+                            <div className="text-3xl font-bold text-wondrous-blue dark:text-blue-400 font-heading">
                               {session.datetime.getHours()}:
                               {session.datetime.getMinutes().toString().padStart(2, "0")}
                             </div>
@@ -1064,12 +1064,12 @@ export default function TrainerCalendar() {
             {/* Availability Legend */}
             <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-md border-2 border-wondrous-grey-light dark:border-gray-700">
               <div className="text-xs font-semibold mb-3 text-wondrous-grey-dark dark:text-gray-100 flex items-center gap-2">
-                <AlertCircle size={14} className="text-wondrous-blue" />
+                <AlertCircle size={14} className="text-wondrous-blue dark:text-blue-400" />
                 Availability Legend
               </div>
               <div className="flex flex-wrap gap-4 text-xs">
                 <div className="flex items-center gap-2">
-                  <div className="w-5 h-5 rounded bg-white border-2 border-wondrous-blue shadow-sm"></div>
+                  <div className="w-5 h-5 rounded bg-white dark:bg-gray-700 border-2 border-wondrous-blue dark:border-blue-400 shadow-sm"></div>
                   <span className="text-wondrous-grey-dark dark:text-gray-200 font-medium">Available</span>
                 </div>
                 <div className="flex items-center gap-2">
@@ -1103,10 +1103,10 @@ export default function TrainerCalendar() {
                       className={cn(
                         "border-2 rounded-lg p-2 text-xs font-semibold transition-all relative",
                         !isAvailable
-                          ? "bg-gray-100 border-gray-200 text-gray-400 cursor-not-allowed opacity-50"
+                          ? "bg-gray-100 dark:bg-gray-700 border-gray-200 dark:border-gray-600 text-gray-400 dark:text-gray-500 cursor-not-allowed opacity-50"
                           : hasConflict
-                          ? "bg-red-50 border-red-200 text-red-400 cursor-not-allowed"
-                          : "bg-white border-wondrous-blue text-wondrous-blue hover:bg-wondrous-blue hover:text-white"
+                          ? "bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-700 text-red-400 dark:text-red-400 cursor-not-allowed"
+                          : "bg-white dark:bg-gray-800 border-wondrous-blue dark:border-blue-400 text-wondrous-blue dark:text-blue-400 hover:bg-wondrous-blue dark:hover:bg-blue-500 hover:text-white"
                       )}
                     >
                       {hasConflict && isAvailable && (
@@ -1387,8 +1387,8 @@ export default function TrainerCalendar() {
                                     className={cn(
                                       "p-2 rounded-lg text-xs font-semibold transition-all border-2",
                                       available
-                                        ? "bg-white border-wondrous-blue text-wondrous-blue hover:bg-wondrous-blue hover:text-white"
-                                        : "bg-gray-100 border-gray-300 text-gray-400 cursor-not-allowed"
+                                        ? "bg-white dark:bg-gray-800 border-wondrous-blue dark:border-blue-400 text-wondrous-blue dark:text-blue-400 hover:bg-wondrous-blue dark:hover:bg-blue-500 hover:text-white"
+                                        : "bg-gray-100 dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-400 dark:text-gray-500 cursor-not-allowed"
                                     )}
                                   >
                                     <div>{formatDate(time)}</div>
@@ -1416,7 +1416,7 @@ export default function TrainerCalendar() {
                             <Button
                               size="sm"
                               variant="outline"
-                              className="text-wondrous-blue border-wondrous-blue hover:bg-wondrous-blue hover:text-white"
+                              className="text-wondrous-blue dark:text-blue-400 border-wondrous-blue dark:border-blue-400 hover:bg-wondrous-blue dark:hover:bg-blue-500 hover:text-white"
                               onClick={() => {
                                 toast({
                                   title: "Suggest Alternative",
