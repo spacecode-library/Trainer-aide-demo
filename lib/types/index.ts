@@ -31,6 +31,7 @@ export type ExerciseLevel = 'beginner' | 'intermediate' | 'advanced';
 
 export interface Exercise {
   id: string;
+  exerciseId: string; // Kebab-case ID matching Supabase folder name (e.g., 'ring-dips')
   name: string;
   category: MuscleGroup;
   equipment?: string;

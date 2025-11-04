@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { EmptyState } from '@/components/shared/EmptyState';
+import { ExerciseImageViewer, ExerciseImageButton } from '@/components/shared/ExerciseImageViewer';
 import { Search, FileText, ChevronDown, ChevronUp, Play } from 'lucide-react';
 import { WorkoutTemplate } from '@/lib/types';
 
@@ -17,6 +18,7 @@ export default function TrainerTemplates() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedType, setSelectedType] = useState<'all' | 'standard' | 'resistance_only'>('all');
   const [expandedTemplateId, setExpandedTemplateId] = useState<string | null>(null);
+  const [viewingExerciseId, setViewingExerciseId] = useState<string | null>(null);
 
   // Filter templates
   const filteredTemplates = templates.filter((template) => {
@@ -143,41 +145,56 @@ export default function TrainerTemplates() {
                               if (!exercise) return null;
 
                               return (
-                                <div
-                                  key={templateExercise.id}
-                                  className="bg-white dark:bg-gray-700 rounded-lg p-3 border border-gray-200 dark:border-gray-600"
-                                >
-                                  <div className="flex items-start gap-3">
-                                    <div className="w-8 h-8 rounded-full bg-wondrous-blue-light flex items-center justify-center flex-shrink-0">
-                                      <span className="text-sm font-semibold text-wondrous-dark-blue">
-                                        {templateExercise.position}
-                                      </span>
-                                    </div>
-                                    <div className="flex-1">
-                                      <div className="flex items-center gap-2 mb-1">
-                                        <span className="font-medium text-gray-900 dark:text-gray-100">{exercise.name}</span>
-                                        <Badge variant="outline" className="capitalize text-xs">
-                                          {templateExercise.muscleGroup}
-                                        </Badge>
+                                <div key={templateExercise.id}>
+                                  <div className="bg-white dark:bg-gray-700 rounded-lg p-3 border border-gray-200 dark:border-gray-600">
+                                    <div className="flex items-start gap-3">
+                                      <div className="w-8 h-8 rounded-full bg-wondrous-blue-light flex items-center justify-center flex-shrink-0">
+                                        <span className="text-sm font-semibold text-wondrous-dark-blue">
+                                          {templateExercise.position}
+                                        </span>
                                       </div>
-                                      <div className="text-sm text-gray-600 dark:text-gray-400">
-                                        {templateExercise.muscleGroup === 'cardio' ? (
-                                          <span>
-                                            {Math.floor((templateExercise.cardioDuration || 0) / 60)} min •
-                                            Intensity {templateExercise.cardioIntensity}/10
-                                          </span>
-                                        ) : templateExercise.muscleGroup === 'stretch' ? (
-                                          <span>{templateExercise.cardioDuration}s hold</span>
-                                        ) : (
-                                          <span>
-                                            {templateExercise.resistanceValue}kg •
-                                            {templateExercise.repsMin}-{templateExercise.repsMax} reps •
-                                            {templateExercise.sets} sets
-                                          </span>
-                                        )}
+                                      <div className="flex-1">
+                                        <div className="flex items-center gap-2 mb-1">
+                                          <span className="font-medium text-gray-900 dark:text-gray-100">{exercise.name}</span>
+                                          <Badge variant="outline" className="capitalize text-xs">
+                                            {templateExercise.muscleGroup}
+                                          </Badge>
+                                          <ExerciseImageButton
+                                            exerciseId={exercise.exerciseId}
+                                            exerciseName={exercise.name}
+                                            isActive={viewingExerciseId === templateExercise.id}
+                                            onClick={() => setViewingExerciseId(viewingExerciseId === templateExercise.id ? null : templateExercise.id)}
+                                          />
+                                        </div>
+                                        <div className="text-sm text-gray-600 dark:text-gray-400">
+                                          {templateExercise.muscleGroup === 'cardio' ? (
+                                            <span>
+                                              {Math.floor((templateExercise.cardioDuration || 0) / 60)} min •
+                                              Intensity {templateExercise.cardioIntensity}/10
+                                            </span>
+                                          ) : templateExercise.muscleGroup === 'stretch' ? (
+                                            <span>{templateExercise.cardioDuration}s hold</span>
+                                          ) : (
+                                            <span>
+                                              {templateExercise.resistanceValue}kg •
+                                              {templateExercise.repsMin}-{templateExercise.repsMax} reps •
+                                              {templateExercise.sets} sets
+                                            </span>
+                                          )}
+                                        </div>
                                       </div>
                                     </div>
                                   </div>
+
+                                  {/* Exercise Image Viewer */}
+                                  {viewingExerciseId === templateExercise.id && (
+                                    <ExerciseImageViewer
+                                      exerciseId={exercise.exerciseId}
+                                      exerciseName={exercise.name}
+                                      isOpen={viewingExerciseId === templateExercise.id}
+                                      onClose={() => setViewingExerciseId(null)}
+                                    />
+                                  )}
                                 </div>
                               );
                             })}

@@ -6,6 +6,7 @@ export const MOCK_EXERCISES: Exercise[] = [
   // ========================================
   {
     id: 'ex_cardio_treadmill',
+    exerciseId: 'treadmill',
     name: 'Treadmill',
     category: 'cardio',
     equipment: 'Treadmill',
@@ -19,6 +20,7 @@ export const MOCK_EXERCISES: Exercise[] = [
   },
   {
     id: 'ex_cardio_bike',
+    exerciseId: 'air-bike',
     name: 'Stationary Bike',
     category: 'cardio',
     equipment: 'Bike',
@@ -32,6 +34,7 @@ export const MOCK_EXERCISES: Exercise[] = [
   },
   {
     id: 'ex_cardio_rower',
+    exerciseId: 'rowing',
     name: 'Rowing Machine',
     category: 'cardio',
     equipment: 'Rowing Machine',
@@ -45,6 +48,7 @@ export const MOCK_EXERCISES: Exercise[] = [
   },
   {
     id: 'ex_cardio_burpees',
+    exerciseId: 'burpees',
     name: 'Burpees',
     category: 'cardio',
     equipment: 'None',
@@ -63,6 +67,7 @@ export const MOCK_EXERCISES: Exercise[] = [
   // ========================================
   {
     id: 'ex_chest_db_press',
+    exerciseId: 'dumbbell-bench-press',
     name: 'Dumbbell Chest Press',
     category: 'chest',
     equipment: 'Dumbbells, Bench',
@@ -76,6 +81,7 @@ export const MOCK_EXERCISES: Exercise[] = [
   },
   {
     id: 'ex_chest_pushup',
+    exerciseId: 'push-ups',
     name: 'Push-Up',
     category: 'chest',
     equipment: 'None',
@@ -93,6 +99,7 @@ export const MOCK_EXERCISES: Exercise[] = [
   // ========================================
   {
     id: 'ex_back_bent_row',
+    exerciseId: 'bent-over-barbell-row',
     name: 'Bent Over Row',
     category: 'back',
     equipment: 'Dumbbells or Barbell',
@@ -106,6 +113,7 @@ export const MOCK_EXERCISES: Exercise[] = [
   },
   {
     id: 'ex_back_lat_pulldown',
+    exerciseId: 'close-grip-front-lat-pulldown',
     name: 'Lat Pulldown',
     category: 'back',
     equipment: 'Cable Machine',
@@ -123,6 +131,7 @@ export const MOCK_EXERCISES: Exercise[] = [
   // ========================================
   {
     id: 'ex_legs_goblet_squat',
+    exerciseId: 'goblet-squat',
     name: 'Goblet Squat',
     category: 'legs',
     equipment: 'Dumbbell or Kettlebell',
@@ -136,6 +145,7 @@ export const MOCK_EXERCISES: Exercise[] = [
   },
   {
     id: 'ex_legs_lunges',
+    exerciseId: 'barbell-walking-lunge',
     name: 'Walking Lunges',
     category: 'legs',
     equipment: 'Dumbbells (optional)',
@@ -149,6 +159,7 @@ export const MOCK_EXERCISES: Exercise[] = [
   },
   {
     id: 'ex_legs_leg_press',
+    exerciseId: 'leg-press',
     name: 'Leg Press',
     category: 'legs',
     equipment: 'Leg Press Machine',
@@ -166,6 +177,7 @@ export const MOCK_EXERCISES: Exercise[] = [
   // ========================================
   {
     id: 'ex_core_plank',
+    exerciseId: 'plank',
     name: 'Plank',
     category: 'core',
     equipment: 'None',
@@ -179,6 +191,7 @@ export const MOCK_EXERCISES: Exercise[] = [
   },
   {
     id: 'ex_core_russian_twist',
+    exerciseId: 'cable-russian-twists',
     name: 'Russian Twists',
     category: 'core',
     equipment: 'Medicine Ball (optional)',
@@ -192,6 +205,7 @@ export const MOCK_EXERCISES: Exercise[] = [
   },
   {
     id: 'ex_core_crunches',
+    exerciseId: 'crunches',
     name: 'Crunches',
     category: 'core',
     equipment: 'None',
@@ -209,6 +223,7 @@ export const MOCK_EXERCISES: Exercise[] = [
   // ========================================
   {
     id: 'ex_shoulders_db_press',
+    exerciseId: 'dumbbell-shoulder-press',
     name: 'Dumbbell Shoulder Press',
     category: 'shoulders',
     equipment: 'Dumbbells',
@@ -222,6 +237,7 @@ export const MOCK_EXERCISES: Exercise[] = [
   },
   {
     id: 'ex_shoulders_lateral_raise',
+    exerciseId: 'dumbbell-lateral-raise',
     name: 'Lateral Raises',
     category: 'shoulders',
     equipment: 'Dumbbells',
@@ -239,6 +255,7 @@ export const MOCK_EXERCISES: Exercise[] = [
   // ========================================
   {
     id: 'ex_biceps_curl',
+    exerciseId: 'barbell-curl',
     name: 'Bicep Curl',
     category: 'biceps',
     equipment: 'Dumbbells or Barbell',
@@ -252,6 +269,7 @@ export const MOCK_EXERCISES: Exercise[] = [
   },
   {
     id: 'ex_biceps_hammer_curl',
+    exerciseId: 'hammer-curls',
     name: 'Hammer Curl',
     category: 'biceps',
     equipment: 'Dumbbells',
@@ -269,6 +287,7 @@ export const MOCK_EXERCISES: Exercise[] = [
   // ========================================
   {
     id: 'ex_triceps_extension',
+    exerciseId: 'overhead-triceps-extension',
     name: 'Overhead Tricep Extension',
     category: 'triceps',
     equipment: 'Dumbbell',
@@ -282,6 +301,7 @@ export const MOCK_EXERCISES: Exercise[] = [
   },
   {
     id: 'ex_triceps_dips',
+    exerciseId: 'ring-dips',
     name: 'Tricep Dips',
     category: 'triceps',
     equipment: 'Bench or Dip Bar',
@@ -299,6 +319,7 @@ export const MOCK_EXERCISES: Exercise[] = [
   // ========================================
   {
     id: 'ex_stretch_hamstring',
+    exerciseId: 'hamstring-stretch',
     name: 'Seated Hamstring Stretch',
     category: 'stretch',
     equipment: 'None',
@@ -312,6 +333,7 @@ export const MOCK_EXERCISES: Exercise[] = [
   },
   {
     id: 'ex_stretch_quad',
+    exerciseId: 'standing-quad-stretch',
     name: 'Standing Quad Stretch',
     category: 'stretch',
     equipment: 'None',
@@ -333,4 +355,9 @@ export function getExercisesByCategory(category: string): Exercise[] {
 // Helper function to get exercise by ID
 export function getExerciseById(id: string): Exercise | undefined {
   return MOCK_EXERCISES.find(ex => ex.id === id);
+}
+
+// Helper function to get exercise by exerciseId (Supabase folder name)
+export function getExerciseByExerciseId(exerciseId: string): Exercise | undefined {
+  return MOCK_EXERCISES.find(ex => ex.exerciseId === exerciseId);
 }

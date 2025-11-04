@@ -12,6 +12,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ExerciseLibrary } from '@/components/studio-owner/ExerciseLibrary';
+import { ExerciseImageViewer, ExerciseImageButton } from '@/components/shared/ExerciseImageViewer';
 import { WorkoutTemplate, WorkoutBlock, TemplateExercise, Exercise, TemplateType } from '@/lib/types';
 import { Plus, Trash2, ChevronUp, ChevronDown, Save, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -38,6 +39,9 @@ function TemplateBuilderContent() {
   const [showExerciseLibrary, setShowExerciseLibrary] = useState(false);
   const [currentBlockId, setCurrentBlockId] = useState<string | null>(null);
   const [requireCardio, setRequireCardio] = useState(false);
+
+  // Exercise image viewer state
+  const [viewingExerciseId, setViewingExerciseId] = useState<string | null>(null);
 
   // Load existing template if editing
   useEffect(() => {
@@ -357,60 +361,78 @@ function TemplateBuilderContent() {
                     const isLast = exerciseIndex === block.exercises.length - 1;
 
                     return (
-                      <div key={templateExercise.id} className="flex items-start gap-2 p-2 lg:p-3 border border-gray-200 dark:border-gray-600 rounded-lg dark:bg-gray-700/50">
-                        <div className="flex flex-col gap-0.5">
+                      <div key={templateExercise.id}>
+                        <div className="flex items-start gap-2 p-2 lg:p-3 border border-gray-200 dark:border-gray-600 rounded-lg dark:bg-gray-700/50">
+                          <div className="flex flex-col gap-0.5">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleMoveExercise(block.id, templateExercise.id, 'up')}
+                              disabled={isFirst}
+                              className="h-6 w-6 p-0 dark:hover:bg-gray-600"
+                            >
+                              <ChevronUp size={14} />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleMoveExercise(block.id, templateExercise.id, 'down')}
+                              disabled={isLast}
+                              className="h-6 w-6 p-0 dark:hover:bg-gray-600"
+                            >
+                              <ChevronDown size={14} />
+                            </Button>
+                          </div>
+
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-1 flex-wrap">
+                              <span className="font-medium text-sm lg:text-base dark:text-gray-100 truncate">{exercise.name}</span>
+                              <Badge variant="outline" className="capitalize text-xs dark:border-gray-500">
+                                {templateExercise.muscleGroup}
+                              </Badge>
+                              <ExerciseImageButton
+                                exerciseId={exercise.exerciseId}
+                                exerciseName={exercise.name}
+                                isActive={viewingExerciseId === templateExercise.id}
+                                onClick={() => setViewingExerciseId(viewingExerciseId === templateExercise.id ? null : templateExercise.id)}
+                              />
+                            </div>
+                            <div className="text-xs lg:text-sm text-gray-600 dark:text-gray-400">
+                              {templateExercise.muscleGroup === 'cardio' ? (
+                                <span>
+                                  {Math.floor((templateExercise.cardioDuration || 0) / 60)} min • Intensity {templateExercise.cardioIntensity}/10
+                                </span>
+                              ) : templateExercise.muscleGroup === 'stretch' ? (
+                                <span>
+                                  {templateExercise.cardioDuration}s hold
+                                </span>
+                              ) : (
+                                <span>
+                                  {templateExercise.resistanceValue}kg • {templateExercise.repsMin}-{templateExercise.repsMax} reps • {templateExercise.sets} sets
+                                </span>
+                              )}
+                            </div>
+                          </div>
+
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => handleMoveExercise(block.id, templateExercise.id, 'up')}
-                            disabled={isFirst}
-                            className="h-6 w-6 p-0 dark:hover:bg-gray-600"
+                            onClick={() => handleRemoveExercise(block.id, templateExercise.id)}
+                            className="text-red-600 hover:text-red-700 dark:hover:bg-red-900/20 flex-shrink-0"
                           >
-                            <ChevronUp size={14} />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleMoveExercise(block.id, templateExercise.id, 'down')}
-                            disabled={isLast}
-                            className="h-6 w-6 p-0 dark:hover:bg-gray-600"
-                          >
-                            <ChevronDown size={14} />
+                            <Trash2 size={14} />
                           </Button>
                         </div>
 
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-1 flex-wrap">
-                            <span className="font-medium text-sm lg:text-base dark:text-gray-100 truncate">{exercise.name}</span>
-                            <Badge variant="outline" className="capitalize text-xs dark:border-gray-500">
-                              {templateExercise.muscleGroup}
-                            </Badge>
-                          </div>
-                          <div className="text-xs lg:text-sm text-gray-600 dark:text-gray-400">
-                            {templateExercise.muscleGroup === 'cardio' ? (
-                              <span>
-                                {Math.floor((templateExercise.cardioDuration || 0) / 60)} min • Intensity {templateExercise.cardioIntensity}/10
-                              </span>
-                            ) : templateExercise.muscleGroup === 'stretch' ? (
-                              <span>
-                                {templateExercise.cardioDuration}s hold
-                              </span>
-                            ) : (
-                              <span>
-                                {templateExercise.resistanceValue}kg • {templateExercise.repsMin}-{templateExercise.repsMax} reps • {templateExercise.sets} sets
-                              </span>
-                            )}
-                          </div>
-                        </div>
-
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleRemoveExercise(block.id, templateExercise.id)}
-                          className="text-red-600 hover:text-red-700 dark:hover:bg-red-900/20 flex-shrink-0"
-                        >
-                          <Trash2 size={14} />
-                        </Button>
+                        {/* Exercise Image Viewer */}
+                        {viewingExerciseId === templateExercise.id && (
+                          <ExerciseImageViewer
+                            exerciseId={exercise.exerciseId}
+                            exerciseName={exercise.name}
+                            isOpen={viewingExerciseId === templateExercise.id}
+                            onClose={() => setViewingExerciseId(null)}
+                          />
+                        )}
                       </div>
                     );
                   })}

@@ -12,6 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import { SessionTimer } from '@/components/session/SessionTimer';
 import { RPEPicker } from '@/components/session/RPEPicker';
 import { SessionCompletionModal } from '@/components/session/SessionCompletionModal';
+import { ExerciseImageViewer, ExerciseImageButton } from '@/components/shared/ExerciseImageViewer';
 import { SessionExercise, SignOffMode } from '@/lib/types';
 import { ChevronRight, CheckCircle2, Circle, User, FileText } from 'lucide-react';
 import { cn } from '@/lib/utils/cn';
@@ -29,6 +30,7 @@ export default function SessionRunner() {
   const [currentBlockIndex, setCurrentBlockIndex] = useState(0);
   const [currentExerciseIndex, setCurrentExerciseIndex] = useState(0);
   const [showCompletionModal, setShowCompletionModal] = useState(false);
+  const [viewingExerciseId, setViewingExerciseId] = useState<string | null>(null);
 
   // Redirect if session not found or already completed
   useEffect(() => {
@@ -182,6 +184,12 @@ export default function SessionRunner() {
                           <Badge variant="outline" className="capitalize text-xs">
                             {exercise.muscleGroup}
                           </Badge>
+                          <ExerciseImageButton
+                            exerciseId={exerciseData.exerciseId}
+                            exerciseName={exerciseData.name}
+                            isActive={viewingExerciseId === exercise.id}
+                            onClick={() => setViewingExerciseId(viewingExerciseId === exercise.id ? null : exercise.id)}
+                          />
                         </div>
                         <p className="text-sm text-gray-600">
                           {exercise.muscleGroup === 'cardio' ? (
@@ -263,6 +271,14 @@ export default function SessionRunner() {
                         Mark as Complete
                       </Button>
                     )}
+
+                    {/* Exercise Image Viewer */}
+                    <ExerciseImageViewer
+                      exerciseId={exerciseData.exerciseId}
+                      exerciseName={exerciseData.name}
+                      isOpen={viewingExerciseId === exercise.id}
+                      onClose={() => setViewingExerciseId(null)}
+                    />
                   </div>
                 );
               })}
@@ -340,6 +356,12 @@ export default function SessionRunner() {
                         <Badge variant="outline" className="capitalize text-xs">
                           {exercise.muscleGroup}
                         </Badge>
+                        <ExerciseImageButton
+                          exerciseId={exerciseData.exerciseId}
+                          exerciseName={exerciseData.name}
+                          isActive={viewingExerciseId === exercise.id}
+                          onClick={() => setViewingExerciseId(viewingExerciseId === exercise.id ? null : exercise.id)}
+                        />
                       </div>
                       <p className="text-sm text-gray-600">
                         {exercise.muscleGroup === 'cardio' ? (
@@ -420,6 +442,14 @@ export default function SessionRunner() {
                       Mark as Complete
                     </Button>
                   )}
+
+                  {/* Exercise Image Viewer */}
+                  <ExerciseImageViewer
+                    exerciseId={exerciseData.exerciseId}
+                    exerciseName={exerciseData.name}
+                    isOpen={viewingExerciseId === exercise.id}
+                    onClose={() => setViewingExerciseId(null)}
+                  />
                 </div>
               );
             })}
@@ -475,16 +505,25 @@ export default function SessionRunner() {
         {/* Current Exercise */}
         <Card className="border-2 border-wondrous-primary">
           <CardHeader>
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-full bg-wondrous-primary flex items-center justify-center">
-                <span className="text-lg font-bold text-white">{currentExercise.position}</span>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-full bg-wondrous-primary flex items-center justify-center">
+                  <span className="text-lg font-bold text-white">{currentExercise.position}</span>
+                </div>
+                <div>
+                  <CardTitle className="text-2xl">{exerciseData.name}</CardTitle>
+                  <Badge variant="outline" className="capitalize mt-1">
+                    {currentExercise.muscleGroup}
+                  </Badge>
+                </div>
               </div>
-              <div>
-                <CardTitle className="text-2xl">{exerciseData.name}</CardTitle>
-                <Badge variant="outline" className="capitalize mt-1">
-                  {currentExercise.muscleGroup}
-                </Badge>
-              </div>
+              <ExerciseImageButton
+                exerciseId={exerciseData.exerciseId}
+                exerciseName={exerciseData.name}
+                isActive={viewingExerciseId === currentExercise.id}
+                onClick={() => setViewingExerciseId(viewingExerciseId === currentExercise.id ? null : currentExercise.id)}
+                className="flex-shrink-0"
+              />
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -522,6 +561,16 @@ export default function SessionRunner() {
                   ))}
                 </ol>
               </div>
+            )}
+
+            {/* Exercise Image Viewer */}
+            {viewingExerciseId === currentExercise.id && (
+              <ExerciseImageViewer
+                exerciseId={exerciseData.exerciseId}
+                exerciseName={exerciseData.name}
+                isOpen={viewingExerciseId === currentExercise.id}
+                onClose={() => setViewingExerciseId(null)}
+              />
             )}
 
             {/* Input Fields */}
