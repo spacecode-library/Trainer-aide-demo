@@ -1,13 +1,14 @@
 import { createClient } from '@supabase/supabase-js'
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY!
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
+const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY || ''
 
-if (!supabaseUrl || !supabaseKey) {
-  throw new Error('Missing Supabase environment variables')
-}
-
-export const supabase = createClient(supabaseUrl, supabaseKey)
+// Create a client with fallback values for build time
+// This prevents build errors when env vars aren't available
+export const supabase = createClient(
+  supabaseUrl || 'https://placeholder.supabase.co',
+  supabaseKey || 'placeholder-key'
+)
 
 /**
  * Constructs the public URL for an exercise image from Supabase storage
@@ -19,6 +20,11 @@ export function getExerciseImageUrl(
   exerciseId: string,
   imageType: 'start' | 'end'
 ): string {
+  // Return placeholder if Supabase is not configured
+  if (!supabaseUrl || supabaseUrl === 'https://placeholder.supabase.co') {
+    return ''
+  }
+
   const { data } = supabase.storage
     .from('exercise-images')
     .getPublicUrl(`${exerciseId}/${imageType}.webp`)
@@ -36,6 +42,11 @@ export async function exerciseImageExists(
   exerciseId: string,
   imageType: 'start' | 'end'
 ): Promise<boolean> {
+  // Return false if Supabase is not configured
+  if (!supabaseUrl || supabaseUrl === 'https://placeholder.supabase.co') {
+    return false
+  }
+
   try {
     const { data, error } = await supabase.storage
       .from('exercise-images')
