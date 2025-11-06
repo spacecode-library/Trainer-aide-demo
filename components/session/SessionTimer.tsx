@@ -71,24 +71,26 @@ export function SessionTimer({ sessionId, onTimeUp, autoCompleteOnTimeUp = true 
     }
   }, []);
 
-  // Update timer every second
+  // Update timer display every second (simple, like GlobalSessionTimer)
   useEffect(() => {
     const interval = setInterval(() => {
       const currentSecondsLeft = getSecondsLeft();
       setSecondsLeft(currentSecondsLeft);
-
-      // Play sound and trigger callback when time is up
-      if (currentSecondsLeft === 0 && !hasPlayedSound) {
-        playTimerEndSound();
-        setHasPlayedSound(true);
-        if (autoCompleteOnTimeUp && onTimeUp) {
-          onTimeUp();
-        }
-      }
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [getSecondsLeft, hasPlayedSound, playTimerEndSound, onTimeUp, autoCompleteOnTimeUp]);
+  }, [getSecondsLeft]);
+
+  // Handle time-up detection separately (avoid re-creating interval)
+  useEffect(() => {
+    if (secondsLeft === 0 && !hasPlayedSound) {
+      playTimerEndSound();
+      setHasPlayedSound(true);
+      if (autoCompleteOnTimeUp && onTimeUp) {
+        onTimeUp();
+      }
+    }
+  }, [secondsLeft, hasPlayedSound, playTimerEndSound, onTimeUp, autoCompleteOnTimeUp]);
 
   const handlePause = () => {
     pauseTimer();
@@ -160,7 +162,7 @@ export function SessionTimer({ sessionId, onTimeUp, autoCompleteOnTimeUp = true 
           {/* Progress Bar */}
           <div className="mt-1.5 lg:mt-3 w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1 lg:h-2 overflow-hidden">
             <div
-              className={cn('h-full transition-all duration-1000 ease-linear', getProgressColor())}
+              className={cn('h-full transition-all duration-100 ease-linear', getProgressColor())}
               style={{ width: `${progressPercentage}%` }}
             ></div>
           </div>

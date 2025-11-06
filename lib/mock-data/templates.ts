@@ -120,7 +120,7 @@ export const MOCK_TEMPLATES: WorkoutTemplate[] = [
           },
           {
             id: 'te_2_4',
-            exerciseId: 'ex_legs_lunges',
+            exerciseId: 'ex_legs_dumbbell_lunges',
             position: 4,
             muscleGroup: 'legs',
             resistanceType: 'weight',
@@ -282,7 +282,7 @@ export const MOCK_TEMPLATES: WorkoutTemplate[] = [
           },
           {
             id: 'te_r2_2',
-            exerciseId: 'ex_legs_lunges',
+            exerciseId: 'ex_legs_dumbbell_lunges',
             position: 2,
             muscleGroup: 'legs',
             resistanceType: 'weight',
@@ -428,7 +428,7 @@ export const MOCK_TEMPLATES: WorkoutTemplate[] = [
           },
           {
             id: 'te_h2_4',
-            exerciseId: 'ex_legs_lunges',
+            exerciseId: 'ex_legs_dumbbell_lunges',
             position: 4,
             muscleGroup: 'legs',
             resistanceType: 'weight',

@@ -15700,7 +15700,7 @@
     "id": "ex_stretch_hamstring",
     "exerciseId": "hamstring-stretch",
     "name": "Hamstring Stretch",
-    "category": "stretching",
+    "category": "stretch",
     "equipment": "None",
     "level": "beginner",
     "instructions": [
@@ -15729,7 +15729,7 @@
     "id": "ex_stretch_quad",
     "exerciseId": "quad-stretch",
     "name": "Quad Stretch",
-    "category": "stretching",
+    "category": "stretch",
     "equipment": "None",
     "level": "beginner",
     "instructions": [

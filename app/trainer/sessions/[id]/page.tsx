@@ -76,6 +76,18 @@ export default function SessionRunner() {
     block.exercises.every((ex) => ex.completed)
   );
 
+  // Debug: Log current state on every render (only in per-exercise mode)
+  if (session.signOffMode === 'per_exercise') {
+    console.log('🔍 PER-EXERCISE DEBUG - Render:', {
+      currentBlockIndex,
+      currentExerciseIndex,
+      currentBlock: currentBlock?.name || 'UNDEFINED',
+      currentExercise: currentExercise?.exerciseId || 'UNDEFINED',
+      allExercisesCompleted,
+      showCompletionModal,
+    });
+  }
+
   const handleUpdateExercise = (
     blockId: string,
     exerciseId: string,
@@ -104,6 +116,36 @@ export default function SessionRunner() {
     }
 
     updateExercise(sessionId, blockId, exerciseId, { completed: true });
+
+    console.log('✅ Exercise completed:', {
+      blockId,
+      exerciseId,
+      exercise: exercise.exerciseId,
+    });
+
+    // Check if the session was actually updated
+    const updatedSession = sessions.find((s) => s.id === sessionId);
+    const allComplete = updatedSession?.blocks.every((block) =>
+      block.exercises.every((ex) => ex.completed)
+    );
+    console.log('🔄 After store update - Session state:', {
+      allExercisesComplete: allComplete,
+      completedCount: updatedSession?.blocks.reduce(
+        (sum, block) => sum + block.exercises.filter((ex) => ex.completed).length,
+        0
+      ),
+      totalCount: updatedSession?.blocks.reduce(
+        (sum, block) => sum + block.exercises.length,
+        0
+      ),
+    });
+
+    console.log('📊 Before moveToNextExercise - State:', {
+      currentBlockIndex,
+      currentExerciseIndex,
+      totalBlocks: session.blocks.length,
+      currentBlockExercises: currentBlock?.exercises.length,
+    });
 
     // Move to next exercise/block based on sign-off mode
     if (session.signOffMode === 'per_exercise') {
@@ -140,13 +182,23 @@ export default function SessionRunner() {
   };
 
   const moveToNextExercise = () => {
+    console.log('➡️ moveToNextExercise called:', {
+      currentBlockIndex,
+      currentExerciseIndex,
+      blockExercisesLength: currentBlock.exercises.length,
+      totalBlocks: session.blocks.length,
+    });
+
     if (currentExerciseIndex < currentBlock.exercises.length - 1) {
+      console.log('⏭️ Moving to next exercise in same block');
       setCurrentExerciseIndex(currentExerciseIndex + 1);
     } else if (currentBlockIndex < session.blocks.length - 1) {
+      console.log('⏭️ Moving to next block');
       setCurrentBlockIndex(currentBlockIndex + 1);
       setCurrentExerciseIndex(0);
     } else {
       // All exercises done
+      console.log('🎉 ALL DONE - Setting completion modal to true');
       setShowCompletionModal(true);
     }
   };
@@ -190,7 +242,7 @@ export default function SessionRunner() {
 
                 return (
                   <div
-                    key={exercise.id}
+                    key={`${block.id}-${exercise.id}`}
                     className={cn(
                       'border rounded-lg p-4',
                       exercise.completed ? 'bg-green-50 border-green-200 dark:bg-green-900/20 dark:border-green-700' : 'bg-white border-gray-200 dark:bg-gray-800 dark:border-gray-700'
@@ -413,7 +465,7 @@ export default function SessionRunner() {
 
               return (
                 <div
-                  key={exercise.id}
+                  key={`${currentBlock.id}-${exercise.id}`}
                   className={cn(
                     'border rounded-lg p-4',
                     exercise.completed ? 'bg-green-50 border-green-200 dark:bg-green-900/20 dark:border-green-700' : 'bg-white border-gray-200 dark:bg-gray-800 dark:border-gray-700'
@@ -599,10 +651,50 @@ export default function SessionRunner() {
   };
 
   const renderPerExerciseMode = () => {
-    if (!currentExercise || !currentBlock) return null;
+    console.log('🎨 renderPerExerciseMode called:', {
+      allExercisesCompleted,
+      hasCurrentExercise: !!currentExercise,
+      hasCurrentBlock: !!currentBlock,
+      showCompletionModal,
+      currentExerciseId: currentExercise?.exerciseId,
+      currentBlockName: currentBlock?.name,
+    });
+
+    // Check if all exercises are completed FIRST (definitive source of truth)
+    if (allExercisesCompleted) {
+      console.log('✨ Rendering completion card (all exercises completed)');
+      return (
+        <div className="space-y-4 lg:space-y-6 px-4 lg:px-0">
+          <Card className="bg-green-50 dark:bg-green-900/20 border-2 border-green-200 dark:border-green-700">
+            <CardContent className="p-8 text-center">
+              <div className="flex flex-col items-center gap-4">
+                <CheckCircle2 className="text-green-600 dark:text-green-400" size={64} />
+                <h2 className="text-2xl font-bold text-green-800 dark:text-green-300">
+                  All Exercises Completed!
+                </h2>
+                <p className="text-gray-600 dark:text-gray-400">
+                  Complete your session by filling out the final details.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      );
+    }
+
+    // Safety check: if no current exercise/block and not all complete, return null
+    if (!currentExercise || !currentBlock) {
+      console.log('⚠️ No current exercise/block - returning null');
+      return null;
+    }
 
     const exerciseData = getExerciseById(currentExercise.exerciseId);
-    if (!exerciseData) return null;
+    if (!exerciseData) {
+      console.log('❌ Exercise data not found - returning null');
+      return null;
+    }
+
+    console.log('📝 Rendering current exercise:', currentExercise.exerciseId);
 
     const totalExercises = session.blocks.reduce((sum, block) => sum + block.exercises.length, 0);
     const completedExercises = session.blocks.reduce(

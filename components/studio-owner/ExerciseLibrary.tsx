@@ -35,6 +35,9 @@ const MUSCLE_GROUPS: MuscleGroup[] = [
   'shoulders',
   'biceps',
   'triceps',
+  'forearms',
+  'full_body',
+  'neck',
   'stretch',
 ];
 
