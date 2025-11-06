@@ -214,9 +214,20 @@ export default function AllSessionsPage() {
                     </div>
 
                     {/* Notes */}
-                    {session.notes && session.completed && (
-                      <div className="mt-2 p-2 bg-gray-50 rounded text-sm">
-                        <p className="text-gray-700 italic">&quot;{session.notes}&quot;</p>
+                    {session.completed && (session.privateNotes || session.publicNotes) && (
+                      <div className="mt-2 space-y-2">
+                        {session.privateNotes && (
+                          <div className="p-2 bg-amber-50 dark:bg-amber-900/20 rounded text-sm">
+                            <p className="text-xs font-medium text-amber-800 dark:text-amber-400 mb-1">Private Notes (Trainer Only):</p>
+                            <p className="text-gray-700 dark:text-gray-300 italic">&quot;{session.privateNotes}&quot;</p>
+                          </div>
+                        )}
+                        {session.publicNotes && (
+                          <div className="p-2 bg-blue-50 dark:bg-blue-900/20 rounded text-sm">
+                            <p className="text-xs font-medium text-blue-800 dark:text-blue-400 mb-1">Public Notes (Shared with Client):</p>
+                            <p className="text-gray-700 dark:text-gray-300 italic">&quot;{session.publicNotes}&quot;</p>
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>

@@ -97,13 +97,13 @@ export default function ClientSessionHistory() {
                 {isExpanded && (
                   <CardContent className="pt-0 border-t">
                     {/* Trainer Notes */}
-                    {session.notes && (
+                    {session.publicNotes && (
                       <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 mb-4 mt-4">
                         <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-2 flex items-center gap-2">
                           <FileText size={16} />
                           Trainer Notes
                         </h4>
-                        <p className="text-sm text-gray-700 dark:text-gray-300 italic">&quot;{session.notes}&quot;</p>
+                        <p className="text-sm text-gray-700 dark:text-gray-300 italic">&quot;{session.publicNotes}&quot;</p>
                       </div>
                     )}
 

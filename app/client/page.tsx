@@ -215,10 +215,10 @@ export default function ClientDashboard() {
                       <Badge variant="success">Completed</Badge>
                     </div>
                   </div>
-                  {session.notes && (
-                    <div className="mt-3 pt-3 border-t border-gray-200">
-                      <p className="text-xs text-gray-600 font-medium mb-1">Trainer Notes:</p>
-                      <p className="text-sm text-gray-700 italic">&quot;{session.notes}&quot;</p>
+                  {session.publicNotes && (
+                    <div className="mt-3 pt-3 border-gray-200 dark:border-gray-700">
+                      <p className="text-xs text-gray-600 dark:text-gray-400 font-medium mb-1">Trainer Notes:</p>
+                      <p className="text-sm text-gray-700 dark:text-gray-300 italic">&quot;{session.publicNotes}&quot;</p>
                     </div>
                   )}
                 </CardContent>

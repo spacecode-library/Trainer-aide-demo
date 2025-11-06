@@ -49,6 +49,14 @@ const clientLinks: NavLink[] = [
   { href: '/settings', label: 'Settings', icon: <Settings size={20} /> },
 ];
 
+const soloPractitionerLinks: NavLink[] = [
+  { href: '/solo', label: 'Dashboard', icon: <Home size={20} /> },
+  { href: '/solo/sessions', label: 'Sessions', icon: <Dumbbell size={20} /> },
+  { href: '/solo/calendar', label: 'Calendar', icon: <Calendar size={20} /> },
+  { href: '/solo/templates', label: 'Templates', icon: <FileText size={20} /> },
+  { href: '/settings', label: 'Settings', icon: <Settings size={20} /> },
+];
+
 export function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
@@ -63,6 +71,7 @@ export function Sidebar() {
   const links =
     currentRole === 'studio_owner' ? studioOwnerLinks :
     currentRole === 'trainer' ? trainerLinks :
+    currentRole === 'solo_practitioner' ? soloPractitionerLinks :
     clientLinks;
 
   return (

@@ -68,7 +68,8 @@ function createSessionFromTemplate(
     completedAt,
     duration: completedAt ? Math.floor((new Date(completedAt).getTime() - new Date(startedAt).getTime()) / 1000) : undefined,
     overallRpe: undefined,
-    notes: undefined,
+    privateNotes: undefined,
+    publicNotes: undefined,
     recommendations: undefined,
     trainerDeclaration: false,
     completed,
@@ -85,7 +86,8 @@ function createCompletedSession(
   startedAt: string,
   duration: number,
   overallRpe: number,
-  notes: string
+  privateNotes: string,
+  publicNotes: string
 ): Session {
   const session = createSessionFromTemplate(
     sessionId,
@@ -114,7 +116,8 @@ function createCompletedSession(
   }));
 
   session.overallRpe = overallRpe;
-  session.notes = notes;
+  session.privateNotes = privateNotes;
+  session.publicNotes = publicNotes;
   session.trainerDeclaration = true;
   session.completed = true;
 
@@ -148,7 +151,8 @@ export const MOCK_SESSIONS: Session[] = [
     '2025-10-20T10:00:00Z',
     1920, // 32 minutes
     7,
-    'Great session! Tom showed improvement in form on chest press. Ready to increase weight next time.'
+    'Tom showed improvement in form on chest press. Ready to increase weight next time. Watch left knee.', // Private notes
+    'Great session! Keep up the excellent work!' // Public notes
   ),
 
   // Completed session 2
@@ -161,7 +165,8 @@ export const MOCK_SESSIONS: Session[] = [
     '2025-10-19T14:00:00Z',
     1800, // 30 minutes
     8,
-    'Jane crushed it today! High energy throughout. Maintain current weights.'
+    'Jane has minor shoulder discomfort. Monitor for next session. Maintain current weights.', // Private notes
+    'Jane crushed it today! High energy throughout. Amazing work!' // Public notes
   ),
 
   // Completed session 3
@@ -174,17 +179,42 @@ export const MOCK_SESSIONS: Session[] = [
     '2025-10-18T09:00:00Z',
     1860, // 31 minutes
     6,
-    'Good consistent effort. Mike needs to focus on squat depth.'
+    'Mike needs to focus on squat depth. Consider mobility work before next session.', // Private notes
+    'Good consistent effort today. Well done!' // Public notes
   ),
 
-  // In-progress session
+  // In-progress sessions - one for each sign-off mode for testing
+
+  // Per Block Mode (default active session)
   createSessionFromTemplate(
-    'session_in_progress_1',
+    'session_in_progress_per_block',
     'user_trainer_1',
     'client_4',
     'template_resistance_only',
     'per_block',
-    new Date(Date.now() - 600000).toISOString(), // Started 10 minutes ago
+    '2025-11-06T12:00:00Z', // Fixed timestamp for testing
+    false
+  ),
+
+  // Per Exercise Mode
+  createSessionFromTemplate(
+    'session_in_progress_per_exercise',
+    'user_trainer_1',
+    'client_1',
+    'template_results_first',
+    'per_exercise',
+    '2025-11-06T12:30:00Z', // Fixed timestamp for testing
+    false
+  ),
+
+  // Full Session Mode
+  createSessionFromTemplate(
+    'session_in_progress_full_session',
+    'user_trainer_1',
+    'client_2',
+    'template_advanced_hiit',
+    'full_session',
+    '2025-11-06T11:45:00Z', // Fixed timestamp for testing
     false
   ),
 ];

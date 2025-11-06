@@ -17,6 +17,7 @@ export default function Home() {
     if (isAuthenticated) {
       const { currentRole } = useUserStore.getState();
       if (currentRole === 'studio_owner') router.push('/studio-owner');
+      else if (currentRole === 'solo_practitioner') router.push('/solo');
       else if (currentRole === 'trainer') router.push('/trainer');
       else if (currentRole === 'client') router.push('/client');
     }
@@ -28,6 +29,7 @@ export default function Home() {
       const { currentRole } = useUserStore.getState();
       // Redirect to appropriate dashboard
       if (currentRole === 'studio_owner') router.push('/studio-owner');
+      else if (currentRole === 'solo_practitioner') router.push('/solo');
       else if (currentRole === 'trainer') router.push('/trainer');
       else if (currentRole === 'client') router.push('/client');
     }
@@ -37,6 +39,8 @@ export default function Home() {
     switch (role) {
       case 'studio_owner':
         return <Building2 size={size} className="text-white" />;
+      case 'solo_practitioner':
+        return <Dumbbell size={size} className="text-white" />;
       case 'trainer':
         return <Dumbbell size={size} className="text-white" />;
       case 'client':
@@ -50,6 +54,8 @@ export default function Home() {
     switch (role) {
       case 'studio_owner':
         return 'border-blue-200 hover:border-blue-400 hover:shadow-blue-200/50 dark:border-blue-800 dark:hover:border-blue-600';
+      case 'solo_practitioner':
+        return 'border-purple-200 hover:border-purple-400 hover:shadow-purple-200/50 dark:border-purple-800 dark:hover:border-purple-600';
       case 'trainer':
         return 'border-pink-200 hover:border-pink-400 hover:shadow-pink-200/50 dark:border-pink-800 dark:hover:border-pink-600';
       case 'client':
@@ -63,6 +69,8 @@ export default function Home() {
     switch (role) {
       case 'studio_owner':
         return 'bg-gradient-to-br from-blue-500 to-blue-600';
+      case 'solo_practitioner':
+        return 'bg-gradient-to-br from-purple-500 to-purple-600';
       case 'trainer':
         return 'bg-gradient-to-br from-pink-500 to-pink-600';
       case 'client':
@@ -76,6 +84,8 @@ export default function Home() {
     switch (role) {
       case 'studio_owner':
         return 'Studio Owner';
+      case 'solo_practitioner':
+        return 'Solo Practitioner';
       case 'trainer':
         return 'Trainer';
       case 'client':

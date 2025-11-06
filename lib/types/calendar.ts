@@ -1,5 +1,7 @@
 // Calendar-specific types for Trainer Aide
 
+import { SignOffMode } from './index';
+
 export interface ServiceType {
   id: string;
   name: string;
@@ -28,7 +30,9 @@ export interface CalendarSession {
   clientCredits?: number;
   status: SessionStatus;
   serviceTypeId: string;
-  workoutId?: string | null;
+  workoutId?: string | null; // Legacy field for simple workout reference
+  templateId?: string | null; // Full workout template with blocks/exercises
+  signOffMode?: SignOffMode; // How to complete session: per_exercise, per_block, full_session
   notes?: string;
   holdExpiry?: Date | null; // For soft-hold sessions
 }
@@ -52,5 +56,7 @@ export interface BookingFormData {
   datetime: Date;
   isSoftHold: boolean;
   workoutId?: string;
+  templateId?: string;
+  signOffMode?: SignOffMode;
   notes?: string;
 }

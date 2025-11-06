@@ -6,13 +6,13 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { RPEPicker } from './RPEPicker';
-import { CheckCircle2, Clock } from 'lucide-react';
+import { CheckCircle2, Clock, AlertCircle } from 'lucide-react';
 import { formatDuration } from '@/lib/utils/generators';
 import { useToast } from '@/hooks/use-toast';
 
 interface SessionCompletionModalProps {
   open: boolean;
-  onComplete: (data: { overallRpe: number; notes: string; trainerDeclaration: boolean }) => void;
+  onComplete: (data: { overallRpe: number; privateNotes: string; publicNotes: string; trainerDeclaration: boolean }) => void;
   sessionName: string;
   duration: number;
   clientName?: string;
@@ -27,7 +27,8 @@ export function SessionCompletionModal({
 }: SessionCompletionModalProps) {
   const { toast } = useToast();
   const [overallRpe, setOverallRpe] = useState<number | undefined>(undefined);
-  const [notes, setNotes] = useState('');
+  const [privateNotes, setPrivateNotes] = useState('');
+  const [publicNotes, setPublicNotes] = useState('');
   const [trainerDeclaration, setTrainerDeclaration] = useState(false);
 
   const handleComplete = () => {
@@ -51,7 +52,8 @@ export function SessionCompletionModal({
 
     onComplete({
       overallRpe,
-      notes,
+      privateNotes,
+      publicNotes,
       trainerDeclaration,
     });
   };
@@ -100,22 +102,50 @@ export function SessionCompletionModal({
               label="Overall Session Intensity (RPE)"
               required
             />
-            <p className="text-xs text-gray-500 mt-2">
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
               Rate the overall intensity of the entire session
             </p>
           </div>
 
-          {/* Session Notes */}
+          {/* Private Notes */}
           <div>
-            <Label htmlFor="notes">Session Notes (Optional)</Label>
+            <Label htmlFor="privateNotes" className="dark:text-gray-200 flex items-center gap-2">
+              Private Notes (Optional)
+              <span className="text-xs text-gray-500 dark:text-gray-400 font-normal">• Only you can see this</span>
+            </Label>
             <Textarea
-              id="notes"
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              placeholder="Add any observations, achievements, or areas for improvement..."
-              rows={4}
-              className="mt-2"
+              id="privateNotes"
+              value={privateNotes}
+              onChange={(e) => setPrivateNotes(e.target.value)}
+              placeholder="e.g., Jane's left knee injury has improved. Don't let Jane do more than 20kg farmers walk..."
+              rows={3}
+              className="mt-2 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
             />
+          </div>
+
+          {/* Public Notes */}
+          <div>
+            <Label htmlFor="publicNotes" className="dark:text-gray-200 flex items-center gap-2">
+              Public Notes (Optional)
+              <span className="text-xs text-amber-600 dark:text-amber-400 font-normal flex items-center gap-1">
+                <AlertCircle size={12} />
+                Visible to client
+              </span>
+            </Label>
+            <Textarea
+              id="publicNotes"
+              value={publicNotes}
+              onChange={(e) => setPublicNotes(e.target.value)}
+              placeholder="e.g., Great work today! You smashed it. Let's keep working on those pull ups..."
+              rows={3}
+              className="mt-2 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100 border-amber-200 dark:border-amber-700 focus:border-amber-400 dark:focus:border-amber-500"
+            />
+            {publicNotes && (
+              <p className="text-xs text-amber-600 dark:text-amber-400 mt-1 flex items-center gap-1">
+                <AlertCircle size={12} />
+                This note will be shared with the client in their dashboard
+              </p>
+            )}
           </div>
 
           {/* Trainer Declaration */}

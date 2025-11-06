@@ -4,6 +4,12 @@
 // ENUMS & TYPES
 // ========================================
 
+// MuscleGroup defines 12 category groups for exercise classification
+// NOTE: The imported exercise data currently only contains exercises for 9 of these categories:
+//   - Used (9): cardio, chest, back, legs, core, shoulders, biceps, triceps, stretch
+//   - Not used (3): full_body, forearms, neck
+// The 3 unused categories are defined here for future expansion when additional
+// exercises are imported or created for these muscle groups.
 export type MuscleGroup =
   | 'cardio'
   | 'chest'
@@ -13,7 +19,10 @@ export type MuscleGroup =
   | 'shoulders'
   | 'biceps'
   | 'triceps'
-  | 'stretch';
+  | 'full_body'
+  | 'stretch'
+  | 'forearms'
+  | 'neck';
 
 export type ResistanceType = 'bodyweight' | 'weight';
 
@@ -21,7 +30,7 @@ export type SignOffMode = 'full_session' | 'per_block' | 'per_exercise';
 
 export type TemplateType = 'standard' | 'resistance_only';
 
-export type UserRole = 'studio_owner' | 'trainer' | 'client';
+export type UserRole = 'studio_owner' | 'trainer' | 'client' | 'solo_practitioner';
 
 export type ExerciseLevel = 'beginner' | 'intermediate' | 'advanced';
 
@@ -37,6 +46,10 @@ export interface Exercise {
   equipment?: string;
   level: ExerciseLevel;
   instructions: string[];
+  modifications?: string[]; // Progressive disclosure: Alternative ways to perform the exercise
+  commonMistakes?: string[]; // Progressive disclosure: Common errors to avoid
+  primaryMuscles?: string; // Primary muscles worked (for progressive disclosure)
+  secondaryMuscles?: string; // Secondary muscles worked (for progressive disclosure)
   imageUrl?: string;
   startImageUrl?: string;
   endImageUrl?: string;
@@ -76,6 +89,9 @@ export interface WorkoutTemplate {
   createdBy: string;   // user ID
   assignedStudios: string[];
   blocks: WorkoutBlock[];
+  defaultSignOffMode?: SignOffMode; // How trainers should sign off sessions using this template
+  alertIntervalMinutes?: number; // Alert interval in minutes (e.g., 10 = alert every 10 mins)
+  isDefault?: boolean; // Whether this is the default template for the studio
   createdAt: string;
   updatedAt: string;
 }
@@ -140,7 +156,8 @@ export interface Session {
   completedAt?: string;
   duration?: number; // in seconds
   overallRpe?: number;
-  notes?: string;
+  privateNotes?: string; // Trainer only - not shared with client
+  publicNotes?: string; // Shared with client in their dashboard
   recommendations?: string;
   trainerDeclaration: boolean;
   completed: boolean;
@@ -192,7 +209,8 @@ export interface StartSessionFormData {
 
 export interface CompleteSessionFormData {
   overallRpe: number;
-  notes: string;
+  privateNotes: string;
+  publicNotes: string;
   recommendations?: string;
   trainerDeclaration: boolean;
 }

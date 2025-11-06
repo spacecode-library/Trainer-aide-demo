@@ -49,16 +49,30 @@ function StartNewSessionContent() {
   const [clientSearch, setClientSearch] = useState('');
   const [step, setStep] = useState<1 | 2 | 3>(1);
 
-  // Pre-fill client from calendar booking
+  // Pre-fill from calendar booking (client, template, sign-off mode)
   useEffect(() => {
     const clientId = searchParams?.get('clientId');
+    const templateId = searchParams?.get('templateId');
+    const signOffMode = searchParams?.get('signOffMode') as SignOffMode | null;
+
     if (clientId) {
       const client = MOCK_CLIENTS.find(c => c.id === clientId);
       if (client) {
         setSelectedClient(client);
       }
     }
-  }, [searchParams]);
+
+    if (templateId) {
+      const template = templates.find(t => t.id === templateId);
+      if (template) {
+        setSelectedTemplate(template);
+      }
+    }
+
+    if (signOffMode && (signOffMode === 'per_exercise' || signOffMode === 'per_block' || signOffMode === 'full_session')) {
+      setSelectedSignOffMode(signOffMode);
+    }
+  }, [searchParams, templates]);
 
   const filteredClients = MOCK_CLIENTS.filter((client) =>
     `${client.firstName} ${client.lastName}`.toLowerCase().includes(clientSearch.toLowerCase())

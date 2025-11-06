@@ -98,7 +98,7 @@ export default function SettingsPage() {
               <Label htmlFor="role">Role</Label>
               <Input
                 id="role"
-                value={currentRole.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                value={currentRole.replace('_', ' ').replace(/\b\w/g, (l: string) => l.toUpperCase())}
                 disabled
                 className="mt-1 capitalize"
               />

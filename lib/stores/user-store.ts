@@ -12,6 +12,11 @@ interface UserState {
   login: (email: string) => boolean;
   logout: () => void;
   reset: () => void;
+  // Permission methods
+  canBuildTemplates: () => boolean;
+  canPushToClients: () => boolean;
+  canViewStudioOwnerFeatures: () => boolean;
+  canViewTrainerFeatures: () => boolean;
 }
 
 export const useUserStore = create<UserState>()(
@@ -50,6 +55,27 @@ export const useUserStore = create<UserState>()(
         currentRole: DEFAULT_USER.role,
         isAuthenticated: true,
       }),
+
+      // Permission methods
+      canBuildTemplates: (): boolean => {
+        const state = useUserStore.getState();
+        return state.currentRole === 'studio_owner' || state.currentRole === 'solo_practitioner';
+      },
+
+      canPushToClients: (): boolean => {
+        const state = useUserStore.getState();
+        return state.currentRole === 'solo_practitioner';
+      },
+
+      canViewStudioOwnerFeatures: (): boolean => {
+        const state = useUserStore.getState();
+        return state.currentRole === 'studio_owner' || state.currentRole === 'solo_practitioner';
+      },
+
+      canViewTrainerFeatures: (): boolean => {
+        const state = useUserStore.getState();
+        return state.currentRole === 'trainer' || state.currentRole === 'solo_practitioner';
+      },
     }),
     {
       name: 'trainer-aide-user',

@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { useSessionStore } from '@/lib/stores/session-store';
+import { useTimerStore } from '@/lib/stores/timer-store';
 import { getExerciseById } from '@/lib/mock-data';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
@@ -13,10 +14,12 @@ import { SessionTimer } from '@/components/session/SessionTimer';
 import { RPEPicker } from '@/components/session/RPEPicker';
 import { SessionCompletionModal } from '@/components/session/SessionCompletionModal';
 import { ExerciseImageViewer, ExerciseImageButton } from '@/components/shared/ExerciseImageViewer';
+import { ExerciseInfoInline, ExerciseInfoButton } from '@/components/exercise/ExerciseInfoInline';
 import { SessionExercise, SignOffMode } from '@/lib/types';
 import { ChevronRight, CheckCircle2, Circle, User, FileText } from 'lucide-react';
 import { cn } from '@/lib/utils/cn';
 import { useToast } from '@/hooks/use-toast';
+import { useSessionAlerts } from '@/lib/hooks/useSessionAlerts';
 
 export default function SessionRunner() {
   const router = useRouter();
@@ -27,10 +30,32 @@ export default function SessionRunner() {
   const { sessions, updateExercise, updateBlock, completeSession } = useSessionStore();
   const session = sessions.find((s) => s.id === sessionId);
 
+  const { getElapsedSeconds, isPaused, isTimerActive } = useTimerStore();
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+
+  // Update elapsed seconds for alert system
+  useEffect(() => {
+    if (!isTimerActive()) return;
+
+    const interval = setInterval(() => {
+      setElapsedSeconds(getElapsedSeconds());
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [getElapsedSeconds, isTimerActive]);
+
+  // Session alerts
+  useSessionAlerts({
+    isActive: isTimerActive() && !isPaused,
+    elapsedSeconds,
+    alertIntervalMinutes: session?.template.alertIntervalMinutes || 10,
+  });
+
   const [currentBlockIndex, setCurrentBlockIndex] = useState(0);
   const [currentExerciseIndex, setCurrentExerciseIndex] = useState(0);
   const [showCompletionModal, setShowCompletionModal] = useState(false);
   const [viewingExerciseId, setViewingExerciseId] = useState<string | null>(null);
+  const [infoDropdownOpen, setInfoDropdownOpen] = useState<string | null>(null);
 
   // Redirect if session not found or already completed
   useEffect(() => {
@@ -90,8 +115,10 @@ export default function SessionRunner() {
     const block = session.blocks.find((b) => b.id === blockId);
     if (!block) return;
 
+    // For per_exercise mode, all exercises must be completed
+    // For per_block mode, individual exercises are optional
     const allExercisesCompleted = block.exercises.every((ex) => ex.completed);
-    if (!allExercisesCompleted) {
+    if (session.signOffMode === 'per_exercise' && !allExercisesCompleted) {
       toast({
         variant: "warning",
         title: "Block Incomplete",
@@ -126,10 +153,11 @@ export default function SessionRunner() {
 
   const handleCompleteSession = (data: {
     overallRpe: number;
-    notes: string;
+    privateNotes: string;
+    publicNotes: string;
     trainerDeclaration: boolean;
   }) => {
-    completeSession(sessionId, data.overallRpe, data.notes, data.trainerDeclaration);
+    completeSession(sessionId, data.overallRpe, data.privateNotes, data.publicNotes, data.trainerDeclaration);
     router.push('/trainer/sessions');
   };
 
@@ -165,11 +193,11 @@ export default function SessionRunner() {
                     key={exercise.id}
                     className={cn(
                       'border rounded-lg p-4',
-                      exercise.completed ? 'bg-green-50 border-green-200' : 'bg-white border-gray-200'
+                      exercise.completed ? 'bg-green-50 border-green-200 dark:bg-green-900/20 dark:border-green-700' : 'bg-white border-gray-200 dark:bg-gray-800 dark:border-gray-700'
                     )}
                   >
                     <div className="flex items-start gap-3 mb-4">
-                      <div className="w-8 h-8 rounded-full bg-wondrous-blue-light flex items-center justify-center flex-shrink-0">
+                      <div className="w-8 h-8 rounded-full bg-wondrous-blue-light dark:bg-wondrous-dark-blue flex items-center justify-center flex-shrink-0">
                         {exercise.completed ? (
                           <CheckCircle2 className="text-green-600" size={20} />
                         ) : (
@@ -179,8 +207,8 @@ export default function SessionRunner() {
                         )}
                       </div>
                       <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
-                          <h4 className="font-semibold text-gray-900">{exerciseData.name}</h4>
+                        <div className="flex items-center gap-2 mb-1 flex-wrap">
+                          <h4 className="font-semibold text-gray-900 dark:text-gray-100">{exerciseData.name}</h4>
                           <Badge variant="outline" className="capitalize text-xs">
                             {exercise.muscleGroup}
                           </Badge>
@@ -188,10 +216,27 @@ export default function SessionRunner() {
                             exerciseId={exerciseData.exerciseId}
                             exerciseName={exerciseData.name}
                             isActive={viewingExerciseId === exercise.id}
-                            onClick={() => setViewingExerciseId(viewingExerciseId === exercise.id ? null : exercise.id)}
+                            onClick={() => {
+                              setInfoDropdownOpen(null); // Close info dropdown when opening image
+                              setViewingExerciseId(viewingExerciseId === exercise.id ? null : exercise.id);
+                            }}
+                          />
+                          <ExerciseInfoButton
+                            hasInfo={
+                              !!(exerciseData.instructions?.length ||
+                              exerciseData.modifications?.length ||
+                              exerciseData.commonMistakes?.length ||
+                              exerciseData.primaryMuscles ||
+                              exerciseData.secondaryMuscles)
+                            }
+                            isActive={infoDropdownOpen === exercise.id}
+                            onClick={() => {
+                              setViewingExerciseId(null); // Close image viewer when opening info
+                              setInfoDropdownOpen(infoDropdownOpen === exercise.id ? null : exercise.id);
+                            }}
                           />
                         </div>
-                        <p className="text-sm text-gray-600">
+                        <p className="text-sm text-gray-600 dark:text-gray-400">
                           {exercise.muscleGroup === 'cardio' ? (
                             <>
                               Target: {Math.floor((exercise.cardioDuration || 0) / 60)} min •
@@ -214,7 +259,22 @@ export default function SessionRunner() {
                     {!exercise.completed && exercise.muscleGroup !== 'cardio' && exercise.muscleGroup !== 'stretch' && (
                       <div className="grid grid-cols-2 gap-3 mb-4">
                         <div>
-                          <Label className="text-xs">Actual Reps *</Label>
+                          <div className="flex items-center justify-between">
+                            <Label className="text-xs dark:text-gray-200">Actual Reps *</Label>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() =>
+                                handleUpdateExercise(block.id, exercise.id, {
+                                  actualReps: exercise.repsMax,
+                                })
+                              }
+                              className="h-5 px-2 text-xs text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+                            >
+                              Use Target
+                            </Button>
+                          </div>
                           <Input
                             type="number"
                             value={exercise.actualReps || ''}
@@ -224,11 +284,26 @@ export default function SessionRunner() {
                               })
                             }
                             placeholder={`${exercise.repsMin}-${exercise.repsMax}`}
-                            className="mt-1"
+                            className="mt-1 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
                           />
                         </div>
                         <div>
-                          <Label className="text-xs">Actual Weight (kg)</Label>
+                          <div className="flex items-center justify-between">
+                            <Label className="text-xs dark:text-gray-200">Actual Weight (kg)</Label>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() =>
+                                handleUpdateExercise(block.id, exercise.id, {
+                                  actualResistance: exercise.resistanceValue,
+                                })
+                              }
+                              className="h-5 px-2 text-xs text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+                            >
+                              Use Target
+                            </Button>
+                          </div>
                           <Input
                             type="number"
                             value={exercise.actualResistance || exercise.resistanceValue}
@@ -238,7 +313,7 @@ export default function SessionRunner() {
                               })
                             }
                             placeholder={String(exercise.resistanceValue)}
-                            className="mt-1"
+                            className="mt-1 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
                           />
                         </div>
                       </div>
@@ -255,21 +330,10 @@ export default function SessionRunner() {
                     )}
 
                     {exercise.completed && exercise.actualReps && (
-                      <div className="text-sm text-gray-600 bg-white rounded p-2 border border-gray-200">
+                      <div className="text-sm text-gray-600 dark:text-gray-400 bg-white dark:bg-gray-700 rounded p-2 border border-gray-200 dark:border-gray-600">
                         Completed: {exercise.actualReps} reps •{' '}
                         {exercise.actualResistance || exercise.resistanceValue}kg • RPE {exercise.rpe}/10
                       </div>
-                    )}
-
-                    {!exercise.completed && (
-                      <Button
-                        onClick={() => handleCompleteExercise(block.id, exercise.id)}
-                        size="sm"
-                        className="w-full"
-                      >
-                        <CheckCircle2 size={16} className="mr-2" />
-                        Mark as Complete
-                      </Button>
                     )}
 
                     {/* Exercise Image Viewer */}
@@ -278,6 +342,21 @@ export default function SessionRunner() {
                       exerciseName={exerciseData.name}
                       isOpen={viewingExerciseId === exercise.id}
                       onClose={() => setViewingExerciseId(null)}
+                    />
+
+                    {/* Exercise Info Inline */}
+                    <ExerciseInfoInline
+                      exerciseId={exerciseData.id}
+                      exerciseName={exerciseData.name}
+                      instructions={exerciseData.instructions}
+                      modifications={exerciseData.modifications}
+                      commonMistakes={exerciseData.commonMistakes}
+                      primaryMuscles={exerciseData.primaryMuscles}
+                      secondaryMuscles={exerciseData.secondaryMuscles}
+                      startImageUrl={exerciseData.startImageUrl}
+                      endImageUrl={exerciseData.endImageUrl}
+                      isOpen={infoDropdownOpen === exercise.id}
+                      onClose={() => setInfoDropdownOpen(null)}
                     />
                   </div>
                 );
@@ -288,7 +367,7 @@ export default function SessionRunner() {
 
         <Button
           onClick={() => setShowCompletionModal(true)}
-          disabled={!allExercisesCompleted}
+          disabled={session.signOffMode !== 'full_session' && !allExercisesCompleted}
           className="w-full py-6 text-lg"
           size="lg"
         >
@@ -305,15 +384,15 @@ export default function SessionRunner() {
     return (
       <div className="space-y-4 lg:space-y-6 px-4 lg:px-0">
         {/* Block Progress */}
-        <Card className="bg-gray-50">
+        <Card className="bg-gray-50 dark:bg-gray-800 dark:border-gray-700">
           <CardContent className="p-4">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium text-gray-600">Block Progress</span>
-              <span className="text-sm font-semibold text-gray-900">
+              <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Block Progress</span>
+              <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">
                 {currentBlockIndex + 1} of {session.blocks.length}
               </span>
             </div>
-            <div className="w-full bg-gray-200 rounded-full h-2">
+            <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
               <div
                 className="bg-wondrous-primary h-full rounded-full transition-all"
                 style={{ width: `${((currentBlockIndex + 1) / session.blocks.length) * 100}%` }}
@@ -337,11 +416,11 @@ export default function SessionRunner() {
                   key={exercise.id}
                   className={cn(
                     'border rounded-lg p-4',
-                    exercise.completed ? 'bg-green-50 border-green-200' : 'bg-white border-gray-200'
+                    exercise.completed ? 'bg-green-50 border-green-200 dark:bg-green-900/20 dark:border-green-700' : 'bg-white border-gray-200 dark:bg-gray-800 dark:border-gray-700'
                   )}
                 >
                   <div className="flex items-start gap-3 mb-4">
-                    <div className="w-8 h-8 rounded-full bg-wondrous-blue-light flex items-center justify-center flex-shrink-0">
+                    <div className="w-8 h-8 rounded-full bg-wondrous-blue-light dark:bg-wondrous-dark-blue flex items-center justify-center flex-shrink-0">
                       {exercise.completed ? (
                         <CheckCircle2 className="text-green-600" size={20} />
                       ) : (
@@ -351,8 +430,8 @@ export default function SessionRunner() {
                       )}
                     </div>
                     <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <h4 className="font-semibold text-gray-900">{exerciseData.name}</h4>
+                      <div className="flex items-center gap-2 mb-1 flex-wrap">
+                        <h4 className="font-semibold text-gray-900 dark:text-gray-100">{exerciseData.name}</h4>
                         <Badge variant="outline" className="capitalize text-xs">
                           {exercise.muscleGroup}
                         </Badge>
@@ -360,10 +439,27 @@ export default function SessionRunner() {
                           exerciseId={exerciseData.exerciseId}
                           exerciseName={exerciseData.name}
                           isActive={viewingExerciseId === exercise.id}
-                          onClick={() => setViewingExerciseId(viewingExerciseId === exercise.id ? null : exercise.id)}
+                          onClick={() => {
+                            setInfoDropdownOpen(null); // Close info dropdown when opening image
+                            setViewingExerciseId(viewingExerciseId === exercise.id ? null : exercise.id);
+                          }}
+                        />
+                        <ExerciseInfoButton
+                          hasInfo={
+                            !!(exerciseData.instructions?.length ||
+                            exerciseData.modifications?.length ||
+                            exerciseData.commonMistakes?.length ||
+                            exerciseData.primaryMuscles ||
+                            exerciseData.secondaryMuscles)
+                          }
+                          isActive={infoDropdownOpen === exercise.id}
+                          onClick={() => {
+                            setViewingExerciseId(null); // Close image viewer when opening info
+                            setInfoDropdownOpen(infoDropdownOpen === exercise.id ? null : exercise.id);
+                          }}
                         />
                       </div>
-                      <p className="text-sm text-gray-600">
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
                         {exercise.muscleGroup === 'cardio' ? (
                           <>
                             Target: {Math.floor((exercise.cardioDuration || 0) / 60)} min •
@@ -385,7 +481,22 @@ export default function SessionRunner() {
                   {!exercise.completed && exercise.muscleGroup !== 'cardio' && exercise.muscleGroup !== 'stretch' && (
                     <div className="grid grid-cols-2 gap-3 mb-4">
                       <div>
-                        <Label className="text-xs">Actual Reps *</Label>
+                        <div className="flex items-center justify-between">
+                          <Label className="text-xs dark:text-gray-200">Actual Reps *</Label>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() =>
+                              handleUpdateExercise(currentBlock.id, exercise.id, {
+                                actualReps: exercise.repsMax,
+                              })
+                            }
+                            className="h-5 px-2 text-xs text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+                          >
+                            Use Target
+                          </Button>
+                        </div>
                         <Input
                           type="number"
                           value={exercise.actualReps || ''}
@@ -395,11 +506,26 @@ export default function SessionRunner() {
                             })
                           }
                           placeholder={`${exercise.repsMin}-${exercise.repsMax}`}
-                          className="mt-1"
+                          className="mt-1 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
                         />
                       </div>
                       <div>
-                        <Label className="text-xs">Actual Weight (kg)</Label>
+                        <div className="flex items-center justify-between">
+                          <Label className="text-xs dark:text-gray-200">Actual Weight (kg)</Label>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() =>
+                              handleUpdateExercise(currentBlock.id, exercise.id, {
+                                actualResistance: exercise.resistanceValue,
+                              })
+                            }
+                            className="h-5 px-2 text-xs text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+                          >
+                            Use Target
+                          </Button>
+                        </div>
                         <Input
                           type="number"
                           value={exercise.actualResistance || exercise.resistanceValue}
@@ -409,7 +535,7 @@ export default function SessionRunner() {
                             })
                           }
                           placeholder={String(exercise.resistanceValue)}
-                          className="mt-1"
+                          className="mt-1 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
                         />
                       </div>
                     </div>
@@ -426,21 +552,10 @@ export default function SessionRunner() {
                   )}
 
                   {exercise.completed && exercise.actualReps && (
-                    <div className="text-sm text-gray-600 bg-white rounded p-2 border border-gray-200">
+                    <div className="text-sm text-gray-600 dark:text-gray-400 bg-white dark:bg-gray-700 rounded p-2 border border-gray-200 dark:border-gray-600">
                       Completed: {exercise.actualReps} reps •{' '}
                       {exercise.actualResistance || exercise.resistanceValue}kg • RPE {exercise.rpe}/10
                     </div>
-                  )}
-
-                  {!exercise.completed && (
-                    <Button
-                      onClick={() => handleCompleteExercise(currentBlock.id, exercise.id)}
-                      size="sm"
-                      className="w-full"
-                    >
-                      <CheckCircle2 size={16} className="mr-2" />
-                      Mark as Complete
-                    </Button>
                   )}
 
                   {/* Exercise Image Viewer */}
@@ -450,6 +565,21 @@ export default function SessionRunner() {
                     isOpen={viewingExerciseId === exercise.id}
                     onClose={() => setViewingExerciseId(null)}
                   />
+
+                  {/* Exercise Info Inline */}
+                  <ExerciseInfoInline
+                    exerciseId={exerciseData.id}
+                    exerciseName={exerciseData.name}
+                    instructions={exerciseData.instructions}
+                    modifications={exerciseData.modifications}
+                    commonMistakes={exerciseData.commonMistakes}
+                    primaryMuscles={exerciseData.primaryMuscles}
+                    secondaryMuscles={exerciseData.secondaryMuscles}
+                    startImageUrl={exerciseData.startImageUrl}
+                    endImageUrl={exerciseData.endImageUrl}
+                    isOpen={infoDropdownOpen === exercise.id}
+                    onClose={() => setInfoDropdownOpen(null)}
+                  />
                 </div>
               );
             })}
@@ -458,7 +588,6 @@ export default function SessionRunner() {
 
         <Button
           onClick={() => handleCompleteBlock(currentBlock.id)}
-          disabled={!currentBlock.exercises.every((ex) => ex.completed)}
           className="w-full py-6 text-lg"
           size="lg"
         >
@@ -484,53 +613,71 @@ export default function SessionRunner() {
     return (
       <div className="space-y-4 lg:space-y-6 px-4 lg:px-0">
         {/* Exercise Progress */}
-        <Card className="bg-gray-50">
+        <Card className="bg-gray-50 dark:bg-gray-800 dark:border-gray-700">
           <CardContent className="p-4">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium text-gray-600">Exercise Progress</span>
-              <span className="text-sm font-semibold text-gray-900">
+              <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Exercise Progress</span>
+              <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">
                 {completedExercises + 1} of {totalExercises}
               </span>
             </div>
-            <div className="w-full bg-gray-200 rounded-full h-2">
+            <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
               <div
                 className="bg-wondrous-primary h-full rounded-full transition-all"
                 style={{ width: `${((completedExercises + 1) / totalExercises) * 100}%` }}
               ></div>
             </div>
-            <p className="text-xs text-gray-500 mt-2">{currentBlock.name}</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">{currentBlock.name}</p>
           </CardContent>
         </Card>
 
         {/* Current Exercise */}
-        <Card className="border-2 border-wondrous-primary">
+        <Card className="border-2 border-wondrous-primary dark:border-wondrous-primary dark:bg-gray-800">
           <CardHeader>
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between gap-2 flex-wrap">
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-full bg-wondrous-primary flex items-center justify-center">
+                <div className="w-12 h-12 rounded-full bg-wondrous-primary flex items-center justify-center flex-shrink-0">
                   <span className="text-lg font-bold text-white">{currentExercise.position}</span>
                 </div>
                 <div>
-                  <CardTitle className="text-2xl">{exerciseData.name}</CardTitle>
-                  <Badge variant="outline" className="capitalize mt-1">
-                    {currentExercise.muscleGroup}
-                  </Badge>
+                  <CardTitle className="text-2xl dark:text-gray-100">{exerciseData.name}</CardTitle>
+                  <div className="flex items-center gap-2 mt-1 flex-wrap">
+                    <Badge variant="outline" className="capitalize">
+                      {currentExercise.muscleGroup}
+                    </Badge>
+                    <ExerciseImageButton
+                      exerciseId={exerciseData.exerciseId}
+                      exerciseName={exerciseData.name}
+                      isActive={viewingExerciseId === currentExercise.id}
+                      onClick={() => {
+                        setInfoDropdownOpen(null); // Close info dropdown when opening image
+                        setViewingExerciseId(viewingExerciseId === currentExercise.id ? null : currentExercise.id);
+                      }}
+                    />
+                    <ExerciseInfoButton
+                      hasInfo={
+                        !!(exerciseData.instructions?.length ||
+                        exerciseData.modifications?.length ||
+                        exerciseData.commonMistakes?.length ||
+                        exerciseData.primaryMuscles ||
+                        exerciseData.secondaryMuscles)
+                      }
+                      isActive={infoDropdownOpen === currentExercise.id}
+                      onClick={() => {
+                        setViewingExerciseId(null); // Close image viewer when opening info
+                        setInfoDropdownOpen(infoDropdownOpen === currentExercise.id ? null : currentExercise.id);
+                      }}
+                    />
+                  </div>
                 </div>
               </div>
-              <ExerciseImageButton
-                exerciseId={exerciseData.exerciseId}
-                exerciseName={exerciseData.name}
-                isActive={viewingExerciseId === currentExercise.id}
-                onClick={() => setViewingExerciseId(viewingExerciseId === currentExercise.id ? null : currentExercise.id)}
-                className="flex-shrink-0"
-              />
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
             {/* Exercise Details */}
-            <div className="bg-gray-50 rounded-lg p-4">
-              <h4 className="font-semibold text-gray-900 mb-2">Target</h4>
-              <p className="text-gray-700">
+            <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+              <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">Target</h4>
+              <p className="text-gray-700 dark:text-gray-300">
                 {currentExercise.muscleGroup === 'cardio' ? (
                   <>
                     Duration: {Math.floor((currentExercise.cardioDuration || 0) / 60)} minutes
@@ -553,9 +700,9 @@ export default function SessionRunner() {
 
             {/* Instructions */}
             {exerciseData.instructions && exerciseData.instructions.length > 0 && (
-              <div className="bg-blue-50 rounded-lg p-4">
-                <h4 className="font-semibold text-gray-900 mb-2">Instructions</h4>
-                <ol className="list-decimal list-inside space-y-1 text-sm text-gray-700">
+              <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 dark:border dark:border-blue-700">
+                <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">Instructions</h4>
+                <ol className="list-decimal list-inside space-y-1 text-sm text-gray-700 dark:text-gray-300">
                   {exerciseData.instructions.map((instruction, idx) => (
                     <li key={idx}>{instruction}</li>
                   ))}
@@ -573,11 +720,41 @@ export default function SessionRunner() {
               />
             )}
 
+            {/* Exercise Info Inline */}
+            <ExerciseInfoInline
+              exerciseId={exerciseData.id}
+              exerciseName={exerciseData.name}
+              instructions={exerciseData.instructions}
+              modifications={exerciseData.modifications}
+              commonMistakes={exerciseData.commonMistakes}
+              primaryMuscles={exerciseData.primaryMuscles}
+              secondaryMuscles={exerciseData.secondaryMuscles}
+              startImageUrl={exerciseData.startImageUrl}
+              endImageUrl={exerciseData.endImageUrl}
+              isOpen={infoDropdownOpen === currentExercise.id}
+              onClose={() => setInfoDropdownOpen(null)}
+            />
+
             {/* Input Fields */}
             {currentExercise.muscleGroup !== 'cardio' && currentExercise.muscleGroup !== 'stretch' && (
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label>Actual Reps *</Label>
+                  <div className="flex items-center justify-between mb-1">
+                    <Label className="dark:text-gray-200">Actual Reps *</Label>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() =>
+                        handleUpdateExercise(currentBlock.id, currentExercise.id, {
+                          actualReps: currentExercise.repsMax,
+                        })
+                      }
+                      className="h-6 px-2 text-xs text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+                    >
+                      Use Target
+                    </Button>
+                  </div>
                   <Input
                     type="number"
                     value={currentExercise.actualReps || ''}
@@ -587,11 +764,26 @@ export default function SessionRunner() {
                       })
                     }
                     placeholder={`${currentExercise.repsMin}-${currentExercise.repsMax}`}
-                    className="mt-1 text-lg h-12"
+                    className="text-lg h-12 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
                   />
                 </div>
                 <div>
-                  <Label>Actual Weight (kg)</Label>
+                  <div className="flex items-center justify-between mb-1">
+                    <Label className="dark:text-gray-200">Actual Weight (kg)</Label>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() =>
+                        handleUpdateExercise(currentBlock.id, currentExercise.id, {
+                          actualResistance: currentExercise.resistanceValue,
+                        })
+                      }
+                      className="h-6 px-2 text-xs text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+                    >
+                      Use Target
+                    </Button>
+                  </div>
                   <Input
                     type="number"
                     value={currentExercise.actualResistance || currentExercise.resistanceValue}
@@ -601,7 +793,7 @@ export default function SessionRunner() {
                       })
                     }
                     placeholder={String(currentExercise.resistanceValue)}
-                    className="mt-1 text-lg h-12"
+                    className="text-lg h-12 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
                   />
                 </div>
               </div>

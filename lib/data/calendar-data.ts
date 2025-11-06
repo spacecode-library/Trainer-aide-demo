@@ -179,6 +179,8 @@ export const CALENDAR_SESSIONS: CalendarSession[] = [
     status: 'confirmed',
     serviceTypeId: 'service_1',
     workoutId: 'workout_1',
+    templateId: 'template_results_first',
+    signOffMode: 'per_block',
   },
   {
     id: 'session_3',
@@ -204,6 +206,8 @@ export const CALENDAR_SESSIONS: CalendarSession[] = [
     status: 'checked-in',
     serviceTypeId: 'service_3',
     workoutId: 'workout_2',
+    templateId: 'template_advanced_hiit',
+    signOffMode: 'per_exercise',
   },
   {
     id: 'session_5',

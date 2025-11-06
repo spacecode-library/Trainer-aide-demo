@@ -29,6 +29,13 @@ export const MOCK_USERS: User[] = [
     role: 'client',
     email: 'tom.phillips@example.com',
   },
+  {
+    id: 'user_solo_1',
+    firstName: 'Alex',
+    lastName: 'Rivera',
+    role: 'solo_practitioner',
+    email: 'alex.rivera@wondrous.com',
+  },
 ];
 
 // Default user for demo (can be changed by role selector)
@@ -40,6 +47,6 @@ export function getUserById(id: string): User | undefined {
 }
 
 // Helper function to get user by role
-export function getUserByRole(role: 'studio_owner' | 'trainer' | 'client'): User | undefined {
+export function getUserByRole(role: 'studio_owner' | 'trainer' | 'client' | 'solo_practitioner'): User | undefined {
   return MOCK_USERS.find(user => user.role === role);
 }

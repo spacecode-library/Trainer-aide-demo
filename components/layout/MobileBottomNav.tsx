@@ -88,6 +88,33 @@ const clientNavItems: NavItem[] = [
   },
 ];
 
+const soloPractitionerNavItems: NavItem[] = [
+  {
+    id: "dashboard",
+    label: "Dashboard",
+    icon: Home,
+    route: "/solo",
+  },
+  {
+    id: "sessions",
+    label: "Sessions",
+    icon: Dumbbell,
+    route: "/solo/sessions",
+  },
+  {
+    id: "calendar",
+    label: "Calendar",
+    icon: Calendar,
+    route: "/solo/calendar",
+  },
+  {
+    id: "templates",
+    label: "Templates",
+    icon: FileText,
+    route: "/solo/templates",
+  },
+];
+
 export function MobileBottomNav() {
   const router = useRouter();
   const pathname = usePathname();
@@ -97,6 +124,7 @@ export function MobileBottomNav() {
   const navItems =
     currentRole === 'studio_owner' ? studioOwnerNavItems :
     currentRole === 'trainer' ? trainerNavItems :
+    currentRole === 'solo_practitioner' ? soloPractitionerNavItems :
     clientNavItems;
 
   const getActiveTab = () => {
@@ -122,6 +150,14 @@ export function MobileBottomNav() {
     if (currentRole === 'client') {
       if (pathname.startsWith("/client/sessions")) return "history";
       if (pathname.startsWith("/client")) return "home";
+    }
+
+    // Solo Practitioner routes
+    if (currentRole === 'solo_practitioner') {
+      if (pathname.startsWith("/solo/templates")) return "templates";
+      if (pathname.startsWith("/solo/calendar")) return "calendar";
+      if (pathname.startsWith("/solo/sessions")) return "sessions";
+      if (pathname.startsWith("/solo")) return "dashboard";
     }
 
     return navItems[0]?.id || "home";

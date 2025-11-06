@@ -18,6 +18,7 @@ interface TimerState {
 
   // Getters
   getSecondsLeft: () => number;
+  getElapsedSeconds: () => number;
   isTimerActive: () => boolean;
 }
 
@@ -102,6 +103,23 @@ export const useTimerStore = create<TimerState>()(
         const secondsLeft = Math.max(0, state.totalSeconds - adjustedElapsed);
 
         return Math.floor(secondsLeft);
+      },
+
+      getElapsedSeconds: () => {
+        const state = get();
+        if (!state.startTime) return 0;
+
+        const now = Date.now();
+        const elapsedTime = (now - state.startTime) / 1000;
+
+        // If paused, calculate elapsed time up to pause point
+        const effectiveElapsedTime = state.isPaused && state.pausedAt
+          ? (state.pausedAt - state.startTime) / 1000
+          : elapsedTime;
+
+        const adjustedElapsed = effectiveElapsedTime - state.accumulatedPausedTime;
+
+        return Math.floor(Math.max(0, adjustedElapsed));
       },
 
       isTimerActive: () => {

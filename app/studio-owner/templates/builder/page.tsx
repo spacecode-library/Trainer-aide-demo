@@ -11,9 +11,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ExerciseLibrary } from '@/components/studio-owner/ExerciseLibrary';
+import { ExerciseLibrary, ExerciseCustomParams } from '@/components/studio-owner/ExerciseLibrary';
 import { ExerciseImageViewer, ExerciseImageButton } from '@/components/shared/ExerciseImageViewer';
-import { WorkoutTemplate, WorkoutBlock, TemplateExercise, Exercise, TemplateType } from '@/lib/types';
+import { WorkoutTemplate, WorkoutBlock, TemplateExercise, Exercise, TemplateType, SignOffMode } from '@/lib/types';
 import { Plus, Trash2, ChevronUp, ChevronDown, Save, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
@@ -29,6 +29,9 @@ function TemplateBuilderContent() {
   const [templateName, setTemplateName] = useState('');
   const [description, setDescription] = useState('');
   const [templateType, setTemplateType] = useState<TemplateType>('standard');
+  const [defaultSignOffMode, setDefaultSignOffMode] = useState<SignOffMode>('per_exercise');
+  const [alertIntervalMinutes, setAlertIntervalMinutes] = useState<number>(10);
+  const [isDefault, setIsDefault] = useState(false);
   const [blocks, setBlocks] = useState<WorkoutBlock[]>([
     { id: generateId('block'), blockNumber: 1, name: 'Block 1', exercises: [] },
     { id: generateId('block'), blockNumber: 2, name: 'Block 2', exercises: [] },
@@ -52,6 +55,9 @@ function TemplateBuilderContent() {
         setDescription(template.description);
         setTemplateType(template.type);
         setBlocks(template.blocks);
+        setDefaultSignOffMode(template.defaultSignOffMode || 'per_exercise');
+        setAlertIntervalMinutes(template.alertIntervalMinutes || 10);
+        setIsDefault(template.isDefault || false);
       }
     }
   }, [templateId, templates]);
@@ -95,7 +101,7 @@ function TemplateBuilderContent() {
     setShowExerciseLibrary(true);
   };
 
-  const handleAddExercise = (exercise: Exercise) => {
+  const handleAddExercise = (exercise: Exercise, params: ExerciseCustomParams) => {
     if (!currentBlockId) return;
 
     const newExercise: TemplateExercise = {
@@ -104,12 +110,12 @@ function TemplateBuilderContent() {
       position: blocks.find(b => b.id === currentBlockId)!.exercises.length + 1,
       muscleGroup: exercise.category,
       resistanceType: exercise.category === 'cardio' || exercise.category === 'stretch' ? 'bodyweight' : 'weight',
-      resistanceValue: exercise.category === 'cardio' || exercise.category === 'stretch' ? 0 : 20,
-      repsMin: exercise.category === 'cardio' || exercise.category === 'stretch' ? 0 : 10,
-      repsMax: exercise.category === 'cardio' || exercise.category === 'stretch' ? 0 : 15,
-      sets: 2,
-      cardioDuration: exercise.category === 'cardio' ? 180 : exercise.category === 'stretch' ? 30 : undefined,
-      cardioIntensity: exercise.category === 'cardio' ? 7 : exercise.category === 'stretch' ? 2 : undefined,
+      resistanceValue: params.resistanceValue || 0,
+      repsMin: params.repsMin || 0,
+      repsMax: params.repsMax || 0,
+      sets: params.sets || 1,
+      cardioDuration: params.cardioDuration,
+      cardioIntensity: params.cardioIntensity,
     };
 
     setBlocks(blocks.map(b =>
@@ -216,6 +222,9 @@ function TemplateBuilderContent() {
       createdBy: 'user_owner_1',
       assignedStudios: ['studio_1'], // Default, can be updated later
       blocks,
+      defaultSignOffMode,
+      alertIntervalMinutes,
+      isDefault,
       createdAt: templateId ? templates.find(t => t.id === templateId)!.createdAt : new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
@@ -315,6 +324,88 @@ function TemplateBuilderContent() {
                 />
                 <span className="text-xs lg:text-sm dark:text-gray-200">Resistance Only (no cardio required)</span>
               </label>
+            </div>
+          </div>
+
+          <div>
+            <Label className="text-sm dark:text-gray-200">Session Sign-Off Type *</Label>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 mb-2">
+              How should trainers mark this session as complete?
+            </p>
+            <div className="flex flex-col gap-2">
+              <label className="flex items-start gap-2 cursor-pointer p-3 border border-gray-200 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                <input
+                  type="radio"
+                  value="per_exercise"
+                  checked={defaultSignOffMode === 'per_exercise'}
+                  onChange={(e) => setDefaultSignOffMode(e.target.value as SignOffMode)}
+                  className="w-4 h-4 text-wondrous-primary mt-0.5"
+                />
+                <div className="text-xs lg:text-sm">
+                  <div className="font-medium dark:text-gray-200">Per Exercise</div>
+                  <div className="text-gray-500 dark:text-gray-400">Trainer must complete and rate each exercise</div>
+                </div>
+              </label>
+              <label className="flex items-start gap-2 cursor-pointer p-3 border border-gray-200 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                <input
+                  type="radio"
+                  value="per_block"
+                  checked={defaultSignOffMode === 'per_block'}
+                  onChange={(e) => setDefaultSignOffMode(e.target.value as SignOffMode)}
+                  className="w-4 h-4 text-wondrous-primary mt-0.5"
+                />
+                <div className="text-xs lg:text-sm">
+                  <div className="font-medium dark:text-gray-200">Per Block</div>
+                  <div className="text-gray-500 dark:text-gray-400">Trainer completes each block (individual exercises optional)</div>
+                </div>
+              </label>
+              <label className="flex items-start gap-2 cursor-pointer p-3 border border-gray-200 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                <input
+                  type="radio"
+                  value="full_session"
+                  checked={defaultSignOffMode === 'full_session'}
+                  onChange={(e) => setDefaultSignOffMode(e.target.value as SignOffMode)}
+                  className="w-4 h-4 text-wondrous-primary mt-0.5"
+                />
+                <div className="text-xs lg:text-sm">
+                  <div className="font-medium dark:text-gray-200">End of Session Only</div>
+                  <div className="text-gray-500 dark:text-gray-400">Only final session completion required (exercises/blocks optional)</div>
+                </div>
+              </label>
+            </div>
+          </div>
+
+          <div>
+            <Label htmlFor="alertInterval" className="text-sm dark:text-gray-200">Alert Interval (minutes)</Label>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 mb-2">
+              Trainer will receive alerts at this interval to track session time
+            </p>
+            <Input
+              id="alertInterval"
+              type="number"
+              min="1"
+              max="60"
+              value={alertIntervalMinutes}
+              onChange={(e) => setAlertIntervalMinutes(parseInt(e.target.value) || 10)}
+              className="mt-1.5 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100 max-w-xs"
+            />
+          </div>
+
+          <div className="flex items-center gap-3 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg">
+            <input
+              type="checkbox"
+              id="isDefault"
+              checked={isDefault}
+              onChange={(e) => setIsDefault(e.target.checked)}
+              className="w-4 h-4 text-wondrous-primary rounded"
+            />
+            <div>
+              <Label htmlFor="isDefault" className="text-sm font-medium dark:text-gray-200 cursor-pointer">
+                Make this the default template
+              </Label>
+              <p className="text-xs text-gray-600 dark:text-gray-400 mt-0.5">
+                This template will be automatically assigned to new clients
+              </p>
             </div>
           </div>
         </CardContent>

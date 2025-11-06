@@ -14,7 +14,7 @@ interface SessionState {
   // Session management
   startSession: (session: Omit<Session, 'id' | 'startedAt' | 'completed' | 'trainerDeclaration'>) => string;
   updateSession: (sessionId: string, updates: Partial<Session>) => void;
-  completeSession: (sessionId: string, overallRpe: number, notes: string, trainerDeclaration: boolean) => void;
+  completeSession: (sessionId: string, overallRpe: number, privateNotes: string, publicNotes: string, trainerDeclaration: boolean) => void;
   deleteSession: (sessionId: string) => void;
 
   // Block management
@@ -76,7 +76,7 @@ export const useSessionStore = create<SessionState>()(
         ),
       })),
 
-      completeSession: (sessionId, overallRpe, notes, trainerDeclaration) => {
+      completeSession: (sessionId, overallRpe, privateNotes, publicNotes, trainerDeclaration) => {
         const session = get().sessions.find(s => s.id === sessionId);
         if (!session) return;
 
@@ -91,7 +91,8 @@ export const useSessionStore = create<SessionState>()(
                   completedAt: new Date().toISOString(),
                   duration,
                   overallRpe,
-                  notes,
+                  privateNotes,
+                  publicNotes,
                   trainerDeclaration,
                 }
               : s

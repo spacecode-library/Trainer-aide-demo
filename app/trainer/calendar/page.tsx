@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronLeft, ChevronRight, Plus, Clock, User, X, Search, Calendar as CalendarIcon, Inbox, CheckCircle, XCircle, MessageSquare, AlertCircle, Play, AlertTriangle, UserX, CalendarX, Check, TrendingUp, Repeat, StickyNote, Dumbbell, Bell, CalendarDays, Timer, CreditCard, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -8,6 +9,8 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { useUserStore } from "@/lib/stores/user-store";
 import { useCalendarStore } from "@/lib/stores/calendar-store";
+import { useTemplateStore } from "@/lib/stores/template-store";
+import { useAvailabilityStore } from "@/lib/stores/availability-store";
 import {
   SERVICE_TYPES,
   CALENDAR_CLIENTS,
@@ -30,17 +33,23 @@ import {
 import type { CalendarSession } from "@/lib/types/calendar";
 import type { BookingRequest } from "@/lib/types/booking-request";
 import type { SessionCompletionFormData } from "@/lib/types/session-completion";
+import type { SignOffMode } from "@/lib/types";
 import { MOCK_BOOKING_REQUESTS } from "@/lib/data/booking-requests";
-import { DEFAULT_TRAINER_AVAILABILITY, isWithinAvailability, getAvailabilityForDay } from "@/lib/data/availability-data";
+import { DEFAULT_TRAINER_AVAILABILITY, isWithinAvailability, getAvailabilityForDay, isTimeBlocked } from "@/lib/data/availability-data";
+import type { BlockReasonType, RecurrenceType } from "@/lib/types/availability";
 import { cn } from "@/lib/utils/cn";
 
 type ViewMode = "day" | "week";
 type CalendarTab = "schedule" | "requests";
 
 export default function TrainerCalendar() {
+  const router = useRouter();
+
   // Store hooks
   const currentUser = useUserStore((state) => state.currentUser);
   const { sessions, initializeSessions, addSession, updateSession, removeSession } = useCalendarStore();
+  const { templates } = useTemplateStore();
+  const { addBlock, getBlockedBlocks } = useAvailabilityStore();
   const { toast } = useToast();
 
   // Client-side only flag to prevent hydration mismatch
@@ -58,6 +67,8 @@ export default function TrainerCalendar() {
   const [showBookingPanel, setShowBookingPanel] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState<Date | null>(null);
   const [selectedServiceType, setSelectedServiceType] = useState<string | null>(null);
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
+  const [selectedSignOffMode, setSelectedSignOffMode] = useState<string | null>(null);
   const [searchClient, setSearchClient] = useState("");
 
   // Inline session details state (NO MODALS)
@@ -72,6 +83,23 @@ export default function TrainerCalendar() {
   const [reschedulingSessionId, setReschedulingSessionId] = useState<string | null>(null);
   const [rescheduleDate, setRescheduleDate] = useState<string>("");
   const [rescheduleTime, setRescheduleTime] = useState<string>("");
+
+  // Session setup panel state (for starting sessions without template/mode)
+  const [showSessionSetupPanel, setShowSessionSetupPanel] = useState(false);
+  const [setupSessionId, setSetupSessionId] = useState<string | null>(null);
+  const [setupTemplateId, setSetupTemplateId] = useState<string | null>(null);
+  const [setupSignOffMode, setSetupSignOffMode] = useState<SignOffMode | null>(null);
+
+  // Block time panel state
+  const [showBlockTimePanel, setShowBlockTimePanel] = useState(false);
+  const [blockRecurrence, setBlockRecurrence] = useState<RecurrenceType>('once');
+  const [blockDate, setBlockDate] = useState<string>('');
+  const [blockEndDate, setBlockEndDate] = useState<string>('');
+  const [blockDayOfWeek, setBlockDayOfWeek] = useState<number>(1);
+  const [blockStartTime, setBlockStartTime] = useState<string>('09:00');
+  const [blockEndTime, setBlockEndTime] = useState<string>('17:00');
+  const [blockReason, setBlockReason] = useState<BlockReasonType>('personal');
+  const [blockNotes, setBlockNotes] = useState<string>('');
 
   // Mark as mounted on client
   useEffect(() => {
@@ -189,7 +217,69 @@ export default function TrainerCalendar() {
     setShowBookingPanel(false);
     setSelectedSlot(null);
     setSelectedServiceType(null);
+    setSelectedTemplateId(null);
+    setSelectedSignOffMode(null);
     setSearchClient("");
+  };
+
+  // Open block time panel
+  const openBlockTimePanel = () => {
+    const today = new Date();
+    const dateStr = today.toISOString().split('T')[0];
+    setBlockDate(dateStr);
+    setBlockEndDate(dateStr);
+    setBlockDayOfWeek(today.getDay() || 1);
+    setBlockRecurrence('once');
+    setBlockStartTime('09:00');
+    setBlockEndTime('17:00');
+    setBlockReason('personal');
+    setBlockNotes('');
+    setShowBlockTimePanel(true);
+  };
+
+  // Close block time panel
+  const closeBlockTimePanel = () => {
+    setShowBlockTimePanel(false);
+  };
+
+  // Create blocked time period
+  const handleCreateBlock = () => {
+    const [startHour, startMinute] = blockStartTime.split(':').map(Number);
+    const [endHour, endMinute] = blockEndTime.split(':').map(Number);
+
+    // Validation
+    if (blockRecurrence === 'once' && !blockDate) {
+      toast({
+        variant: "destructive",
+        title: "Missing Date",
+        description: "Please select a date for the blocked period",
+      });
+      return;
+    }
+
+    const newBlock = {
+      id: `block_${Date.now()}`,
+      blockType: 'blocked' as const,
+      dayOfWeek: blockRecurrence === 'weekly' ? blockDayOfWeek : new Date(blockDate).getDay(),
+      startHour,
+      startMinute,
+      endHour,
+      endMinute,
+      recurrence: blockRecurrence,
+      specificDate: blockRecurrence === 'once' ? blockDate : undefined,
+      endDate: blockRecurrence === 'once' && blockEndDate && blockEndDate !== blockDate ? blockEndDate : undefined,
+      reason: blockReason,
+      notes: blockNotes || undefined,
+    };
+
+    addBlock(newBlock);
+
+    toast({
+      title: "Time Blocked",
+      description: `Blocked ${blockRecurrence === 'weekly' ? 'weekly' : 'on ' + blockDate} from ${blockStartTime} to ${blockEndTime}`,
+    });
+
+    closeBlockTimePanel();
   };
 
   // Create booking (instructor-led as per guide)
@@ -248,6 +338,8 @@ export default function TrainerCalendar() {
       status: "confirmed",
       serviceTypeId: serviceType.id,
       workoutId: null,
+      templateId: selectedTemplateId || null,
+      signOffMode: (selectedSignOffMode as SignOffMode) || undefined,
     };
 
     // Update sessions
@@ -277,12 +369,19 @@ export default function TrainerCalendar() {
     const session = sessions.find((s) => s.id === sessionId);
     if (!session) return;
 
-    updateSession(sessionId, { status: "checked-in" });
-
-    toast({
-      title: "Session Started",
-      description: `${session.clientName} checked in`,
-    });
+    // Check if session has template and sign-off mode
+    if (session.templateId && session.signOffMode) {
+      // Navigate directly to session start page with pre-filled params
+      router.push(
+        `/trainer/sessions/new?clientId=${session.clientId}&templateId=${session.templateId}&signOffMode=${session.signOffMode}`
+      );
+    } else {
+      // Show setup panel to select template and sign-off mode
+      setSetupSessionId(sessionId);
+      setSetupTemplateId(null);
+      setSetupSignOffMode(null);
+      setShowSessionSetupPanel(true);
+    }
   };
 
   // Complete session
@@ -470,6 +569,43 @@ export default function TrainerCalendar() {
 
     setReschedulingSessionId(null);
     setExpandedSessionId(null);
+  };
+
+  // Close session setup panel
+  const closeSessionSetupPanel = () => {
+    setShowSessionSetupPanel(false);
+    setSetupSessionId(null);
+    setSetupTemplateId(null);
+    setSetupSignOffMode(null);
+  };
+
+  // Confirm session setup and start
+  const confirmSessionSetup = () => {
+    if (!setupSessionId || !setupTemplateId || !setupSignOffMode) {
+      toast({
+        variant: "destructive",
+        title: "Incomplete Setup",
+        description: "Please select both template and sign-off mode",
+      });
+      return;
+    }
+
+    const session = sessions.find((s) => s.id === setupSessionId);
+    if (!session) return;
+
+    // Update the calendar session with selected template and sign-off mode
+    updateSession(setupSessionId, {
+      templateId: setupTemplateId,
+      signOffMode: setupSignOffMode,
+    });
+
+    // Navigate to session start page
+    router.push(
+      `/trainer/sessions/new?clientId=${session.clientId}&templateId=${setupTemplateId}&signOffMode=${setupSignOffMode}`
+    );
+
+    // Close setup panel
+    closeSessionSetupPanel();
   };
 
   // Accept booking request
@@ -1168,6 +1304,7 @@ export default function TrainerCalendar() {
                       const date = weekDates[dayIndex];
                       const slotTime = new Date(date);
                       slotTime.setHours(hour, 0, 0, 0);
+                      const isBlocked = isTimeBlocked(slotTime, trainerAvailability);
                       const isAvailable = isWithinAvailability(slotTime, trainerAvailability);
 
                       return (
@@ -1175,13 +1312,23 @@ export default function TrainerCalendar() {
                           key={dayIndex}
                           className={cn(
                             "rounded border transition-colors relative",
-                            isAvailable
+                            isBlocked
+                              ? "bg-red-100 dark:bg-red-900/20 border-red-300 dark:border-red-800 cursor-not-allowed bg-[repeating-linear-gradient(45deg,_transparent,_transparent_10px,_rgba(239,68,68,0.1)_10px,_rgba(239,68,68,0.1)_20px)]"
+                              : isAvailable
                               ? "bg-gray-50 dark:bg-gray-700 border-wondrous-grey-light dark:border-gray-600 hover:bg-blue-50 dark:hover:bg-gray-600 cursor-pointer"
                               : "bg-gray-200 dark:bg-gray-600 border-gray-300 dark:border-gray-500 cursor-not-allowed opacity-40"
                           )}
-                          onClick={() => isAvailable && handleQuickSlotClick(slotTime)}
-                          title={!isAvailable ? "Trainer not available" : "Click to book"}
-                        />
+                          onClick={() => (isAvailable && !isBlocked) && handleQuickSlotClick(slotTime)}
+                          title={isBlocked ? "Time blocked" : !isAvailable ? "Trainer not available" : "Click to book"}
+                        >
+                          {isBlocked && (
+                            <div className="absolute inset-0 flex items-center justify-center">
+                              <span className="text-[8px] lg:text-[10px] font-semibold text-red-600 dark:text-red-400 bg-white/80 dark:bg-gray-900/80 px-1 rounded">
+                                BLOCKED
+                              </span>
+                            </div>
+                          )}
+                        </div>
                       );
                     })}
                   </div>
@@ -1446,11 +1593,11 @@ export default function TrainerCalendar() {
             animate={{ y: 0 }}
             exit={{ y: "100%" }}
             transition={{ type: "spring", damping: 30, stiffness: 300 }}
-            className="fixed bottom-0 left-0 right-0 z-40 bg-white dark:bg-gray-800 rounded-t-3xl shadow-2xl lg:hidden max-h-[85vh] overflow-y-auto border-t-4 border-wondrous-magenta"
+            className="fixed bottom-0 left-0 right-0 z-40 bg-white dark:bg-gray-800 rounded-t-3xl shadow-2xl border-t-4 border-wondrous-magenta lg:left-1/2 lg:-translate-x-1/2 lg:w-[600px] lg:max-w-[90vw] lg:bottom-4 lg:rounded-3xl max-h-[90vh] lg:max-h-[85vh] overflow-hidden flex flex-col"
           >
-            <div className="p-5">
-              {/* Header */}
-              <div className="flex items-center justify-between mb-4">
+            {/* Header - Fixed */}
+            <div className="flex-shrink-0 p-5 pb-3 border-b border-gray-200 dark:border-gray-700">
+              <div className="flex items-center justify-between">
                 <div>
                   <h3 className="text-xl font-bold text-wondrous-grey-dark dark:text-gray-100">
                     Book Session
@@ -1466,7 +1613,10 @@ export default function TrainerCalendar() {
                   <X size={24} />
                 </button>
               </div>
+            </div>
 
+            {/* Scrollable Content */}
+            <div className="flex-1 overflow-y-auto p-5 pt-4">
               {/* Service Type Selection - INLINE */}
               <div className="mb-4">
                 <div className="text-xs font-semibold mb-2 text-wondrous-grey-dark dark:text-gray-200">
@@ -1511,6 +1661,123 @@ export default function TrainerCalendar() {
                   ))}
                 </div>
               </div>
+
+              {/* Workout Template Selection - OPTIONAL */}
+              <div className="mb-4">
+                <div className="text-xs font-semibold mb-2 text-wondrous-grey-dark dark:text-gray-200">
+                  Workout Template <span className="text-gray-400 font-normal">(Optional)</span>
+                </div>
+                <div className="grid grid-cols-1 gap-2 max-h-[200px] overflow-y-auto">
+                  <button
+                    onClick={() => {
+                      setSelectedTemplateId(null);
+                      setSelectedSignOffMode(null);
+                    }}
+                    className={cn(
+                      "border-2 rounded-xl p-3 text-left hover:opacity-90 transition-all",
+                      !selectedTemplateId
+                        ? "bg-gray-200 dark:bg-gray-700 border-gray-400 dark:border-gray-600"
+                        : "bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600"
+                    )}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                        No Template - Set Later
+                      </div>
+                      {!selectedTemplateId && (
+                        <CheckCircle size={20} className="text-gray-600 dark:text-gray-400" />
+                      )}
+                    </div>
+                  </button>
+                  {templates.map((template) => (
+                    <button
+                      key={template.id}
+                      onClick={() => setSelectedTemplateId(template.id)}
+                      className={cn(
+                        "border-2 rounded-xl p-3 text-left hover:opacity-90 transition-all",
+                        selectedTemplateId === template.id
+                          ? "bg-wondrous-magenta border-wondrous-magenta text-white"
+                          : "bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600"
+                      )}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <div className={cn(
+                            "font-semibold text-sm",
+                            selectedTemplateId === template.id
+                              ? "text-white"
+                              : "text-gray-900 dark:text-gray-100"
+                          )}>
+                            {template.name}
+                          </div>
+                          <div className={cn(
+                            "text-xs",
+                            selectedTemplateId === template.id
+                              ? "text-white/80"
+                              : "text-gray-600 dark:text-gray-400"
+                          )}>
+                            {template.blocks.length} blocks • {template.type === 'resistance_only' ? 'Resistance Only' : 'Standard'}
+                          </div>
+                        </div>
+                        {selectedTemplateId === template.id && (
+                          <CheckCircle size={20} />
+                        )}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Sign-Off Mode Selection - Only if template selected */}
+              {selectedTemplateId && (
+                <div className="mb-4">
+                  <div className="text-xs font-semibold mb-2 text-wondrous-grey-dark dark:text-gray-200">
+                    Sign-Off Mode
+                  </div>
+                  <div className="grid grid-cols-1 gap-2">
+                    {([
+                      { value: 'per_exercise', label: 'Per Exercise', desc: 'Sign off after each exercise' },
+                      { value: 'per_block', label: 'Per Block', desc: 'Sign off after each block' },
+                      { value: 'full_session', label: 'Full Session', desc: 'Sign off at the end' },
+                    ] as const).map((mode) => (
+                      <button
+                        key={mode.value}
+                        onClick={() => setSelectedSignOffMode(mode.value)}
+                        className={cn(
+                          "border-2 rounded-xl p-3 text-left hover:opacity-90 transition-all",
+                          selectedSignOffMode === mode.value
+                            ? "bg-blue-500 border-blue-500 text-white"
+                            : "bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600"
+                        )}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <div className={cn(
+                              "font-semibold text-sm",
+                              selectedSignOffMode === mode.value
+                                ? "text-white"
+                                : "text-gray-900 dark:text-gray-100"
+                            )}>
+                              {mode.label}
+                            </div>
+                            <div className={cn(
+                              "text-xs",
+                              selectedSignOffMode === mode.value
+                                ? "text-white/80"
+                                : "text-gray-600 dark:text-gray-400"
+                            )}>
+                              {mode.desc}
+                            </div>
+                          </div>
+                          {selectedSignOffMode === mode.value && (
+                            <CheckCircle size={20} />
+                          )}
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* Client Search - INLINE */}
               <div className="mb-3 relative">
@@ -1632,10 +1899,13 @@ export default function TrainerCalendar() {
                   );
                 })}
               </div>
+            </div>
 
+            {/* Fixed Footer with Button */}
+            <div className="flex-shrink-0 p-5 pt-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
               <Button
                 variant="outline"
-                className="w-full mt-3"
+                className="w-full"
                 onClick={closeBookingPanel}
               >
                 Cancel
@@ -1645,13 +1915,404 @@ export default function TrainerCalendar() {
         )}
       </AnimatePresence>
 
-      {/* Floating Action Button */}
-      <button
-        onClick={() => handleQuickSlotClick(new Date())}
-        className="fixed bottom-24 right-6 lg:bottom-6 w-14 h-14 rounded-full bg-wondrous-magenta text-white text-2xl shadow-lg hover:shadow-xl hover:bg-wondrous-magenta-alt transition-all flex items-center justify-center z-30"
-      >
-        <Plus size={28} />
-      </button>
+      {/* INLINE Session Setup Panel (NO MODAL) */}
+      <AnimatePresence>
+        {showSessionSetupPanel && setupSessionId && (
+          <motion.div
+            initial={{ y: "100%" }}
+            animate={{ y: 0 }}
+            exit={{ y: "100%" }}
+            transition={{ type: "spring", damping: 30, stiffness: 300 }}
+            className="fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-gray-800 rounded-t-3xl shadow-2xl border-t-4 border-wondrous-primary lg:left-1/2 lg:-translate-x-1/2 lg:w-[600px] lg:max-w-[90vw] lg:bottom-4 lg:rounded-3xl max-h-[90vh] lg:max-h-[85vh] overflow-hidden flex flex-col"
+          >
+            {/* Header - Fixed */}
+            <div className="flex-shrink-0 p-5 pb-3 border-b border-gray-200 dark:border-gray-700">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-xl font-bold text-wondrous-grey-dark dark:text-gray-100">
+                    Setup Session
+                  </h3>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Select template and sign-off mode to start
+                  </p>
+                </div>
+                <button
+                  onClick={closeSessionSetupPanel}
+                  className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full"
+                >
+                  <X size={24} />
+                </button>
+              </div>
+            </div>
+
+            {/* Scrollable Content */}
+            <div className="flex-1 overflow-y-auto p-5 pt-4">
+              {/* Workout Template Selection - REQUIRED */}
+              <div className="mb-4">
+                <div className="text-xs font-semibold mb-2 text-wondrous-grey-dark dark:text-gray-200">
+                  Workout Template <span className="text-red-500">*</span>
+                </div>
+                <div className="grid grid-cols-1 gap-2 max-h-[250px] overflow-y-auto">
+                  {templates.map((template) => (
+                    <button
+                      key={template.id}
+                      onClick={() => setSetupTemplateId(template.id)}
+                      className={cn(
+                        "border-2 rounded-xl p-3 text-left hover:opacity-90 transition-all",
+                        setupTemplateId === template.id
+                          ? "bg-wondrous-magenta border-wondrous-magenta text-white"
+                          : "bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600"
+                      )}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <div className={cn(
+                            "font-semibold text-sm",
+                            setupTemplateId === template.id
+                              ? "text-white"
+                              : "text-gray-900 dark:text-gray-100"
+                          )}>
+                            {template.name}
+                          </div>
+                          <div className={cn(
+                            "text-xs",
+                            setupTemplateId === template.id
+                              ? "text-white/80"
+                              : "text-gray-600 dark:text-gray-400"
+                          )}>
+                            {template.blocks.length} blocks • {template.type === 'resistance_only' ? 'Resistance Only' : 'Standard'}
+                          </div>
+                        </div>
+                        {setupTemplateId === template.id && (
+                          <CheckCircle size={20} />
+                        )}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Sign-Off Mode Selection - REQUIRED */}
+              {setupTemplateId && (
+                <div className="mb-4">
+                  <div className="text-xs font-semibold mb-2 text-wondrous-grey-dark dark:text-gray-200">
+                    Sign-Off Mode <span className="text-red-500">*</span>
+                  </div>
+                  <div className="grid grid-cols-1 gap-2">
+                    {([
+                      { value: 'per_exercise' as const, label: 'Per Exercise', desc: 'Sign off after each exercise' },
+                      { value: 'per_block' as const, label: 'Per Block', desc: 'Sign off after each block' },
+                      { value: 'full_session' as const, label: 'Full Session', desc: 'Sign off at the end' },
+                    ]).map((mode) => (
+                      <button
+                        key={mode.value}
+                        onClick={() => setSetupSignOffMode(mode.value)}
+                        className={cn(
+                          "border-2 rounded-xl p-3 text-left hover:opacity-90 transition-all",
+                          setupSignOffMode === mode.value
+                            ? "bg-blue-500 border-blue-500 text-white"
+                            : "bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600"
+                        )}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <div className={cn(
+                              "font-semibold text-sm",
+                              setupSignOffMode === mode.value
+                                ? "text-white"
+                                : "text-gray-900 dark:text-gray-100"
+                            )}>
+                              {mode.label}
+                            </div>
+                            <div className={cn(
+                              "text-xs",
+                              setupSignOffMode === mode.value
+                                ? "text-white/80"
+                                : "text-gray-600 dark:text-gray-400"
+                            )}>
+                              {mode.desc}
+                            </div>
+                          </div>
+                          {setupSignOffMode === mode.value && (
+                            <CheckCircle size={20} />
+                          )}
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Fixed Footer with Buttons */}
+            <div className="flex-shrink-0 p-5 pt-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  onClick={closeSessionSetupPanel}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  className="flex-1 bg-wondrous-primary hover:bg-wondrous-primary/90"
+                  onClick={confirmSessionSetup}
+                  disabled={!setupTemplateId || !setupSignOffMode}
+                >
+                  Start Session
+                </Button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* INLINE Block Time Panel (NO MODAL) */}
+      <AnimatePresence>
+        {showBlockTimePanel && (
+          <motion.div
+            initial={{ y: "100%" }}
+            animate={{ y: 0 }}
+            exit={{ y: "100%" }}
+            transition={{ type: "spring", damping: 30, stiffness: 300 }}
+            className="fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-gray-800 rounded-t-3xl shadow-2xl border-t-4 border-red-500 lg:left-1/2 lg:-translate-x-1/2 lg:w-[600px] lg:max-w-[90vw] lg:bottom-4 lg:rounded-3xl max-h-[90vh] lg:max-h-[85vh] overflow-hidden flex flex-col"
+          >
+            {/* Header - Fixed */}
+            <div className="flex-shrink-0 p-5 pb-3 border-b border-gray-200 dark:border-gray-700">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-xl font-bold text-wondrous-grey-dark dark:text-gray-100">
+                    Block Time
+                  </h3>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Mark time as unavailable
+                  </p>
+                </div>
+                <button
+                  onClick={closeBlockTimePanel}
+                  className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full"
+                >
+                  <X size={24} />
+                </button>
+              </div>
+            </div>
+
+            {/* Scrollable Content */}
+            <div className="flex-1 overflow-y-auto p-5 pt-4">
+              {/* Recurrence Type Selection */}
+              <div className="mb-4">
+                <div className="text-xs font-semibold mb-2 text-wondrous-grey-dark dark:text-gray-200">
+                  Recurrence Type
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    onClick={() => setBlockRecurrence('once')}
+                    className={cn(
+                      "border-2 rounded-xl p-3 text-left hover:opacity-90 transition-all",
+                      blockRecurrence === 'once'
+                        ? "bg-red-500 border-red-500 text-white"
+                        : "bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600"
+                    )}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="font-semibold text-sm">One-Time</div>
+                      {blockRecurrence === 'once' && <CheckCircle size={20} />}
+                    </div>
+                  </button>
+                  <button
+                    onClick={() => setBlockRecurrence('weekly')}
+                    className={cn(
+                      "border-2 rounded-xl p-3 text-left hover:opacity-90 transition-all",
+                      blockRecurrence === 'weekly'
+                        ? "bg-red-500 border-red-500 text-white"
+                        : "bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600"
+                    )}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="font-semibold text-sm">Weekly</div>
+                      {blockRecurrence === 'weekly' && <CheckCircle size={20} />}
+                    </div>
+                  </button>
+                </div>
+              </div>
+
+              {/* One-Time: Date Selection */}
+              {blockRecurrence === 'once' && (
+                <>
+                  <div className="mb-4">
+                    <label className="text-xs font-semibold mb-2 block text-wondrous-grey-dark dark:text-gray-200">
+                      Start Date
+                    </label>
+                    <Input
+                      type="date"
+                      value={blockDate}
+                      onChange={(e) => setBlockDate(e.target.value)}
+                      className="border-2 border-wondrous-grey-light"
+                    />
+                  </div>
+                  <div className="mb-4">
+                    <label className="text-xs font-semibold mb-2 block text-wondrous-grey-dark dark:text-gray-200">
+                      End Date <span className="text-gray-400 font-normal">(Optional - for multi-day blocks)</span>
+                    </label>
+                    <Input
+                      type="date"
+                      value={blockEndDate}
+                      onChange={(e) => setBlockEndDate(e.target.value)}
+                      className="border-2 border-wondrous-grey-light"
+                      min={blockDate}
+                    />
+                  </div>
+                </>
+              )}
+
+              {/* Weekly: Day of Week Selection */}
+              {blockRecurrence === 'weekly' && (
+                <div className="mb-4">
+                  <div className="text-xs font-semibold mb-2 text-wondrous-grey-dark dark:text-gray-200">
+                    Day of Week
+                  </div>
+                  <div className="grid grid-cols-4 gap-2">
+                    {[
+                      { value: 1, label: 'Mon' },
+                      { value: 2, label: 'Tue' },
+                      { value: 3, label: 'Wed' },
+                      { value: 4, label: 'Thu' },
+                      { value: 5, label: 'Fri' },
+                      { value: 6, label: 'Sat' },
+                      { value: 0, label: 'Sun' },
+                    ].map((day) => (
+                      <button
+                        key={day.value}
+                        onClick={() => setBlockDayOfWeek(day.value)}
+                        className={cn(
+                          "border-2 rounded-lg p-2 text-xs font-semibold hover:opacity-90 transition-all",
+                          blockDayOfWeek === day.value
+                            ? "bg-red-500 border-red-500 text-white"
+                            : "bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600"
+                        )}
+                      >
+                        {day.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Time Range */}
+              <div className="mb-4">
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs font-semibold mb-2 block text-wondrous-grey-dark dark:text-gray-200">
+                      Start Time
+                    </label>
+                    <Input
+                      type="time"
+                      value={blockStartTime}
+                      onChange={(e) => setBlockStartTime(e.target.value)}
+                      className="border-2 border-wondrous-grey-light"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold mb-2 block text-wondrous-grey-dark dark:text-gray-200">
+                      End Time
+                    </label>
+                    <Input
+                      type="time"
+                      value={blockEndTime}
+                      onChange={(e) => setBlockEndTime(e.target.value)}
+                      className="border-2 border-wondrous-grey-light"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Reason Selection */}
+              <div className="mb-4">
+                <div className="text-xs font-semibold mb-2 text-wondrous-grey-dark dark:text-gray-200">
+                  Reason
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  {([
+                    { value: 'personal', label: 'Personal' },
+                    { value: 'vacation', label: 'Vacation' },
+                    { value: 'training', label: 'Training' },
+                    { value: 'admin', label: 'Admin' },
+                  ] as const).map((reason) => (
+                    <button
+                      key={reason.value}
+                      onClick={() => setBlockReason(reason.value)}
+                      className={cn(
+                        "border-2 rounded-xl p-3 text-left hover:opacity-90 transition-all",
+                        blockReason === reason.value
+                          ? "bg-gray-700 border-gray-700 text-white"
+                          : "bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600"
+                      )}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="font-semibold text-sm">{reason.label}</div>
+                        {blockReason === reason.value && <CheckCircle size={20} />}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Notes */}
+              <div className="mb-4">
+                <label className="text-xs font-semibold mb-2 block text-wondrous-grey-dark dark:text-gray-200">
+                  Notes <span className="text-gray-400 font-normal">(Optional)</span>
+                </label>
+                <Input
+                  type="text"
+                  value={blockNotes}
+                  onChange={(e) => setBlockNotes(e.target.value)}
+                  placeholder="e.g., Doctor appointment, Team meeting..."
+                  className="border-2 border-wondrous-grey-light"
+                />
+              </div>
+            </div>
+
+            {/* Fixed Footer with Buttons */}
+            <div className="flex-shrink-0 p-5 pt-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
+              <div className="flex gap-2">
+                <Button
+                  onClick={closeBlockTimePanel}
+                  variant="outline"
+                  className="flex-1"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleCreateBlock}
+                  className="flex-1 bg-red-500 hover:bg-red-600"
+                >
+                  Block Time
+                </Button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Floating Action Buttons */}
+      <div className="fixed bottom-24 right-6 lg:bottom-6 flex flex-col gap-3 z-30">
+        {/* Block Time Button */}
+        <button
+          onClick={openBlockTimePanel}
+          className="w-14 h-14 rounded-full bg-red-500 text-white shadow-lg hover:shadow-xl hover:bg-red-600 transition-all flex items-center justify-center"
+          aria-label="Block time"
+        >
+          <CalendarX size={24} />
+        </button>
+        {/* Book Session Button */}
+        <button
+          onClick={() => handleQuickSlotClick(new Date())}
+          className="w-14 h-14 rounded-full bg-wondrous-magenta text-white shadow-lg hover:shadow-xl hover:bg-wondrous-magenta-alt transition-all flex items-center justify-center"
+          aria-label="Book session"
+        >
+          <Plus size={28} />
+        </button>
+      </div>
     </div>
   );
 }
