@@ -37,7 +37,6 @@ const MUSCLE_GROUPS: MuscleGroup[] = [
   'triceps',
   'forearms',
   'full_body',
-  'neck',
   'stretch',
 ];
 
@@ -109,7 +108,7 @@ export function ExerciseLibrary({
 
   return (
     <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
-      <DialogContent className="max-w-4xl max-h-[80vh] flex flex-col">
+      <DialogContent className="max-w-4xl max-h-[85vh] sm:max-h-[80vh] flex flex-col">
         <DialogHeader>
           <div className="flex items-center gap-2">
             {selectedExercise && (
@@ -355,7 +354,7 @@ export function ExerciseLibrary({
             </div>
 
             {/* Actions */}
-            <div className="flex gap-2 pt-2">
+            <div className="flex gap-2 pt-2 pb-20 lg:pb-2">
               <Button variant="outline" onClick={handleBack} className="flex-1">
                 Back
               </Button>

@@ -128,7 +128,7 @@ export function ServiceFormDialog({ open, onClose, onSave, service }: ServiceFor
 
   return (
     <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto dark:bg-gray-800 dark:border-gray-700">
+      <DialogContent className="max-w-2xl max-h-[85vh] sm:max-h-[90vh] flex flex-col dark:bg-gray-800 dark:border-gray-700">
         <DialogHeader>
           <DialogTitle className="dark:text-gray-100">
             {isEditing ? 'Edit Service' : 'Add New Service'}
@@ -140,7 +140,7 @@ export function ServiceFormDialog({ open, onClose, onSave, service }: ServiceFor
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4 py-4">
+        <div className="flex-1 overflow-y-auto space-y-4 py-4">
           {/* Name */}
           <div>
             <Label htmlFor="name">Service Name *</Label>
@@ -304,7 +304,7 @@ export function ServiceFormDialog({ open, onClose, onSave, service }: ServiceFor
           </div>
         </div>
 
-        <DialogFooter className="flex-row gap-3 sm:gap-2">
+        <DialogFooter className="flex-row gap-3 sm:gap-2 pb-20 lg:pb-0">
           <Button type="button" variant="outline" onClick={onClose} className="flex-1 sm:flex-initial dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700">
             Cancel
           </Button>

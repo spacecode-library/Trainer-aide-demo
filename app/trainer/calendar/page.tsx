@@ -2299,7 +2299,7 @@ export default function TrainerCalendar() {
         {/* Block Time Button */}
         <button
           onClick={openBlockTimePanel}
-          className="w-14 h-14 rounded-full bg-red-500 text-white shadow-lg hover:shadow-xl hover:bg-red-600 transition-all flex items-center justify-center"
+          className="w-14 h-14 rounded-full bg-gray-300 text-gray-700 shadow-lg hover:shadow-xl hover:bg-gray-400 transition-all flex items-center justify-center"
           aria-label="Block time"
         >
           <CalendarX size={24} />
@@ -2307,7 +2307,7 @@ export default function TrainerCalendar() {
         {/* Book Session Button */}
         <button
           onClick={() => handleQuickSlotClick(new Date())}
-          className="w-14 h-14 rounded-full bg-wondrous-magenta text-white shadow-lg hover:shadow-xl hover:bg-wondrous-magenta-alt transition-all flex items-center justify-center"
+          className="w-14 h-14 rounded-full bg-wondrous-orange text-white shadow-lg hover:shadow-xl hover:bg-amber-500 transition-all flex items-center justify-center"
           aria-label="Book session"
         >
           <Plus size={28} />

@@ -60,7 +60,7 @@ export function SessionCompletionModal({
 
   return (
     <Dialog open={open} onOpenChange={() => {}}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl max-h-[85vh] sm:max-h-[90vh] flex flex-col">
         <DialogHeader>
           <div className="flex items-center gap-2 mb-2">
             <CheckCircle2 className="text-green-600" size={28} />
@@ -71,7 +71,7 @@ export function SessionCompletionModal({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-6 py-4">
+        <div className="flex-1 overflow-y-auto space-y-6 py-4">
           {/* Session Summary */}
           <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 space-y-2">
             <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-3">Session Summary</h3>
@@ -169,7 +169,7 @@ export function SessionCompletionModal({
         </div>
 
         {/* Actions */}
-        <div className="flex gap-3 pt-4 border-t">
+        <div className="flex gap-3 pt-4 pb-20 lg:pb-0 mt-auto border-t">
           <Button
             onClick={handleComplete}
             disabled={!overallRpe || !trainerDeclaration}

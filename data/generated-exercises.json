@@ -1,22 +1,5 @@
 [
   {
-    "id": "ex_core_foldername",
-    "exerciseId": "folder_name",
-    "name": "Folder_name",
-    "category": "core",
-    "level": "intermediate",
-    "instructions": [
-      "Start in proper position",
-      "Perform the exercise with control",
-      "Maintain proper form throughout",
-      "Return to starting position"
-    ],
-    "modifications": [],
-    "commonMistakes": [],
-    "startImageUrl": null,
-    "endImageUrl": null
-  },
-  {
     "id": "ex_core_3_4_sit",
     "exerciseId": "3-4-sit-up",
     "name": "3 4 Sit Up",
@@ -363,7 +346,7 @@
     "id": "ex_core_alternating_hang_clean",
     "exerciseId": "alternating-hang-clean",
     "name": "Alternating Hang Clean",
-    "category": "core",
+    "category": "full_body",
     "level": "intermediate",
     "instructions": [
       "Start in proper position",
@@ -802,7 +785,7 @@
     "endImageUrl": null
   },
   {
-    "id": "ex_core_band_good_morning",
+    "id": "core_band-good-morning-pull-through",
     "exerciseId": "band-good-morning-pull-through",
     "name": "Band Good Morning Pull Through",
     "category": "core",
@@ -903,7 +886,7 @@
     "endImageUrl": null
   },
   {
-    "id": "ex_core_barbell_ab_rollout",
+    "id": "core_barbell-ab-rollout-on-knees",
     "exerciseId": "barbell-ab-rollout-on-knees",
     "name": "Barbell Ab Rollout On Knees",
     "category": "core",
@@ -1487,7 +1470,7 @@
     "endImageUrl": null
   },
   {
-    "id": "ex_chest_bench_press_with",
+    "id": "chest_bench-press-with-chains",
     "exerciseId": "bench-press-with-chains",
     "name": "Bench Press With Chains",
     "category": "chest",
@@ -1663,7 +1646,7 @@
     "endImageUrl": null
   },
   {
-    "id": "ex_back_bent_over_two",
+    "id": "back_bent-over-two-dumbbell-row",
     "exerciseId": "bent-over-two-dumbbell-row",
     "name": "Bent Over Two Dumbbell Row",
     "category": "back",
@@ -1681,7 +1664,7 @@
     "endImageUrl": null
   },
   {
-    "id": "ex_back_bent_over_two",
+    "id": "back_bent-over-two-dumbbell-row-with-palms-in",
     "exerciseId": "bent-over-two-dumbbell-row-with-palms-in",
     "name": "Bent Over Two Dumbbell Row With Palms In",
     "category": "back",
@@ -1911,7 +1894,7 @@
     "id": "ex_core_bottoms_up_clean",
     "exerciseId": "bottoms-up-clean-from-the-hang-position",
     "name": "Bottoms Up Clean From The Hang Position",
-    "category": "core",
+    "category": "full_body",
     "level": "intermediate",
     "instructions": [
       "Start in proper position",
@@ -1994,7 +1977,7 @@
     "endImageUrl": null
   },
   {
-    "id": "ex_legs_box_squat_with",
+    "id": "legs_box-squat-with-chains",
     "exerciseId": "box-squat-with-chains",
     "name": "Box Squat With Chains",
     "category": "legs",
@@ -2513,7 +2496,7 @@
     "id": "ex_biceps_cable_wrist_curl",
     "exerciseId": "cable-wrist-curl",
     "name": "Cable Wrist Curl",
-    "category": "biceps",
+    "category": "forearms",
     "equipment": "Cable Machine",
     "level": "intermediate",
     "instructions": [
@@ -3029,7 +3012,7 @@
     "id": "ex_core_clean",
     "exerciseId": "clean",
     "name": "Clean",
-    "category": "core",
+    "category": "full_body",
     "level": "intermediate",
     "instructions": [
       "Start in proper position",
@@ -3046,7 +3029,7 @@
     "id": "ex_core_clean_and_jerk",
     "exerciseId": "clean-and-jerk",
     "name": "Clean And Jerk",
-    "category": "core",
+    "category": "full_body",
     "level": "intermediate",
     "instructions": [
       "Start in proper position",
@@ -3063,7 +3046,7 @@
     "id": "ex_core_clean_and_press",
     "exerciseId": "clean-and-press",
     "name": "Clean And Press",
-    "category": "core",
+    "category": "full_body",
     "level": "intermediate",
     "instructions": [
       "Start in proper position",
@@ -3097,7 +3080,7 @@
     "id": "ex_core_clean_from_blocks",
     "exerciseId": "clean-from-blocks",
     "name": "Clean From Blocks",
-    "category": "core",
+    "category": "full_body",
     "level": "intermediate",
     "instructions": [
       "Start in proper position",
@@ -3114,7 +3097,7 @@
     "id": "ex_core_clean_pull",
     "exerciseId": "clean-pull",
     "name": "Clean Pull",
-    "category": "core",
+    "category": "full_body",
     "level": "intermediate",
     "instructions": [
       "Start in proper position",
@@ -3131,7 +3114,7 @@
     "id": "ex_core_clean_shrug",
     "exerciseId": "clean-shrug",
     "name": "Clean Shrug",
-    "category": "core",
+    "category": "full_body",
     "level": "intermediate",
     "instructions": [
       "Start in proper position",
@@ -3215,7 +3198,7 @@
     "endImageUrl": null
   },
   {
-    "id": "ex_biceps_close_grip_e",
+    "id": "biceps_close-grip-e-z-bar-curl-with-band",
     "exerciseId": "close-grip-e-z-bar-curl-with-band",
     "name": "Close Grip E Z Bar Curl With Band",
     "category": "biceps",
@@ -3930,7 +3913,7 @@
     "id": "ex_core_double_kettlebell_snatch",
     "exerciseId": "double-kettlebell-snatch",
     "name": "Double Kettlebell Snatch",
-    "category": "core",
+    "category": "full_body",
     "equipment": "Kettlebell",
     "level": "intermediate",
     "instructions": [
@@ -4067,7 +4050,7 @@
     "endImageUrl": null
   },
   {
-    "id": "ex_chest_dumbbell_bench_press",
+    "id": "chest_dumbbell-bench-press-with-neutral-grip",
     "exerciseId": "dumbbell-bench-press-with-neutral-grip",
     "name": "Dumbbell Bench Press With Neutral Grip",
     "category": "chest",
@@ -4106,7 +4089,7 @@
     "id": "ex_core_dumbbell_clean",
     "exerciseId": "dumbbell-clean",
     "name": "Dumbbell Clean",
-    "category": "core",
+    "category": "full_body",
     "equipment": "Dumbbell",
     "level": "intermediate",
     "instructions": [
@@ -4797,7 +4780,7 @@
     "endImageUrl": null
   },
   {
-    "id": "ex_core_external_rotation_with",
+    "id": "core_external-rotation-with-cable",
     "exerciseId": "external-rotation-with-cable",
     "name": "External Rotation With Cable",
     "category": "core",
@@ -4903,7 +4886,7 @@
     "id": "ex_biceps_finger_curls",
     "exerciseId": "finger-curls",
     "name": "Finger Curls",
-    "category": "biceps",
+    "category": "forearms",
     "level": "intermediate",
     "instructions": [
       "Start in proper position",
@@ -5177,7 +5160,7 @@
     "endImageUrl": null
   },
   {
-    "id": "ex_legs_front_barbell_squat",
+    "id": "legs_front-barbell-squat-to-a-bench",
     "exerciseId": "front-barbell-squat-to-a-bench",
     "name": "Front Barbell Squat To A Bench",
     "category": "legs",
@@ -5673,7 +5656,7 @@
     "id": "ex_core_hang_clean",
     "exerciseId": "hang-clean",
     "name": "Hang Clean",
-    "category": "core",
+    "category": "full_body",
     "level": "intermediate",
     "instructions": [
       "Start in proper position",
@@ -5690,7 +5673,7 @@
     "id": "ex_core_hang_clean_below",
     "exerciseId": "hang-clean-below-the-knees",
     "name": "Hang Clean Below The Knees",
-    "category": "core",
+    "category": "full_body",
     "level": "intermediate",
     "instructions": [
       "Start in proper position",
@@ -5758,7 +5741,7 @@
     "id": "ex_core_hang_snatch",
     "exerciseId": "hang-snatch",
     "name": "Hang Snatch",
-    "category": "core",
+    "category": "full_body",
     "level": "intermediate",
     "instructions": [
       "Start in proper position",
@@ -5775,7 +5758,7 @@
     "id": "ex_core_hang_snatch_below",
     "exerciseId": "hang-snatch-below-knees",
     "name": "Hang Snatch Below Knees",
-    "category": "core",
+    "category": "full_body",
     "level": "intermediate",
     "instructions": [
       "Start in proper position",
@@ -5792,7 +5775,7 @@
     "id": "ex_core_heaving_snatch_balance",
     "exerciseId": "heaving-snatch-balance",
     "name": "Heaving Snatch Balance",
-    "category": "core",
+    "category": "full_body",
     "level": "intermediate",
     "instructions": [
       "Start in proper position",
@@ -6159,7 +6142,7 @@
     "endImageUrl": null
   },
   {
-    "id": "ex_chest_incline_dumbbell_flyes",
+    "id": "chest_incline-dumbbell-flyes-with-a-twist",
     "exerciseId": "incline-dumbbell-flyes-with-a-twist",
     "name": "Incline Dumbbell Flyes With A Twist",
     "category": "chest",
@@ -6246,7 +6229,7 @@
     "endImageUrl": null
   },
   {
-    "id": "ex_chest_incline_push_up",
+    "id": "chest_incline-push-up-close-grip",
     "exerciseId": "incline-push-up-close-grip",
     "name": "Incline Push Up Close Grip",
     "category": "chest",
@@ -6280,7 +6263,7 @@
     "endImageUrl": null
   },
   {
-    "id": "ex_chest_incline_push_up",
+    "id": "chest_incline-push-up-medium",
     "exerciseId": "incline-push-up-medium",
     "name": "Incline Push Up Medium",
     "category": "chest",
@@ -6297,7 +6280,7 @@
     "endImageUrl": null
   },
   {
-    "id": "ex_chest_incline_push_up",
+    "id": "chest_incline-push-up-reverse-grip",
     "exerciseId": "incline-push-up-reverse-grip",
     "name": "Incline Push Up Reverse Grip",
     "category": "chest",
@@ -6314,7 +6297,7 @@
     "endImageUrl": null
   },
   {
-    "id": "ex_chest_incline_push_up",
+    "id": "chest_incline-push-up-wide",
     "exerciseId": "incline-push-up-wide",
     "name": "Incline Push Up Wide",
     "category": "chest",
@@ -6695,7 +6678,7 @@
     "id": "ex_core_kettlebell_dead_clean",
     "exerciseId": "kettlebell-dead-clean",
     "name": "Kettlebell Dead Clean",
-    "category": "core",
+    "category": "full_body",
     "equipment": "Kettlebell",
     "level": "intermediate",
     "instructions": [
@@ -6731,7 +6714,7 @@
     "id": "ex_core_kettlebell_hang_clean",
     "exerciseId": "kettlebell-hang-clean",
     "name": "Kettlebell Hang Clean",
-    "category": "core",
+    "category": "full_body",
     "equipment": "Kettlebell",
     "level": "intermediate",
     "instructions": [
@@ -6875,7 +6858,7 @@
     "id": "ex_core_kettlebell_thruster",
     "exerciseId": "kettlebell-thruster",
     "name": "Kettlebell Thruster",
-    "category": "core",
+    "category": "full_body",
     "equipment": "Kettlebell",
     "level": "intermediate",
     "instructions": [
@@ -6893,7 +6876,7 @@
     "id": "ex_legs_kettlebell_turkish_get",
     "exerciseId": "kettlebell-turkish-get-up-lunge-style",
     "name": "Kettlebell Turkish Get Up Lunge Style",
-    "category": "legs",
+    "category": "full_body",
     "equipment": "Kettlebell",
     "level": "intermediate",
     "instructions": [
@@ -6908,10 +6891,10 @@
     "endImageUrl": null
   },
   {
-    "id": "ex_legs_kettlebell_turkish_get",
+    "id": "full_body_kettlebell-turkish-get-up-squat-style",
     "exerciseId": "kettlebell-turkish-get-up-squat-style",
     "name": "Kettlebell Turkish Get Up Squat Style",
-    "category": "legs",
+    "category": "full_body",
     "equipment": "Kettlebell",
     "level": "intermediate",
     "instructions": [
@@ -7836,7 +7819,7 @@
     "endImageUrl": null
   },
   {
-    "id": "ex_triceps_lying_close_grip",
+    "id": "triceps_lying-close-grip-barbell-triceps-press-to-chin",
     "exerciseId": "lying-close-grip-barbell-triceps-press-to-chin",
     "name": "Lying Close Grip Barbell Triceps Press To Chin",
     "category": "triceps",
@@ -8345,7 +8328,7 @@
     "id": "ex_core_mountain_climbers",
     "exerciseId": "mountain-climbers",
     "name": "Mountain Climbers",
-    "category": "core",
+    "category": "full_body",
     "level": "intermediate",
     "instructions": [
       "Start in proper position",
@@ -8379,7 +8362,7 @@
     "id": "ex_core_muscle_snatch",
     "exerciseId": "muscle-snatch",
     "name": "Muscle Snatch",
-    "category": "core",
+    "category": "full_body",
     "level": "intermediate",
     "instructions": [
       "Start in proper position",
@@ -8739,7 +8722,7 @@
     "endImageUrl": null
   },
   {
-    "id": "ex_core_one_arm_kettlebell",
+    "id": "core_one-arm-kettlebell-clean-and-jerk",
     "exerciseId": "one-arm-kettlebell-clean-and-jerk",
     "name": "One Arm Kettlebell Clean And Jerk",
     "category": "core",
@@ -8757,7 +8740,7 @@
     "endImageUrl": null
   },
   {
-    "id": "ex_core_one_arm_kettlebell",
+    "id": "core_one-arm-kettlebell-floor-press",
     "exerciseId": "one-arm-kettlebell-floor-press",
     "name": "One Arm Kettlebell Floor Press",
     "category": "core",
@@ -8775,7 +8758,7 @@
     "endImageUrl": null
   },
   {
-    "id": "ex_core_one_arm_kettlebell",
+    "id": "core_one-arm-kettlebell-jerk",
     "exerciseId": "one-arm-kettlebell-jerk",
     "name": "One Arm Kettlebell Jerk",
     "category": "core",
@@ -8811,7 +8794,7 @@
     "endImageUrl": null
   },
   {
-    "id": "ex_core_one_arm_kettlebell",
+    "id": "core_one-arm-kettlebell-para-press",
     "exerciseId": "one-arm-kettlebell-para-press",
     "name": "One Arm Kettlebell Para Press",
     "category": "core",
@@ -8829,7 +8812,7 @@
     "endImageUrl": null
   },
   {
-    "id": "ex_core_one_arm_kettlebell",
+    "id": "core_one-arm-kettlebell-push-press",
     "exerciseId": "one-arm-kettlebell-push-press",
     "name": "One Arm Kettlebell Push Press",
     "category": "core",
@@ -8865,7 +8848,7 @@
     "endImageUrl": null
   },
   {
-    "id": "ex_core_one_arm_kettlebell",
+    "id": "core_one-arm-kettlebell-snatch",
     "exerciseId": "one-arm-kettlebell-snatch",
     "name": "One Arm Kettlebell Snatch",
     "category": "core",
@@ -8883,7 +8866,7 @@
     "endImageUrl": null
   },
   {
-    "id": "ex_core_one_arm_kettlebell",
+    "id": "core_one-arm-kettlebell-split-jerk",
     "exerciseId": "one-arm-kettlebell-split-jerk",
     "name": "One Arm Kettlebell Split Jerk",
     "category": "core",
@@ -8901,7 +8884,7 @@
     "endImageUrl": null
   },
   {
-    "id": "ex_core_one_arm_kettlebell",
+    "id": "core_one-arm-kettlebell-split-snatch",
     "exerciseId": "one-arm-kettlebell-split-snatch",
     "name": "One Arm Kettlebell Split Snatch",
     "category": "core",
@@ -8919,7 +8902,7 @@
     "endImageUrl": null
   },
   {
-    "id": "ex_core_one_arm_kettlebell",
+    "id": "core_one-arm-kettlebell-swings",
     "exerciseId": "one-arm-kettlebell-swings",
     "name": "One Arm Kettlebell Swings",
     "category": "core",
@@ -9391,7 +9374,7 @@
     "id": "ex_biceps_palms_down_dumbbell",
     "exerciseId": "palms-down-dumbbell-wrist-curl-over-a-bench",
     "name": "Palms Down Dumbbell Wrist Curl Over A Bench",
-    "category": "biceps",
+    "category": "forearms",
     "equipment": "Dumbbell",
     "level": "intermediate",
     "instructions": [
@@ -9409,7 +9392,7 @@
     "id": "ex_biceps_palms_down_wrist",
     "exerciseId": "palms-down-wrist-curl-over-a-bench",
     "name": "Palms Down Wrist Curl Over A Bench",
-    "category": "biceps",
+    "category": "forearms",
     "equipment": "Bench",
     "level": "intermediate",
     "instructions": [
@@ -9427,7 +9410,7 @@
     "id": "ex_biceps_palms_up_barbell",
     "exerciseId": "palms-up-barbell-wrist-curl-over-a-bench",
     "name": "Palms Up Barbell Wrist Curl Over A Bench",
-    "category": "biceps",
+    "category": "forearms",
     "equipment": "Barbell",
     "level": "intermediate",
     "instructions": [
@@ -9445,7 +9428,7 @@
     "id": "ex_biceps_palms_up_dumbbell",
     "exerciseId": "palms-up-dumbbell-wrist-curl-over-a-bench",
     "name": "Palms Up Dumbbell Wrist Curl Over A Bench",
-    "category": "biceps",
+    "category": "forearms",
     "equipment": "Dumbbell",
     "level": "intermediate",
     "instructions": [
@@ -9732,7 +9715,7 @@
     "id": "ex_core_power_clean",
     "exerciseId": "power-clean",
     "name": "Power Clean",
-    "category": "core",
+    "category": "full_body",
     "level": "intermediate",
     "instructions": [
       "Start in proper position",
@@ -9749,7 +9732,7 @@
     "id": "ex_core_power_clean_from",
     "exerciseId": "power-clean-from-blocks",
     "name": "Power Clean From Blocks",
-    "category": "core",
+    "category": "full_body",
     "level": "intermediate",
     "instructions": [
       "Start in proper position",
@@ -9800,7 +9783,7 @@
     "id": "ex_core_power_snatch",
     "exerciseId": "power-snatch",
     "name": "Power Snatch",
-    "category": "core",
+    "category": "full_body",
     "level": "intermediate",
     "instructions": [
       "Start in proper position",
@@ -9817,7 +9800,7 @@
     "id": "ex_core_power_snatch_from",
     "exerciseId": "power-snatch-from-blocks",
     "name": "Power Snatch From Blocks",
-    "category": "core",
+    "category": "full_body",
     "level": "intermediate",
     "instructions": [
       "Start in proper position",
@@ -10070,7 +10053,7 @@
     "endImageUrl": null
   },
   {
-    "id": "ex_chest_push_ups_with",
+    "id": "chest_push-ups-with-feet-on-an-exercise-ball",
     "exerciseId": "push-ups-with-feet-on-an-exercise-ball",
     "name": "Push Ups With Feet On An Exercise Ball",
     "category": "chest",
@@ -11068,7 +11051,7 @@
     "endImageUrl": null
   },
   {
-    "id": "ex_triceps_seated_bent_over",
+    "id": "triceps_seated-bent-over-two-arm-dumbbell-triceps-extension",
     "exerciseId": "seated-bent-over-two-arm-dumbbell-triceps-extension",
     "name": "Seated Bent Over Two Arm Dumbbell Triceps Extension",
     "category": "triceps",
@@ -11230,7 +11213,7 @@
     "id": "ex_biceps_seated_dumbbell_palms",
     "exerciseId": "seated-dumbbell-palms-down-wrist-curl",
     "name": "Seated Dumbbell Palms Down Wrist Curl",
-    "category": "biceps",
+    "category": "forearms",
     "equipment": "Dumbbell",
     "level": "intermediate",
     "instructions": [
@@ -11245,10 +11228,10 @@
     "endImageUrl": null
   },
   {
-    "id": "ex_biceps_seated_dumbbell_palms",
+    "id": "forearms_seated-dumbbell-palms-up-wrist-curl",
     "exerciseId": "seated-dumbbell-palms-up-wrist-curl",
     "name": "Seated Dumbbell Palms Up Wrist Curl",
-    "category": "biceps",
+    "category": "forearms",
     "equipment": "Dumbbell",
     "level": "intermediate",
     "instructions": [
@@ -11473,7 +11456,7 @@
     "id": "ex_biceps_seated_one_arm",
     "exerciseId": "seated-one-arm-dumbbell-palms-down-wrist-curl",
     "name": "Seated One Arm Dumbbell Palms Down Wrist Curl",
-    "category": "biceps",
+    "category": "forearms",
     "equipment": "Dumbbell",
     "level": "intermediate",
     "instructions": [
@@ -11488,10 +11471,10 @@
     "endImageUrl": null
   },
   {
-    "id": "ex_biceps_seated_one_arm",
+    "id": "forearms_seated-one-arm-dumbbell-palms-up-wrist-curl",
     "exerciseId": "seated-one-arm-dumbbell-palms-up-wrist-curl",
     "name": "Seated One Arm Dumbbell Palms Up Wrist Curl",
-    "category": "biceps",
+    "category": "forearms",
     "equipment": "Dumbbell",
     "level": "intermediate",
     "instructions": [
@@ -11526,7 +11509,7 @@
     "id": "ex_biceps_seated_palms_down",
     "exerciseId": "seated-palms-down-barbell-wrist-curl",
     "name": "Seated Palms Down Barbell Wrist Curl",
-    "category": "biceps",
+    "category": "forearms",
     "equipment": "Barbell",
     "level": "intermediate",
     "instructions": [
@@ -11544,7 +11527,7 @@
     "id": "ex_biceps_seated_palm_up",
     "exerciseId": "seated-palm-up-barbell-wrist-curl",
     "name": "Seated Palm Up Barbell Wrist Curl",
-    "category": "biceps",
+    "category": "forearms",
     "equipment": "Barbell",
     "level": "intermediate",
     "instructions": [
@@ -11596,7 +11579,7 @@
     "id": "ex_biceps_seated_two_arm",
     "exerciseId": "seated-two-arm-palms-up-low-pulley-wrist-curl",
     "name": "Seated Two Arm Palms Up Low Pulley Wrist Curl",
-    "category": "biceps",
+    "category": "forearms",
     "level": "intermediate",
     "instructions": [
       "Start in proper position",
@@ -11900,7 +11883,7 @@
     "endImageUrl": null
   },
   {
-    "id": "ex_core_side_to_side",
+    "id": "core_side-to-side-chins",
     "exerciseId": "side-to-side-chins",
     "name": "Side To Side Chins",
     "category": "core",
@@ -11920,7 +11903,7 @@
     "id": "ex_core_side_wrist_pull",
     "exerciseId": "side-wrist-pull",
     "name": "Side Wrist Pull",
-    "category": "core",
+    "category": "forearms",
     "level": "intermediate",
     "instructions": [
       "Start in proper position",
@@ -12670,7 +12653,7 @@
     "id": "ex_core_snatch",
     "exerciseId": "snatch",
     "name": "Snatch",
-    "category": "core",
+    "category": "full_body",
     "level": "intermediate",
     "instructions": [
       "Start in proper position",
@@ -12687,7 +12670,7 @@
     "id": "ex_core_snatch_balance",
     "exerciseId": "snatch-balance",
     "name": "Snatch Balance",
-    "category": "core",
+    "category": "full_body",
     "level": "intermediate",
     "instructions": [
       "Start in proper position",
@@ -12721,7 +12704,7 @@
     "id": "ex_core_snatch_from_blocks",
     "exerciseId": "snatch-from-blocks",
     "name": "Snatch From Blocks",
-    "category": "core",
+    "category": "full_body",
     "level": "intermediate",
     "instructions": [
       "Start in proper position",
@@ -12738,7 +12721,7 @@
     "id": "ex_core_snatch_pull",
     "exerciseId": "snatch-pull",
     "name": "Snatch Pull",
-    "category": "core",
+    "category": "full_body",
     "level": "intermediate",
     "instructions": [
       "Start in proper position",
@@ -12755,7 +12738,7 @@
     "id": "ex_core_snatch_shrug",
     "exerciseId": "snatch-shrug",
     "name": "Snatch Shrug",
-    "category": "core",
+    "category": "full_body",
     "level": "intermediate",
     "instructions": [
       "Start in proper position",
@@ -12892,7 +12875,7 @@
     "id": "ex_core_split_clean",
     "exerciseId": "split-clean",
     "name": "Split Clean",
-    "category": "core",
+    "category": "full_body",
     "level": "intermediate",
     "instructions": [
       "Start in proper position",
@@ -12943,7 +12926,7 @@
     "id": "ex_core_split_snatch",
     "exerciseId": "split-snatch",
     "name": "Split Snatch",
-    "category": "core",
+    "category": "full_body",
     "level": "intermediate",
     "instructions": [
       "Start in proper position",
@@ -13168,7 +13151,7 @@
     "endImageUrl": null
   },
   {
-    "id": "ex_triceps_standing_bent_over",
+    "id": "triceps_standing-bent-over-two-arm-dumbbell-triceps-extension",
     "exerciseId": "standing-bent-over-two-arm-dumbbell-triceps-extension",
     "name": "Standing Bent Over Two Arm Dumbbell Triceps Extension",
     "category": "triceps",
@@ -13784,7 +13767,7 @@
     "id": "ex_back_standing_palms_up",
     "exerciseId": "standing-palms-up-barbell-behind-the-back-wrist-curl",
     "name": "Standing Palms Up Barbell Behind The Back Wrist Curl",
-    "category": "back",
+    "category": "forearms",
     "equipment": "Barbell",
     "level": "intermediate",
     "instructions": [
@@ -14146,7 +14129,7 @@
     "endImageUrl": null
   },
   {
-    "id": "ex_back_sumo_deadlift_with",
+    "id": "back_sumo-deadlift-with-chains",
     "exerciseId": "sumo-deadlift-with-chains",
     "name": "Sumo Deadlift With Chains",
     "category": "back",
@@ -14676,7 +14659,7 @@
     "endImageUrl": null
   },
   {
-    "id": "ex_core_two_arm_kettlebell",
+    "id": "core_two-arm-kettlebell-jerk",
     "exerciseId": "two-arm-kettlebell-jerk",
     "name": "Two Arm Kettlebell Jerk",
     "category": "core",
@@ -15115,7 +15098,7 @@
     "endImageUrl": null
   },
   {
-    "id": "ex_chest_wide_grip_decline",
+    "id": "chest_wide-grip-decline-barbell-pullover",
     "exerciseId": "wide-grip-decline-barbell-pullover",
     "name": "Wide Grip Decline Barbell Pullover",
     "category": "chest",
@@ -15291,7 +15274,7 @@
     "id": "ex_core_wrist_circles",
     "exerciseId": "wrist-circles",
     "name": "Wrist Circles",
-    "category": "core",
+    "category": "forearms",
     "level": "intermediate",
     "instructions": [
       "Start in proper position",
@@ -15308,7 +15291,7 @@
     "id": "ex_core_wrist_roller",
     "exerciseId": "wrist-roller",
     "name": "Wrist Roller",
-    "category": "core",
+    "category": "forearms",
     "level": "intermediate",
     "instructions": [
       "Start in proper position",
@@ -15325,7 +15308,7 @@
     "id": "ex_core_wrist_rotations_with",
     "exerciseId": "wrist-rotations-with-straight-bar",
     "name": "Wrist Rotations With Straight Bar",
-    "category": "core",
+    "category": "forearms",
     "level": "intermediate",
     "instructions": [
       "Start in proper position",
