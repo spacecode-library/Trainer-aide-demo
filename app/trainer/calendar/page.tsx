@@ -93,6 +93,7 @@ export default function TrainerCalendar() {
   // Block time panel state
   const [showBlockTimePanel, setShowBlockTimePanel] = useState(false);
   const [blockRecurrence, setBlockRecurrence] = useState<RecurrenceType>('once');
+  const [blockMakeRecurring, setBlockMakeRecurring] = useState<boolean>(false);
   const [blockDate, setBlockDate] = useState<string>('');
   const [blockEndDate, setBlockEndDate] = useState<string>('');
   const [blockDayOfWeek, setBlockDayOfWeek] = useState<number>(1);
@@ -257,26 +258,36 @@ export default function TrainerCalendar() {
       return;
     }
 
+    // Determine effective recurrence: if makeRecurring is enabled in one-time mode, treat as weekly
+    const effectiveRecurrence = (blockRecurrence === 'once' && blockMakeRecurring) ? 'weekly' : blockRecurrence;
+    const blockDayFromDate = blockDate ? new Date(blockDate).getDay() : 1;
+
     const newBlock = {
       id: `block_${Date.now()}`,
       blockType: 'blocked' as const,
-      dayOfWeek: blockRecurrence === 'weekly' ? blockDayOfWeek : new Date(blockDate).getDay(),
+      dayOfWeek: effectiveRecurrence === 'weekly' ?
+                 (blockRecurrence === 'weekly' ? blockDayOfWeek : blockDayFromDate) :
+                 blockDayFromDate,
       startHour,
       startMinute,
       endHour,
       endMinute,
-      recurrence: blockRecurrence,
-      specificDate: blockRecurrence === 'once' ? blockDate : undefined,
-      endDate: blockRecurrence === 'once' && blockEndDate && blockEndDate !== blockDate ? blockEndDate : undefined,
+      recurrence: effectiveRecurrence,
+      specificDate: effectiveRecurrence === 'once' ? blockDate : undefined,
+      endDate: effectiveRecurrence === 'once' && blockEndDate && blockEndDate !== blockDate ? blockEndDate : undefined,
       reason: blockReason,
       notes: blockNotes || undefined,
     };
 
     addBlock(newBlock);
 
+    const description = effectiveRecurrence === 'weekly'
+      ? `Blocked weekly from ${blockStartTime} to ${blockEndTime}`
+      : `Blocked on ${blockDate} from ${blockStartTime} to ${blockEndTime}`;
+
     toast({
       title: "Time Blocked",
-      description: `Blocked ${blockRecurrence === 'weekly' ? 'weekly' : 'on ' + blockDate} from ${blockStartTime} to ${blockEndTime}`,
+      description,
     });
 
     closeBlockTimePanel();
@@ -2075,7 +2086,7 @@ export default function TrainerCalendar() {
             animate={{ y: 0 }}
             exit={{ y: "100%" }}
             transition={{ type: "spring", damping: 30, stiffness: 300 }}
-            className="fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-gray-800 rounded-t-3xl shadow-2xl border-t-4 border-red-500 lg:left-1/2 lg:-translate-x-1/2 lg:w-[600px] lg:max-w-[90vw] lg:bottom-4 lg:rounded-3xl max-h-[90vh] lg:max-h-[85vh] overflow-hidden flex flex-col"
+            className="fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-gray-800 rounded-t-3xl shadow-2xl border-t-4 border-wondrous-magenta lg:left-1/2 lg:-translate-x-1/2 lg:w-[600px] lg:max-w-[90vw] lg:bottom-4 lg:rounded-3xl max-h-[90vh] lg:max-h-[85vh] overflow-hidden flex flex-col"
           >
             {/* Header - Fixed */}
             <div className="flex-shrink-0 p-5 pb-3 border-b border-gray-200 dark:border-gray-700">
@@ -2110,7 +2121,7 @@ export default function TrainerCalendar() {
                     className={cn(
                       "border-2 rounded-xl p-3 text-left hover:opacity-90 transition-all",
                       blockRecurrence === 'once'
-                        ? "bg-red-500 border-red-500 text-white"
+                        ? "bg-wondrous-magenta border-wondrous-magenta text-white"
                         : "bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600"
                     )}
                   >
@@ -2124,7 +2135,7 @@ export default function TrainerCalendar() {
                     className={cn(
                       "border-2 rounded-xl p-3 text-left hover:opacity-90 transition-all",
                       blockRecurrence === 'weekly'
-                        ? "bg-red-500 border-red-500 text-white"
+                        ? "bg-wondrous-magenta border-wondrous-magenta text-white"
                         : "bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600"
                     )}
                   >
@@ -2162,6 +2173,24 @@ export default function TrainerCalendar() {
                       min={blockDate}
                     />
                   </div>
+                  <div className="mb-4">
+                    <label className="flex items-center gap-3 cursor-pointer p-3 rounded-lg border-2 border-gray-300 dark:border-gray-600 hover:border-wondrous-magenta dark:hover:border-wondrous-magenta transition-colors">
+                      <input
+                        type="checkbox"
+                        checked={blockMakeRecurring}
+                        onChange={(e) => setBlockMakeRecurring(e.target.checked)}
+                        className="w-5 h-5 rounded border-gray-300 text-wondrous-magenta focus:ring-wondrous-magenta"
+                      />
+                      <div className="flex-1">
+                        <div className="text-sm font-semibold text-wondrous-grey-dark dark:text-gray-200">
+                          Make Recurring
+                        </div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400">
+                          Repeat this block every week on the same day
+                        </div>
+                      </div>
+                    </label>
+                  </div>
                 </>
               )}
 
@@ -2187,7 +2216,7 @@ export default function TrainerCalendar() {
                         className={cn(
                           "border-2 rounded-lg p-2 text-xs font-semibold hover:opacity-90 transition-all",
                           blockDayOfWeek === day.value
-                            ? "bg-red-500 border-red-500 text-white"
+                            ? "bg-wondrous-magenta border-wondrous-magenta text-white"
                             : "bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600"
                         )}
                       >
@@ -2231,12 +2260,11 @@ export default function TrainerCalendar() {
                 <div className="text-xs font-semibold mb-2 text-wondrous-grey-dark dark:text-gray-200">
                   Reason
                 </div>
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-3 gap-2">
                   {([
                     { value: 'personal', label: 'Personal' },
-                    { value: 'vacation', label: 'Vacation' },
-                    { value: 'training', label: 'Training' },
                     { value: 'admin', label: 'Admin' },
+                    { value: 'break', label: 'Break' },
                   ] as const).map((reason) => (
                     <button
                       key={reason.value}
@@ -2284,7 +2312,7 @@ export default function TrainerCalendar() {
                 </Button>
                 <Button
                   onClick={handleCreateBlock}
-                  className="flex-1 bg-red-500 hover:bg-red-600"
+                  className="flex-1 bg-wondrous-magenta hover:bg-wondrous-magenta-alt"
                 >
                   Block Time
                 </Button>

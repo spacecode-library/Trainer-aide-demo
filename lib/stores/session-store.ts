@@ -3,6 +3,7 @@ import { persist } from 'zustand/middleware';
 import { Session, SessionBlock, SessionExercise } from '@/lib/types';
 import { MOCK_SESSIONS } from '@/lib/mock-data';
 import { useTimerStore } from './timer-store';
+import { useUserStore } from './user-store';
 
 interface SessionState {
   sessions: Session[];
@@ -16,6 +17,7 @@ interface SessionState {
   updateSession: (sessionId: string, updates: Partial<Session>) => void;
   completeSession: (sessionId: string, overallRpe: number, privateNotes: string, publicNotes: string, trainerDeclaration: boolean) => void;
   deleteSession: (sessionId: string) => void;
+  clearAllSessions: () => void;
 
   // Block management
   updateBlock: (sessionId: string, blockId: string, updates: Partial<SessionBlock>) => void;
@@ -109,6 +111,11 @@ export const useSessionStore = create<SessionState>()(
         activeSessionId: state.activeSessionId === sessionId ? null : state.activeSessionId,
       })),
 
+      clearAllSessions: () => set({
+        sessions: [],
+        activeSessionId: null,
+      }),
+
       updateBlock: (sessionId, blockId, updates) => set((state) => ({
         sessions: state.sessions.map(s =>
           s.id === sessionId
@@ -180,20 +187,24 @@ export const useSessionStore = create<SessionState>()(
       })),
 
       getSessionById: (sessionId) => {
-        return get().sessions.find(s => s.id === sessionId);
+        const currentUserId = useUserStore.getState().currentUser.id;
+        return get().sessions.find(s => s.id === sessionId && s.trainerId === currentUserId);
       },
 
       getActiveSession: () => {
         const { sessions, activeSessionId } = get();
-        return sessions.find(s => s.id === activeSessionId);
+        const currentUserId = useUserStore.getState().currentUser.id;
+        return sessions.find(s => s.id === activeSessionId && s.trainerId === currentUserId);
       },
 
       getCompletedSessions: () => {
-        return get().sessions.filter(s => s.completed);
+        const currentUserId = useUserStore.getState().currentUser.id;
+        return get().sessions.filter(s => s.completed && s.trainerId === currentUserId);
       },
 
       getInProgressSessions: () => {
-        return get().sessions.filter(s => !s.completed);
+        const currentUserId = useUserStore.getState().currentUser.id;
+        return get().sessions.filter(s => !s.completed && s.trainerId === currentUserId);
       },
     }),
     {

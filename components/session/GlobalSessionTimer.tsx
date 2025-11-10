@@ -4,17 +4,25 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSessionStore } from '@/lib/stores/session-store';
 import { useTimerStore } from '@/lib/stores/timer-store';
+import { useUserStore } from '@/lib/stores/user-store';
 import { Clock, ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils/cn';
 
 export function GlobalSessionTimer() {
   const router = useRouter();
+  const { currentUser, currentRole } = useUserStore();
   const { activeSessionId, getSessionById } = useSessionStore();
   const { sessionId: timerSessionId, getSecondsLeft, isTimerActive } = useTimerStore();
   const [secondsLeft, setSecondsLeft] = useState(0);
 
   const activeSession = activeSessionId ? getSessionById(activeSessionId) : null;
-  const shouldShowTimer = isTimerActive() && timerSessionId && activeSession && !activeSession.completed;
+
+  // Only show timer if session belongs to current user
+  const shouldShowTimer = isTimerActive() &&
+                          timerSessionId &&
+                          activeSession &&
+                          !activeSession.completed &&
+                          activeSession.trainerId === currentUser.id;
 
   // Update timer display every second
   useEffect(() => {
@@ -42,12 +50,16 @@ export function GlobalSessionTimer() {
   };
 
   const handleClick = () => {
-    router.push(`/trainer/sessions/${timerSessionId}`);
+    // Role-aware navigation
+    const basePath = currentRole === 'studio_owner' ? '/studio-owner' :
+                     currentRole === 'solo_practitioner' ? '/solo' :
+                     '/trainer';
+    router.push(`${basePath}/sessions/${timerSessionId}`);
   };
 
   return (
     <div
-      className="fixed bottom-20 lg:bottom-8 right-4 z-40 cursor-pointer"
+      className="fixed bottom-20 lg:bottom-8 right-4 z-50 cursor-pointer"
       onClick={handleClick}
     >
       <div className="bg-white dark:bg-gray-800 border-2 border-wondrous-primary dark:border-wondrous-primary shadow-lg rounded-lg p-3 hover:shadow-xl transition-shadow">

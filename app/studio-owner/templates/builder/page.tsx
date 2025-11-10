@@ -46,6 +46,10 @@ function TemplateBuilderContent() {
   // Exercise image viewer state
   const [viewingExerciseId, setViewingExerciseId] = useState<string | null>(null);
 
+  // Track unsaved changes for sticky save bar
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [initialState, setInitialState] = useState<string>('');
+
   // Load existing template if editing
   useEffect(() => {
     if (templateId) {
@@ -61,6 +65,41 @@ function TemplateBuilderContent() {
       }
     }
   }, [templateId, templates]);
+
+  // Capture initial state after template loads
+  useEffect(() => {
+    const state = JSON.stringify({
+      templateName,
+      description,
+      templateType,
+      defaultSignOffMode,
+      alertIntervalMinutes,
+      isDefault,
+      blocks,
+    });
+
+    // Only set initial state once (when we have actual data)
+    if (!initialState && (templateName || blocks.some(b => b.exercises.length > 0))) {
+      setInitialState(state);
+    }
+  }, [templateId]); // Only run when templateId changes or on mount
+
+  // Track changes
+  useEffect(() => {
+    if (!initialState) return; // Wait for initial state to be set
+
+    const currentState = JSON.stringify({
+      templateName,
+      description,
+      templateType,
+      defaultSignOffMode,
+      alertIntervalMinutes,
+      isDefault,
+      blocks,
+    });
+
+    setHasUnsavedChanges(currentState !== initialState);
+  }, [templateName, description, templateType, defaultSignOffMode, alertIntervalMinutes, isDefault, blocks, initialState]);
 
   const handleAddBlock = () => {
     const newBlock: WorkoutBlock = {
@@ -234,6 +273,9 @@ function TemplateBuilderContent() {
     } else {
       addTemplate(template);
     }
+
+    // Clear unsaved changes flag
+    setHasUnsavedChanges(false);
 
     router.push('/studio-owner/templates');
   };
@@ -564,6 +606,28 @@ function TemplateBuilderContent() {
         onSelect={handleAddExercise}
         filterCardioOnly={requireCardio}
       />
+
+      {/* Sticky Bottom Save Bar - Only show when there are unsaved changes */}
+      {hasUnsavedChanges && (
+        <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 z-50 px-4 py-3 shadow-lg">
+          <div className="flex gap-3 max-w-7xl mx-auto">
+            <Button
+              variant="outline"
+              onClick={() => router.back()}
+              className="flex-1 sm:flex-initial dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSave}
+              className="flex-1 sm:flex-initial bg-wondrous-magenta hover:bg-wondrous-magenta-alt"
+            >
+              <Save size={18} className="mr-2" />
+              Save Changes
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

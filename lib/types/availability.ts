@@ -2,7 +2,7 @@
 
 export type BlockType = 'available' | 'blocked';
 export type RecurrenceType = 'once' | 'weekly';
-export type BlockReasonType = 'vacation' | 'personal' | 'training' | 'admin' | 'other';
+export type BlockReasonType = 'personal' | 'admin' | 'break' | 'other';
 
 export interface AvailabilityBlock {
   id: string;

@@ -95,7 +95,7 @@ export default function SoloPractitionerDashboard() {
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-heading-2 dark:text-gray-100">Quick Actions</h2>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
+        <div className="grid grid-cols-3 gap-3 md:gap-4">
           <Link href="/solo/sessions/new" className="group">
             <div className="relative overflow-hidden backdrop-blur-md bg-white/90 dark:bg-gray-800/90 border border-blue-200/50 dark:border-blue-800/50 rounded-xl lg:rounded-2xl p-4 lg:p-6 hover:shadow-lg active:scale-[0.98] transition-all duration-200 cursor-pointer">
               <div className="absolute top-0 right-0 w-24 h-24 lg:w-32 lg:h-32 bg-gradient-to-bl from-blue-500/10 to-transparent opacity-50" />

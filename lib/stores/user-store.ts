@@ -43,12 +43,23 @@ export const useUserStore = create<UserState>()(
         return false;
       },
 
-      // Logout - clears user data
-      logout: () => set({
-        currentUser: DEFAULT_USER,
-        currentRole: DEFAULT_USER.role,
-        isAuthenticated: false,
-      }),
+      // Logout - clears user data, sessions, and timer
+      logout: () => {
+        // Import stores here to avoid circular dependencies
+        const { useSessionStore } = require('./session-store');
+        const { useTimerStore } = require('./timer-store');
+
+        // Clear sessions and timer
+        useSessionStore.getState().clearAllSessions();
+        useTimerStore.getState().clearTimer();
+
+        // Clear user data
+        set({
+          currentUser: DEFAULT_USER,
+          currentRole: DEFAULT_USER.role,
+          isAuthenticated: false,
+        });
+      },
 
       reset: () => set({
         currentUser: DEFAULT_USER,
