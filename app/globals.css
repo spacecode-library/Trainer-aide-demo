@@ -130,28 +130,4 @@
   .btn-lg {
     @apply px-6 py-3 text-lg;
   }
-
-  /* Card System - WITH DARK MODE SUPPORT */
-  .card {
-    @apply bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm;
-    @apply transition-shadow duration-200;
-  }
-
-  .card:hover {
-    @apply shadow-md;
-  }
-
-  .card-interactive {
-    @apply card cursor-pointer;
-    @apply hover:shadow-lg hover:-translate-y-1;
-    @apply active:scale-[0.99];
-  }
-
-  .card-stat {
-    @apply card p-6;
-  }
-
-  .card-accent {
-    @apply card border-l-4 border-l-wondrous-primary;
-  }
 }

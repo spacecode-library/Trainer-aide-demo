@@ -9,7 +9,7 @@ export const MOCK_TEMPLATES: WorkoutTemplate[] = [
     name: '=Results First Session',
     description: 'Go-to workout for new clients. Balanced full-body routine.',
     type: 'standard',
-    createdBy: 'user_owner_1',
+    createdBy: '11111111-1111-1111-1111-111111111111',
     assignedStudios: ['studio_1', 'studio_2', 'studio_3'],
     blocks: [
       {
@@ -221,7 +221,7 @@ export const MOCK_TEMPLATES: WorkoutTemplate[] = [
     name: 'Resistance Only Power Hour',
     description: 'Pure strength training - no cardio, all resistance.',
     type: 'resistance_only',
-    createdBy: 'user_owner_1',
+    createdBy: '11111111-1111-1111-1111-111111111111',
     assignedStudios: ['studio_1'],
     blocks: [
       {
@@ -319,7 +319,7 @@ export const MOCK_TEMPLATES: WorkoutTemplate[] = [
     name: 'Advanced HIIT Blast',
     description: 'High-intensity interval training for experienced clients.',
     type: 'standard',
-    createdBy: 'user_owner_1',
+    createdBy: '11111111-1111-1111-1111-111111111111',
     assignedStudios: ['studio_1', 'studio_2'],
     blocks: [
       {

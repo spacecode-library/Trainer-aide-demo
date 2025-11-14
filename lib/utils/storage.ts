@@ -28,30 +28,6 @@ export function loadFromStorage<T>(key: string): T | null {
   }
 }
 
-export function removeFromStorage(key: string): boolean {
-  if (typeof window === 'undefined') return false;
-
-  try {
-    localStorage.removeItem(key);
-    return true;
-  } catch (error) {
-    console.error(`Error removing from localStorage (key: ${key}):`, error);
-    return false;
-  }
-}
-
-export function clearStorage(): boolean {
-  if (typeof window === 'undefined') return false;
-
-  try {
-    localStorage.clear();
-    return true;
-  } catch (error) {
-    console.error('Error clearing localStorage:', error);
-    return false;
-  }
-}
-
 // Storage keys
 export const STORAGE_KEYS = {
   USER_ROLE: 'trainer_aide_user_role',

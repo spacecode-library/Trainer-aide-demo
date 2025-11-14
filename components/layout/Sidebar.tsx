@@ -17,6 +17,7 @@ import {
   ChevronRight,
   LogOut,
   Clock,
+  Sparkles,
 } from 'lucide-react';
 import { useUserStore } from '@/lib/stores/user-store';
 import { cn } from '@/lib/utils/cn';
@@ -38,6 +39,7 @@ const studioOwnerLinks: NavLink[] = [
 const trainerLinks: NavLink[] = [
   { href: '/trainer', label: 'Dashboard', icon: <LayoutDashboard size={20} /> },
   { href: '/trainer/templates', label: 'Templates', icon: <FileText size={20} /> },
+  { href: '/trainer/programs', label: 'AI Programs', icon: <Sparkles size={20} /> },
   { href: '/trainer/sessions', label: 'My Sessions', icon: <Dumbbell size={20} /> },
   { href: '/trainer/calendar', label: 'Calendar', icon: <Calendar size={20} /> },
   { href: '/settings', label: 'Settings', icon: <Settings size={20} /> },

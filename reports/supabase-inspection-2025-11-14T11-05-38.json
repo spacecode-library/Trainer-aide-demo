@@ -1,0 +1,21 @@
+{
+  "timestamp": "2025-11-14T11:05:36.599Z",
+  "connection": {
+    "url": "https://scpfuwijsbjxuhfwoogg.supabase.co",
+    "status": "failed",
+    "error": "relation \"public.information_schema.tables\" does not exist"
+  },
+  "tables": [],
+  "exerciseLibrary": {
+    "found": false,
+    "schema": null,
+    "sampleData": null,
+    "rowCount": null
+  },
+  "exerciseLibraryBackup": {
+    "found": false,
+    "schema": null,
+    "sampleData": null,
+    "rowCount": null
+  }
+}

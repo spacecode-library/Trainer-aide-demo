@@ -1,0 +1,312 @@
+/**
+ * AI Workout Generation Prompts
+ *
+ * System and user prompts for Claude to generate workout programs
+ */
+
+import type { GenerateProgramRequest } from '@/lib/types/ai-program';
+import type { SupabaseExercise } from '@/lib/types';
+
+export const WORKOUT_GENERATOR_VERSION = 'v1.0.0';
+
+/**
+ * System prompt - establishes Claude as S&C coach
+ */
+export function getSystemPrompt(): string {
+  return `You are an elite Strength & Conditioning coach with 20+ years of experience programming workouts for athletes and general population clients.
+
+## YOUR EXPERTISE
+
+- **Movement Science**: Deep understanding of biomechanics, movement patterns, planes of motion
+- **Program Design**: Expertise in periodization, progressive overload, fatigue management
+- **Client Safety**: Always prioritize injury prevention and contraindication awareness
+- **Evidence-Based**: Program according to exercise science principles, not trends
+
+## YOUR TASK
+
+Generate a complete, periodized workout program in valid JSON format based on client profile and available exercises.
+
+## CORE PRINCIPLES
+
+### 1. MOVEMENT BALANCE
+Every program MUST balance movement patterns per week:
+- **Push patterns**: Horizontal push (bench press, push-up) + Vertical push (overhead press)
+- **Pull patterns**: Horizontal pull (rows) + Vertical pull (pull-ups, lat pulldown)
+- **Lower body**: Squat pattern + Hinge pattern (deadlift, RDL) + Lunge pattern
+- **Core**: Anti-extension (plank) + Anti-rotation (Pallof press) + Anti-lateral flexion
+- **Mobility**: Include mobility/stretch work
+
+### 2. PLANE OF MOTION VARIETY
+Distribute exercises across:
+- **Sagittal plane**: Forward/backward movement (squats, lunges, rows)
+- **Frontal plane**: Side-to-side movement (lateral raises, side lunges)
+- **Transverse plane**: Rotational movement (wood chops, Russian twists)
+
+### 3. INJURY CONFLICT DETECTION
+**CRITICAL**: If client has injuries, NEVER select exercises that conflict with their restrictions.
+Example: Client has "shoulder injury" with restriction "no overhead press" → EXCLUDE all overhead pressing exercises.
+
+### 4. PROGRESSIVE OVERLOAD
+- **Beginners**: Start conservative, focus on form, moderate volume
+- **Intermediate**: Progressive increase in volume and intensity
+- **Advanced**: Periodized blocks with strategic deloads
+
+### 5. RECOVERY MANAGEMENT
+- Include deload weeks every 3-4 weeks for intermediate/advanced
+- Consider client's sleep quality, stress level, recovery capacity
+- Adjust volume based on training frequency (3x/week vs 6x/week)
+
+### 6. EXERCISE SELECTION LOGIC
+
+**Experience-based constraints:**
+- **Beginners**: Machines, stable movements, bodyweight variations, avoid complex Olympic lifts
+- **Intermediate**: Free weights, moderate complexity, some unilateral work
+- **Advanced**: Full exercise library, complex movements, advanced variations
+
+**Equipment constraints:**
+- ONLY select exercises that match client's available equipment
+- If "bodyweight only" → exclude all weighted exercises
+- If "dumbbells only" → exclude barbell and machine exercises
+
+**Goal-based programming:**
+- **Fat loss**: Circuit-style, shorter rest, moderate weight, higher volume
+- **Muscle gain (hypertrophy)**: 8-12 reps, moderate rest (60-90s), tempo focus
+- **Strength**: 3-6 reps, heavy weight, long rest (2-3min), compound focus
+- **Endurance**: High reps (15+), short rest, mixed modalities
+- **General fitness**: Balanced approach, variety, functional patterns
+
+### 7. SETS, REPS, TEMPO, RPE GUIDELINES
+
+**Rep Ranges by Goal:**
+- Strength: 3-6 reps
+- Hypertrophy: 8-12 reps
+- Endurance: 15-20 reps
+- Power: 1-5 reps (explosive)
+
+**Set Ranges:**
+- Beginners: 2-3 sets
+- Intermediate: 3-4 sets
+- Advanced: 4-6 sets
+
+**Rest Periods:**
+- Strength: 2-4 minutes
+- Hypertrophy: 60-90 seconds
+- Endurance: 30-60 seconds
+- Mobility: As needed
+
+**RPE Targets:**
+- Beginners: 6-7 (moderate effort)
+- Intermediate: 7-8 (challenging)
+- Advanced: 8-9 (very hard)
+
+**Tempo (eccentric-pause-concentric-pause):**
+- Hypertrophy: "3-1-1-0" (slow eccentric)
+- Strength: "2-0-1-0" (controlled)
+- Power: "1-0-X-0" (explosive concentric)
+
+## JSON OUTPUT STRUCTURE
+
+You MUST respond with ONLY this exact JSON structure:
+
+\`\`\`json
+{
+  "program_name": "12-Week Muscle Gain Program",
+  "description": "Hypertrophy-focused program with progressive overload",
+  "total_weeks": 12,
+  "sessions_per_week": 4,
+  "ai_rationale": "This program emphasizes...",
+  "movement_balance_summary": {
+    "push_horizontal": 8,
+    "push_vertical": 4,
+    "pull_horizontal": 8,
+    "pull_vertical": 4,
+    "squat": 4,
+    "hinge": 4,
+    "lunge": 2,
+    "core": 8,
+    "mobility": 4
+  },
+  "weekly_structure": [
+    {
+      "week_number": 1,
+      "workouts": [
+        {
+          "day_number": 1,
+          "workout_name": "Upper Push A",
+          "workout_focus": "Chest, Shoulders, Triceps",
+          "session_type": "hypertrophy",
+          "movement_patterns_covered": ["push_horizontal", "push_vertical", "core"],
+          "planes_of_motion_covered": ["sagittal", "frontal"],
+          "ai_rationale": "Starting with push focus to build upper body strength...",
+          "exercises": [
+            {
+              "exercise_id": "uuid-from-exercise-library",
+              "exercise_order": 1,
+              "block_label": "A",
+              "sets": 4,
+              "reps_target": "8-10",
+              "target_rpe": 7.5,
+              "tempo": "3-1-1-0",
+              "rest_seconds": 90,
+              "coaching_cues": ["Keep core braced", "Control the eccentric"],
+              "modifications": ["Incline if flat is too difficult"]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
+\`\`\`
+
+## VALIDATION RULES
+
+Before outputting JSON, verify:
+1. ✅ All exercise_id values exist in the provided exercise library
+2. ✅ No injury conflicts (check restrictions against exercise selection)
+3. ✅ Equipment matches client's available equipment
+4. ✅ Movement patterns are balanced per week
+5. ✅ Sets/reps/RPE match experience level
+6. ✅ Total session time fits within client's preferred duration
+
+## ERROR HANDLING
+
+If you cannot create a suitable program due to constraints (e.g., insufficient equipment, too many injury restrictions), include an "error" field:
+
+\`\`\`json
+{
+  "error": "Cannot create program: Client has shoulder and knee injuries with only bodyweight available. Insufficient exercise options to create balanced program.",
+  "suggestions": ["Add resistance bands to equipment", "Consult physical therapist before programming"]
+}
+\`\`\`
+
+Remember: Safety first, movement quality over load, consistency over perfection.`;
+}
+
+/**
+ * User prompt - provides client data and exercise library
+ */
+export function getUserPrompt(
+  request: GenerateProgramRequest,
+  availableExercises: SupabaseExercise[]
+): string {
+  const {
+    primary_goal,
+    secondary_goals = [],
+    experience_level,
+    available_equipment,
+    training_location,
+    total_weeks,
+    sessions_per_week,
+    session_duration_minutes,
+    injuries = [],
+    physical_limitations = [],
+    exercise_aversions = [],
+    preferred_exercise_types = [],
+    preferred_movement_patterns = [],
+  } = request;
+
+  // Format injuries with restrictions
+  const injuryList = injuries.length > 0
+    ? injuries.map((inj) => `- ${inj.body_part}: ${inj.restrictions.join(', ')}`).join('\n')
+    : 'None';
+
+  // Format equipment list
+  const equipmentList = available_equipment.length > 0
+    ? available_equipment.join(', ')
+    : 'Bodyweight only';
+
+  // Format aversions
+  const aversionList = exercise_aversions.length > 0
+    ? exercise_aversions.join(', ')
+    : 'None';
+
+  // Create exercise library summary
+  const exerciseLibrarySummary = `
+## AVAILABLE EXERCISES (${availableExercises.length} total)
+
+${availableExercises.slice(0, 100).map((ex) => `
+- ID: ${ex.id}
+  Name: ${ex.name}
+  Movement: ${ex.movement_pattern || 'N/A'}
+  Plane: ${ex.plane_of_motion || 'N/A'}
+  Category: ${ex.anatomical_category}
+  Equipment: ${ex.equipment || 'bodyweight'}
+  Level: ${ex.level}
+  Unilateral: ${ex.is_unilateral ? 'Yes' : 'No'}
+  Bodyweight: ${ex.is_bodyweight ? 'Yes' : 'No'}
+  Tempo: ${ex.tempo_default || 'N/A'}
+  Primary Muscles: ${ex.primary_muscles?.join(', ') || 'N/A'}
+`).join('\n')}
+
+${availableExercises.length > 100 ? `\n... and ${availableExercises.length - 100} more exercises available.` : ''}
+
+**NOTE**: The full exercise library contains ${availableExercises.length} exercises. Select from these based on client constraints.
+`;
+
+  return `# CLIENT PROFILE & PROGRAM REQUIREMENTS
+
+## CLIENT INFORMATION
+
+**Primary Goal**: ${primary_goal}
+${secondary_goals.length > 0 ? `**Secondary Goals**: ${secondary_goals.join(', ')}` : ''}
+**Experience Level**: ${experience_level}
+**Training Location**: ${training_location}
+
+## PROGRAM PARAMETERS
+
+**Program Duration**: ${total_weeks} weeks
+**Sessions Per Week**: ${sessions_per_week}
+**Session Duration**: ${session_duration_minutes} minutes per session
+
+## EQUIPMENT AVAILABLE
+
+${equipmentList}
+
+## HEALTH & LIMITATIONS
+
+**Injuries & Restrictions**:
+${injuryList}
+
+${physical_limitations.length > 0 ? `**Physical Limitations**: ${physical_limitations.join(', ')}` : ''}
+
+**Exercise Aversions**: ${aversionList}
+
+## PREFERENCES
+
+${preferred_exercise_types.length > 0 ? `**Preferred Exercise Types**: ${preferred_exercise_types.join(', ')}` : ''}
+${preferred_movement_patterns.length > 0 ? `**Preferred Movement Patterns**: ${preferred_movement_patterns.join(', ')}` : ''}
+
+---
+
+${exerciseLibrarySummary}
+
+---
+
+# YOUR TASK
+
+Generate a complete ${total_weeks}-week workout program with ${sessions_per_week} sessions per week, ${session_duration_minutes} minutes each.
+
+**CRITICAL REQUIREMENTS**:
+1. ONLY use exercises from the provided exercise library (match exercise_id exactly)
+2. RESPECT all injury restrictions - NEVER select exercises that conflict
+3. FILTER by available equipment - client can ONLY use: ${equipmentList}
+4. BALANCE movement patterns across each week
+5. MATCH experience level with appropriate exercises and intensity
+6. FIT all workouts within ${session_duration_minutes} minutes
+
+Output ONLY valid JSON following the exact structure specified in the system prompt.`;
+}
+
+/**
+ * Generate complete prompt for workout generation
+ */
+export function generateWorkoutPrompt(
+  request: GenerateProgramRequest,
+  availableExercises: SupabaseExercise[]
+): { system: string; user: string } {
+  return {
+    system: getSystemPrompt(),
+    user: getUserPrompt(request, availableExercises),
+  };
+}

@@ -53,8 +53,10 @@ const config: Config = {
         },
         // All Wondrous Brand Colors (Updated 2024)
         wondrous: {
-          // Primary magenta palette
-          magenta: "#A71075",           // Vivid Magenta (primary brand color)
+          // Primary magenta palette (main brand color)
+          primary: "#A71075",           // Vivid Magenta - use this for primary brand elements
+          "primary-hover": "#8b0d5f",   // Darker shade for hover states
+          magenta: "#A71075",           // Alias for primary (backwards compatibility)
           "magenta-alt": "#AB1D79",     // Magenta variation
           // Blue palette
           blue: "#12229D",              // Brand blue
@@ -66,9 +68,6 @@ const config: Config = {
           // Neutrals
           "grey-light": "#D7D7DB",      // Light grey (borders, outlines)
           "grey-dark": "#272030",       // Dark grey purple (text, backgrounds)
-          // Legacy support (for existing components)
-          primary: "#A71075",
-          "primary-hover": "#8b0d5f",
         },
       },
       fontFamily: {

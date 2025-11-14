@@ -76,17 +76,6 @@ export default function SessionRunner() {
     block.exercises.every((ex) => ex.completed)
   );
 
-  // Debug: Log current state on every render (only in per-exercise mode)
-  if (session.signOffMode === 'per_exercise') {
-    console.log('🔍 PER-EXERCISE DEBUG - Render:', {
-      currentBlockIndex,
-      currentExerciseIndex,
-      currentBlock: currentBlock?.name || 'UNDEFINED',
-      currentExercise: currentExercise?.exerciseId || 'UNDEFINED',
-      allExercisesCompleted,
-      showCompletionModal,
-    });
-  }
 
   const handleUpdateExercise = (
     blockId: string,
@@ -116,36 +105,6 @@ export default function SessionRunner() {
     }
 
     updateExercise(sessionId, blockId, exerciseId, { completed: true });
-
-    console.log('✅ Exercise completed:', {
-      blockId,
-      exerciseId,
-      exercise: exercise.exerciseId,
-    });
-
-    // Check if the session was actually updated
-    const updatedSession = sessions.find((s) => s.id === sessionId);
-    const allComplete = updatedSession?.blocks.every((block) =>
-      block.exercises.every((ex) => ex.completed)
-    );
-    console.log('🔄 After store update - Session state:', {
-      allExercisesComplete: allComplete,
-      completedCount: updatedSession?.blocks.reduce(
-        (sum, block) => sum + block.exercises.filter((ex) => ex.completed).length,
-        0
-      ),
-      totalCount: updatedSession?.blocks.reduce(
-        (sum, block) => sum + block.exercises.length,
-        0
-      ),
-    });
-
-    console.log('📊 Before moveToNextExercise - State:', {
-      currentBlockIndex,
-      currentExerciseIndex,
-      totalBlocks: session.blocks.length,
-      currentBlockExercises: currentBlock?.exercises.length,
-    });
 
     // Move to next exercise/block based on sign-off mode
     if (session.signOffMode === 'per_exercise') {
@@ -182,23 +141,13 @@ export default function SessionRunner() {
   };
 
   const moveToNextExercise = () => {
-    console.log('➡️ moveToNextExercise called:', {
-      currentBlockIndex,
-      currentExerciseIndex,
-      blockExercisesLength: currentBlock.exercises.length,
-      totalBlocks: session.blocks.length,
-    });
-
     if (currentExerciseIndex < currentBlock.exercises.length - 1) {
-      console.log('⏭️ Moving to next exercise in same block');
       setCurrentExerciseIndex(currentExerciseIndex + 1);
     } else if (currentBlockIndex < session.blocks.length - 1) {
-      console.log('⏭️ Moving to next block');
       setCurrentBlockIndex(currentBlockIndex + 1);
       setCurrentExerciseIndex(0);
     } else {
       // All exercises done
-      console.log('🎉 ALL DONE - Setting completion modal to true');
       setShowCompletionModal(true);
     }
   };
@@ -651,18 +600,8 @@ export default function SessionRunner() {
   };
 
   const renderPerExerciseMode = () => {
-    console.log('🎨 renderPerExerciseMode called:', {
-      allExercisesCompleted,
-      hasCurrentExercise: !!currentExercise,
-      hasCurrentBlock: !!currentBlock,
-      showCompletionModal,
-      currentExerciseId: currentExercise?.exerciseId,
-      currentBlockName: currentBlock?.name,
-    });
-
     // Check if all exercises are completed FIRST (definitive source of truth)
     if (allExercisesCompleted) {
-      console.log('✨ Rendering completion card (all exercises completed)');
       return (
         <div className="space-y-4 lg:space-y-6 px-4 lg:px-0">
           <Card className="bg-green-50 dark:bg-green-900/20 border-2 border-green-200 dark:border-green-700">
@@ -684,17 +623,13 @@ export default function SessionRunner() {
 
     // Safety check: if no current exercise/block and not all complete, return null
     if (!currentExercise || !currentBlock) {
-      console.log('⚠️ No current exercise/block - returning null');
       return null;
     }
 
     const exerciseData = getExerciseById(currentExercise.exerciseId);
     if (!exerciseData) {
-      console.log('❌ Exercise data not found - returning null');
       return null;
     }
-
-    console.log('📝 Rendering current exercise:', currentExercise.exerciseId);
 
     const totalExercises = session.blocks.reduce((sum, block) => sum + block.exercises.length, 0);
     const completedExercises = session.blocks.reduce(

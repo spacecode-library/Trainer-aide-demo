@@ -74,55 +74,6 @@ export function getExerciseImages(exerciseId: string) {
 }
 
 /**
- * Gets exercise images using the folder name from the mapping utility
- * @param exerciseId - The exercise ID (e.g., 'ex_chest_db_press')
- * @param exerciseName - The exercise name for fuzzy matching
- * @returns Object with startImageUrl and endImageUrl (or null if not found)
- */
-export function getExerciseImagesFromMapping(
-  exerciseId: string,
-  exerciseName?: string
-): { startImageUrl: string | null; endImageUrl: string | null } {
-  // Dynamic import to avoid circular dependencies
-  const { getExerciseFolderName, AVAILABLE_SUPABASE_FOLDERS } = require('./utils/exercise-image-mapping')
-
-  const folderName = getExerciseFolderName(
-    exerciseId,
-    exerciseName,
-    AVAILABLE_SUPABASE_FOLDERS
-  )
-
-  // Check if Supabase is configured
-  if (!supabaseUrl || supabaseUrl === 'https://placeholder.supabase.co') {
-    return { startImageUrl: null, endImageUrl: null }
-  }
-
-  const images = getExerciseImages(folderName)
-
-  return {
-    startImageUrl: images.startUrl || null,
-    endImageUrl: images.endUrl || null,
-  }
-}
-
-/**
- * Bulk load exercise images for multiple exercises
- * @param exercises - Array of exercises with id and name
- * @returns Map of exerciseId to image URLs
- */
-export function bulkGetExerciseImages(
-  exercises: Array<{ id: string; name: string }>
-): Record<string, { startImageUrl: string | null; endImageUrl: string | null }> {
-  const result: Record<string, { startImageUrl: string | null; endImageUrl: string | null }> = {}
-
-  for (const exercise of exercises) {
-    result[exercise.id] = getExerciseImagesFromMapping(exercise.id, exercise.name)
-  }
-
-  return result
-}
-
-/**
  * Checks if exercise images exist in Supabase
  * @param exerciseId - The exercise ID
  * @param exerciseName - The exercise name

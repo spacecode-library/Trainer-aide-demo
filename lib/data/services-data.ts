@@ -88,13 +88,3 @@ export function getService(serviceId: string): Service | undefined {
 export function getActiveServices(): Service[] {
   return MOCK_SERVICES.filter((s) => s.isActive);
 }
-
-export function getServicesByStudio(studioId: string): Service[] {
-  return MOCK_SERVICES.filter(
-    (s) => s.isActive && s.assignedStudios.includes(studioId)
-  );
-}
-
-export function getServicesByType(type: '1-2-1' | 'duet' | 'group'): Service[] {
-  return MOCK_SERVICES.filter((s) => s.isActive && s.type === type);
-}

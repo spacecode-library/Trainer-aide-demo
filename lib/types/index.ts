@@ -38,6 +38,97 @@ export type ExerciseLevel = 'beginner' | 'intermediate' | 'advanced';
 // EXERCISE LIBRARY
 // ========================================
 
+// New types for Supabase exercise schema
+export type ExerciseType =
+  | 'resistance'
+  | 'cardio'
+  | 'mobility-stretch'
+  | 'bodyweight-static'
+  | 'bodyweight-reps'
+  | 'plyometric';
+
+export type MovementPattern =
+  | 'push_horizontal'
+  | 'push_vertical'
+  | 'pull_horizontal'
+  | 'pull_vertical'
+  | 'squat'
+  | 'hinge'
+  | 'lunge'
+  | 'rotation'
+  | 'carry'
+  | 'mobility'
+  | 'anti-extension'
+  | 'anti-rotation'
+  | 'anti-lateral-flexion';
+
+export type PlaneOfMotion =
+  | 'sagittal'
+  | 'frontal'
+  | 'transverse'
+  | 'multi-planar';
+
+export type ForceType = 'push' | 'pull' | 'static';
+
+export type MechanicType = 'compound' | 'isolation' | null;
+
+export interface MusclesJson {
+  primary: string[];
+  secondary: string[];
+  stabilizers: string[];
+}
+
+export interface MuscleIntensityJson {
+  primary: Record<string, number>; // muscle_name: intensity (0.0-1.0)
+  secondary: Record<string, number>;
+  stabilizers: Record<string, number>;
+}
+
+// Complete Supabase Exercise schema (ta_exercise_library_original)
+export interface SupabaseExercise {
+  id: string; // UUID
+  slug: string; // Kebab-case slug
+  name: string;
+
+  // Classification
+  exercise_type: ExerciseType;
+  anatomical_category: string; // e.g., "Chest", "Back", "Mobility-Stretch"
+  legacy_category: string; // Original category from data import
+  movement_pattern: MovementPattern | null;
+  plane_of_motion: PlaneOfMotion | null;
+
+  // Biomechanics
+  force: ForceType | null;
+  mechanic: MechanicType;
+  is_unilateral: boolean;
+  is_bodyweight: boolean;
+
+  // Difficulty & Equipment
+  level: ExerciseLevel;
+  equipment: string | null;
+
+  // Muscles
+  primary_muscles: string[]; // Legacy array format
+  secondary_muscles: string[];
+  muscles_json: MusclesJson; // Structured format
+  muscle_intensity_json: MuscleIntensityJson; // Intensity scores
+
+  // Instructions & Guidance
+  instructions: string[];
+  common_mistakes_text: string | null;
+  modifications_text: string | null;
+  tempo_default: string | null; // e.g., "3-1-1-0" (eccentric-pause-concentric-pause)
+
+  // Media
+  image_folder: string;
+  start_image_url: string | null;
+  end_image_url: string | null;
+
+  // Metadata
+  created_at: string;
+}
+
+// Simplified Exercise interface for frontend use (backwards compatible)
 export interface Exercise {
   id: string;
   exerciseId: string; // Kebab-case ID matching Supabase folder name (e.g., 'ring-dips')
@@ -53,6 +144,19 @@ export interface Exercise {
   imageUrl?: string;
   startImageUrl?: string;
   endImageUrl?: string;
+
+  // Enhanced S&C fields (from Supabase)
+  exerciseType?: ExerciseType;
+  anatomicalCategory?: string;
+  movementPattern?: MovementPattern | null;
+  planeOfMotion?: PlaneOfMotion | null;
+  musclesJson?: MusclesJson;
+  muscleIntensityJson?: MuscleIntensityJson;
+  isUnilateral?: boolean;
+  isBodyweight?: boolean;
+  tempoDefault?: string | null;
+  force?: ForceType | null;
+  mechanic?: MechanicType;
 }
 
 // ========================================
@@ -125,6 +229,12 @@ export interface SessionExercise {
   // For cardio
   cardioDuration?: number;
   cardioIntensity?: number;
+  // AI-specific fields (from AI-generated workouts)
+  tempo?: string; // e.g., "3-1-1-0"
+  restSeconds?: number; // Rest period between sets
+  rir?: number; // Reps in Reserve
+  coachingCues?: string[]; // Array of coaching cues for this exercise
+  notes?: string; // Exercise-specific notes
   // Tracking during session
   completed: boolean;
   actualResistance?: number;

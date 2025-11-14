@@ -144,8 +144,8 @@ export const MOCK_SESSIONS: Session[] = [
   // Completed session 1
   createCompletedSession(
     'session_completed_1',
-    'user_trainer_1',
-    'client_1',
+    '22222222-2222-2222-2222-222222222222',
+    '44444444-4444-4444-4444-444444444444',
     'template_results_first',
     'per_block',
     '2025-10-20T10:00:00Z',
@@ -158,8 +158,8 @@ export const MOCK_SESSIONS: Session[] = [
   // Completed session 2
   createCompletedSession(
     'session_completed_2',
-    'user_trainer_2',
-    'client_2',
+    '33333333-3333-3333-3333-333333333333',
+    '66666666-6666-6666-6666-666666666666',
     'template_advanced_hiit',
     'per_exercise',
     '2025-10-19T14:00:00Z',
@@ -172,8 +172,8 @@ export const MOCK_SESSIONS: Session[] = [
   // Completed session 3
   createCompletedSession(
     'session_completed_3',
-    'user_trainer_1',
-    'client_3',
+    '22222222-2222-2222-2222-222222222222',
+    '77777777-7777-7777-7777-777777777777',
     'template_results_first',
     'full_session',
     '2025-10-18T09:00:00Z',
@@ -188,8 +188,8 @@ export const MOCK_SESSIONS: Session[] = [
   // Per Block Mode (default active session)
   createSessionFromTemplate(
     'session_in_progress_per_block',
-    'user_trainer_1',
-    'client_4',
+    '22222222-2222-2222-2222-222222222222',
+    '88888888-8888-8888-8888-888888888888',
     'template_resistance_only',
     'per_block',
     '2025-11-06T12:00:00Z', // Fixed timestamp for testing
@@ -199,8 +199,8 @@ export const MOCK_SESSIONS: Session[] = [
   // Per Exercise Mode
   createSessionFromTemplate(
     'session_in_progress_per_exercise',
-    'user_trainer_1',
-    'client_1',
+    '22222222-2222-2222-2222-222222222222',
+    '44444444-4444-4444-4444-444444444444',
     'template_results_first',
     'per_exercise',
     '2025-11-06T12:30:00Z', // Fixed timestamp for testing
@@ -210,8 +210,8 @@ export const MOCK_SESSIONS: Session[] = [
   // Full Session Mode
   createSessionFromTemplate(
     'session_in_progress_full_session',
-    'user_trainer_1',
-    'client_2',
+    '22222222-2222-2222-2222-222222222222',
+    '66666666-6666-6666-6666-666666666666',
     'template_advanced_hiit',
     'full_session',
     '2025-11-06T11:45:00Z', // Fixed timestamp for testing
@@ -222,24 +222,4 @@ export const MOCK_SESSIONS: Session[] = [
 // Helper function to get session by ID
 export function getSessionById(id: string): Session | undefined {
   return MOCK_SESSIONS.find(session => session.id === id);
-}
-
-// Helper function to get sessions by trainer
-export function getSessionsByTrainer(trainerId: string): Session[] {
-  return MOCK_SESSIONS.filter(session => session.trainerId === trainerId);
-}
-
-// Helper function to get sessions by client
-export function getSessionsByClient(clientId: string): Session[] {
-  return MOCK_SESSIONS.filter(session => session.clientId === clientId);
-}
-
-// Helper function to get completed sessions
-export function getCompletedSessions(): Session[] {
-  return MOCK_SESSIONS.filter(session => session.completed);
-}
-
-// Helper function to get in-progress sessions
-export function getInProgressSessions(): Session[] {
-  return MOCK_SESSIONS.filter(session => !session.completed);
 }

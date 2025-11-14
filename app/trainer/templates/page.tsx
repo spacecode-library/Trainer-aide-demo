@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useTemplateStore } from '@/lib/stores/template-store';
 import { getExerciseById } from '@/lib/mock-data';
@@ -10,8 +10,10 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { ExerciseImageViewer, ExerciseImageButton } from '@/components/shared/ExerciseImageViewer';
-import { Search, FileText, ChevronDown, ChevronUp, Play } from 'lucide-react';
+import { AITemplateCard } from '@/components/templates/AITemplateCard';
+import { Search, FileText, ChevronDown, ChevronUp, Play, Sparkles } from 'lucide-react';
 import { WorkoutTemplate } from '@/lib/types';
+import type { AIProgram } from '@/lib/types/ai-program';
 
 export default function TrainerTemplates() {
   const templates = useTemplateStore((state) => state.templates);
@@ -19,6 +21,32 @@ export default function TrainerTemplates() {
   const [selectedType, setSelectedType] = useState<'all' | 'standard' | 'resistance_only'>('all');
   const [expandedTemplateId, setExpandedTemplateId] = useState<string | null>(null);
   const [viewingExerciseId, setViewingExerciseId] = useState<string | null>(null);
+  const [aiTemplates, setAITemplates] = useState<AIProgram[]>([]);
+  const [loadingAITemplates, setLoadingAITemplates] = useState(true);
+
+  // Fetch AI templates
+  useEffect(() => {
+    async function fetchAITemplates() {
+      try {
+        setLoadingAITemplates(true);
+        const response = await fetch('/api/ai-programs/templates');
+
+        if (!response.ok) {
+          throw new Error('Failed to fetch AI templates');
+        }
+
+        const data = await response.json();
+        setAITemplates(data.templates || []);
+      } catch (error) {
+        console.error('Error fetching AI templates:', error);
+        setAITemplates([]);
+      } finally {
+        setLoadingAITemplates(false);
+      }
+    }
+
+    fetchAITemplates();
+  }, []);
 
   // Filter templates
   const filteredTemplates = templates.filter((template) => {
@@ -79,6 +107,51 @@ export default function TrainerTemplates() {
           </Button>
         </div>
       </div>
+
+      {/* AI Program Templates Section */}
+      {aiTemplates.length > 0 && (
+        <div className="mb-10">
+          <div className="flex items-center gap-2 mb-4">
+            <Sparkles size={20} className="text-wondrous-magenta" />
+            <h2 className="text-xl font-heading font-semibold text-gray-900 dark:text-gray-100">
+              AI Program Templates
+            </h2>
+            <Badge variant="secondary" className="ml-2">
+              {aiTemplates.length}
+            </Badge>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {aiTemplates.map((template) => (
+              <AITemplateCard
+                key={template.id}
+                template={template}
+                onUpdate={() => {
+                  // Refresh AI templates
+                  fetch('/api/ai-programs/templates')
+                    .then(res => res.json())
+                    .then(data => setAITemplates(data.templates || []))
+                    .catch(console.error);
+                }}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Manual Templates Section */}
+      {filteredTemplates.length > 0 && (
+        <div className="mb-4">
+          <div className="flex items-center gap-2 mb-4">
+            <FileText size={20} className="text-gray-600 dark:text-gray-400" />
+            <h2 className="text-xl font-heading font-semibold text-gray-900 dark:text-gray-100">
+              Manual Templates
+            </h2>
+            <Badge variant="secondary" className="ml-2">
+              {filteredTemplates.length}
+            </Badge>
+          </div>
+        </div>
+      )}
 
       {/* Templates List */}
       {filteredTemplates.length > 0 ? (
@@ -214,7 +287,7 @@ export default function TrainerTemplates() {
             );
           })}
         </div>
-      ) : (
+      ) : aiTemplates.length === 0 ? (
         <EmptyState
           icon={FileText}
           title={searchQuery || selectedType !== 'all' ? 'No templates found' : 'No templates available'}
@@ -224,7 +297,7 @@ export default function TrainerTemplates() {
               : 'No templates have been assigned yet'
           }
         />
-      )}
+      ) : null}
     </div>
   );
 }

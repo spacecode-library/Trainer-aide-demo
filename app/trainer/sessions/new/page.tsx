@@ -8,13 +8,15 @@ import { useUserStore } from '@/lib/stores/user-store';
 import { MOCK_CLIENTS } from '@/lib/mock-data';
 import { getExerciseById } from '@/lib/mock-data';
 import { generateId } from '@/lib/utils/generators';
+import { convertAIWorkoutToSessionBlocks, getAIWorkoutSessionName } from '@/lib/utils/ai-workout-converter';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { SignOffMode, Client, WorkoutTemplate, SessionBlock } from '@/lib/types';
-import { Play, FileText, User, Settings, ChevronRight, Search } from 'lucide-react';
+import type { AIWorkout } from '@/lib/types/ai-program';
+import { Play, FileText, User, Settings, ChevronRight, Search, Sparkles } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 const SIGN_OFF_MODES: { value: SignOffMode; label: string; description: string }[] = [
@@ -49,11 +51,19 @@ function StartNewSessionContent() {
   const [clientSearch, setClientSearch] = useState('');
   const [step, setStep] = useState<1 | 2 | 3>(1);
 
-  // Pre-fill from calendar booking (client, template, sign-off mode)
+  // AI workout state
+  const [aiWorkout, setAiWorkout] = useState<AIWorkout | null>(null);
+  const [loadingAiWorkout, setLoadingAiWorkout] = useState(false);
+  const [sourceType, setSourceType] = useState<'manual' | 'ai'>('manual');
+
+  // Pre-fill from calendar booking or AI template
   useEffect(() => {
     const clientId = searchParams?.get('clientId');
     const templateId = searchParams?.get('templateId');
     const signOffMode = searchParams?.get('signOffMode') as SignOffMode | null;
+    const source = searchParams?.get('source');
+    const programId = searchParams?.get('programId');
+    const workoutId = searchParams?.get('workoutId');
 
     if (clientId) {
       const client = MOCK_CLIENTS.find(c => c.id === clientId);
@@ -62,24 +72,100 @@ function StartNewSessionContent() {
       }
     }
 
-    if (templateId) {
+    // Handle AI template source
+    if (source === 'ai-template' && programId && workoutId) {
+      setSourceType('ai');
+      setLoadingAiWorkout(true);
+
+      // Fetch the AI workout
+      fetch(`/api/ai-programs/${programId}/workouts`)
+        .then(res => res.json())
+        .then(data => {
+          const workout = data.workouts?.find((w: AIWorkout) => w.id === workoutId);
+          if (workout) {
+            setAiWorkout(workout);
+            setStep(2); // Skip template selection, go straight to client selection
+          } else {
+            toast({
+              variant: "destructive",
+              title: "Workout Not Found",
+              description: "The selected AI workout could not be found.",
+            });
+          }
+        })
+        .catch(error => {
+          console.error('Error fetching AI workout:', error);
+          toast({
+            variant: "destructive",
+            title: "Error Loading Workout",
+            description: "Failed to load the AI workout. Please try again.",
+          });
+        })
+        .finally(() => setLoadingAiWorkout(false));
+    }
+    // Handle manual template
+    else if (templateId) {
       const template = templates.find(t => t.id === templateId);
       if (template) {
         setSelectedTemplate(template);
+        setSourceType('manual');
       }
     }
 
     if (signOffMode && (signOffMode === 'per_exercise' || signOffMode === 'per_block' || signOffMode === 'full_session')) {
       setSelectedSignOffMode(signOffMode);
     }
-  }, [searchParams, templates]);
+  }, [searchParams, templates, toast]);
 
   const filteredClients = MOCK_CLIENTS.filter((client) =>
     `${client.firstName} ${client.lastName}`.toLowerCase().includes(clientSearch.toLowerCase())
   );
 
   const handleStart = () => {
-    if (!selectedTemplate) {
+    let sessionBlocks: SessionBlock[];
+    let sessionName: string;
+    let templateId: string;
+    let template: WorkoutTemplate | undefined;
+
+    if (sourceType === 'ai' && aiWorkout) {
+      // Convert AI workout to session blocks
+      sessionBlocks = convertAIWorkoutToSessionBlocks(aiWorkout);
+      sessionName = getAIWorkoutSessionName(
+        aiWorkout,
+        selectedClient ? `${selectedClient.firstName} ${selectedClient.lastName}` : undefined
+      );
+      // Use AI workout ID as template ID (for tracking purposes)
+      templateId = aiWorkout.id;
+      template = undefined; // AI workouts don't have a manual template
+    } else if (sourceType === 'manual' && selectedTemplate) {
+      // Create session blocks from manual template
+      sessionBlocks = selectedTemplate.blocks.map((block) => ({
+        id: generateId('session-block'),
+        blockNumber: block.blockNumber,
+        name: block.name,
+        completed: false,
+        exercises: block.exercises.map((templateExercise) => ({
+          id: generateId('session-exercise'),
+          exerciseId: templateExercise.exerciseId,
+          position: templateExercise.position,
+          muscleGroup: templateExercise.muscleGroup,
+          resistanceType: templateExercise.resistanceType,
+          resistanceValue: templateExercise.resistanceValue,
+          repsMin: templateExercise.repsMin,
+          repsMax: templateExercise.repsMax,
+          sets: templateExercise.sets,
+          cardioDuration: templateExercise.cardioDuration,
+          cardioIntensity: templateExercise.cardioIntensity,
+          actualReps: undefined,
+          actualResistance: undefined,
+          rpe: undefined,
+          completed: false,
+        })),
+      }));
+      sessionName = `${selectedTemplate.name} - ${selectedClient ? `${selectedClient.firstName} ${selectedClient.lastName}` : 'Walk-in'}`;
+      templateId = selectedTemplate.id;
+      template = selectedTemplate;
+    } else {
       toast({
         variant: "destructive",
         title: "Template Required",
@@ -88,39 +174,14 @@ function StartNewSessionContent() {
       return;
     }
 
-    // Create session blocks from template
-    const sessionBlocks: SessionBlock[] = selectedTemplate.blocks.map((block) => ({
-      id: generateId('session-block'),
-      blockNumber: block.blockNumber,
-      name: block.name,
-      completed: false,
-      exercises: block.exercises.map((templateExercise) => ({
-        id: generateId('session-exercise'),
-        exerciseId: templateExercise.exerciseId,
-        position: templateExercise.position,
-        muscleGroup: templateExercise.muscleGroup,
-        resistanceType: templateExercise.resistanceType,
-        resistanceValue: templateExercise.resistanceValue,
-        repsMin: templateExercise.repsMin,
-        repsMax: templateExercise.repsMax,
-        sets: templateExercise.sets,
-        cardioDuration: templateExercise.cardioDuration,
-        cardioIntensity: templateExercise.cardioIntensity,
-        actualReps: undefined,
-        actualResistance: undefined,
-        rpe: undefined,
-        completed: false,
-      })),
-    }));
-
     try {
       const sessionId = startSession({
         trainerId: currentUser.id,
         clientId: selectedClient?.id,
         client: selectedClient || undefined,
-        templateId: selectedTemplate.id,
-        template: selectedTemplate,
-        sessionName: `${selectedTemplate.name} - ${selectedClient ? `${selectedClient.firstName} ${selectedClient.lastName}` : 'Walk-in'}`,
+        templateId,
+        template,
+        sessionName,
         signOffMode: selectedSignOffMode,
         blocks: sessionBlocks,
       });
@@ -140,10 +201,37 @@ function StartNewSessionContent() {
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-heading-1 mb-2">Start New Session</h1>
-        <p className="text-body-sm text-gray-600">
+        <p className="text-body-sm text-gray-600 dark:text-gray-400">
           Configure your training session in 3 simple steps
         </p>
       </div>
+
+      {/* AI Workout Banner */}
+      {sourceType === 'ai' && aiWorkout && (
+        <Card className="mb-6 bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 border-wondrous-magenta/30">
+          <CardContent className="p-4">
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-wondrous-magenta/20 to-wondrous-blue/20 flex items-center justify-center flex-shrink-0">
+                <Sparkles size={20} className="text-wondrous-magenta" />
+              </div>
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-1">
+                  <h3 className="font-semibold text-gray-900 dark:text-gray-100">
+                    AI-Generated Workout
+                  </h3>
+                  <Badge variant="secondary" className="bg-purple-100 dark:bg-purple-900/40 text-purple-900 dark:text-purple-200">
+                    {aiWorkout.workout_name}
+                  </Badge>
+                </div>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  Week {aiWorkout.week_number}, Day {aiWorkout.day_number}
+                  {aiWorkout.workout_focus && ` • ${aiWorkout.workout_focus}`}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Progress Steps */}
       <div className="flex items-center gap-2 mb-8">
@@ -370,8 +458,17 @@ function StartNewSessionContent() {
             </CardHeader>
             <CardContent className="space-y-2">
               <div className="flex justify-between text-sm">
-                <span className="text-gray-600 dark:text-gray-400">Template:</span>
-                <span className="font-medium text-gray-900 dark:text-gray-100">{selectedTemplate?.name}</span>
+                <span className="text-gray-600 dark:text-gray-400">Workout:</span>
+                <span className="font-medium text-gray-900 dark:text-gray-100 flex items-center gap-2">
+                  {sourceType === 'ai' && aiWorkout ? (
+                    <>
+                      {aiWorkout.workout_name}
+                      <Sparkles size={14} className="text-wondrous-magenta" />
+                    </>
+                  ) : (
+                    selectedTemplate?.name
+                  )}
+                </span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-gray-600 dark:text-gray-400">Client:</span>
@@ -380,8 +477,8 @@ function StartNewSessionContent() {
                 </span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-gray-600">Sign-Off Mode:</span>
-                <span className="font-medium text-gray-900">
+                <span className="text-gray-600 dark:text-gray-400">Sign-Off Mode:</span>
+                <span className="font-medium text-gray-900 dark:text-gray-100">
                   {SIGN_OFF_MODES.find((m) => m.value === selectedSignOffMode)?.label}
                 </span>
               </div>

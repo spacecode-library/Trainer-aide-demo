@@ -7,18 +7,6 @@ export function generateId(prefix?: string): string {
 }
 
 /**
- * Create a URL-friendly slug from a string
- */
-export function createSlug(text: string): string {
-  return text
-    .toLowerCase()
-    .replace(/[^\w\s-]/g, '')
-    .replace(/\s+/g, '-')
-    .replace(/-+/g, '-')
-    .trim();
-}
-
-/**
  * Format duration in seconds to MM:SS
  */
 export function formatDuration(seconds: number): string {

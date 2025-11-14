@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion";
 import { useRouter, usePathname } from "next/navigation";
-import { Home, Calendar, Settings, FileText, Dumbbell, BookOpen, LayoutDashboard, Clock } from "lucide-react";
+import { Home, Calendar, Settings, FileText, Dumbbell, BookOpen, LayoutDashboard, Clock, Sparkles } from "lucide-react";
 import { useUserStore } from "@/lib/stores/user-store";
 
 interface NavItem {
@@ -48,10 +48,10 @@ const trainerNavItems: NavItem[] = [
     route: "/trainer",
   },
   {
-    id: "calendar",
-    label: "Calendar",
-    icon: Calendar,
-    route: "/trainer/calendar",
+    id: "programs",
+    label: "Programs",
+    icon: Sparkles,
+    route: "/trainer/programs",
   },
   {
     id: "sessions",
@@ -141,6 +141,7 @@ export function MobileBottomNav() {
 
     // Trainer routes
     if (currentRole === 'trainer') {
+      if (pathname.startsWith("/trainer/programs")) return "programs";
       if (pathname.startsWith("/trainer/calendar")) return "calendar";
       if (pathname.startsWith("/trainer/sessions")) return "sessions";
       if (pathname.startsWith("/trainer")) return "dashboard";
