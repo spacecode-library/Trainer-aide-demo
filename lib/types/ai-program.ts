@@ -136,6 +136,9 @@ export interface AIWorkout {
   // Metadata
   created_at: string;
   updated_at: string;
+
+  // Related data (populated by API)
+  exercises?: AIWorkoutExercise[];
 }
 
 // ========================================

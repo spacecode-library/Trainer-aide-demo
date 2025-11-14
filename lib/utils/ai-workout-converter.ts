@@ -1,4 +1,4 @@
-import { AIWorkout, AIExercise } from '@/lib/types/ai-program';
+import { AIWorkout, AIWorkoutExercise } from '@/lib/types/ai-program';
 import { SessionBlock, SessionExercise } from '@/lib/types';
 
 /**
@@ -18,7 +18,7 @@ export function convertAIWorkoutToSessionBlocks(workout: AIWorkout): SessionBloc
     }
     acc[blockNum].push(exercise);
     return acc;
-  }, {} as Record<number, AIExercise[]>);
+  }, {} as Record<number, AIWorkoutExercise[]>);
 
   // Convert to session blocks
   const blocks: SessionBlock[] = Object.entries(exercisesByBlock)
@@ -45,7 +45,7 @@ export function convertAIWorkoutToSessionBlocks(workout: AIWorkout): SessionBloc
  * Converts an AI exercise to session exercise format
  */
 export function convertAIExerciseToSessionExercise(
-  aiExercise: AIExercise,
+  aiExercise: AIWorkoutExercise,
   position: number
 ): SessionExercise {
   // Determine muscle group from exercise name or default to 'other'

@@ -6,12 +6,14 @@ import { Plus, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ProgramCard } from '@/components/ai-programs/ProgramCard';
+import { useToast } from '@/hooks/use-toast';
 import type { AIProgram } from '@/lib/types/ai-program';
 
 type FilterType = 'all' | 'draft' | 'active' | 'completed' | 'archived';
 
 export default function ProgramsListPage() {
   const router = useRouter();
+  const { toast } = useToast();
   const [programs, setPrograms] = useState<AIProgram[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -21,97 +23,22 @@ export default function ProgramsListPage() {
     async function fetchPrograms() {
       try {
         setLoading(true);
-        // TODO: Replace with actual API call
-        // const response = await fetch('/api/programs');
-        // const data = await response.json();
+        const response = await fetch('/api/ai-programs');
 
-        // Mock data for now
-        await new Promise(resolve => setTimeout(resolve, 500));
+        if (!response.ok) {
+          throw new Error('Failed to fetch programs');
+        }
 
-        const mockPrograms: AIProgram[] = [
-          {
-            id: '1',
-            trainer_id: 'trainer-1',
-            client_profile_id: '1',
-            program_name: "Sarah's 8-Week Muscle Builder",
-            description: 'Hypertrophy-focused program for beginner trainee',
-            total_weeks: 8,
-            sessions_per_week: 3,
-            session_duration_minutes: 45,
-            primary_goal: 'hypertrophy',
-            experience_level: 'beginner',
-            ai_model: 'claude-sonnet-4-5-20250929',
-            movement_balance_summary: {
-              push_horizontal: 18,
-              pull_horizontal: 18,
-              push_vertical: 12,
-              squat: 12,
-              lunge: 12,
-              core: 24,
-            },
-            status: 'draft',
-            created_at: '2025-11-14T10:30:00Z',
-            updated_at: '2025-11-14T10:30:00Z',
-          },
-          {
-            id: '2',
-            trainer_id: 'trainer-1',
-            client_profile_id: '2',
-            program_name: "Mike's 12-Week Strength Block",
-            description: 'Progressive strength development with full gym access',
-            total_weeks: 12,
-            sessions_per_week: 4,
-            session_duration_minutes: 60,
-            primary_goal: 'strength',
-            experience_level: 'intermediate',
-            ai_model: 'claude-sonnet-4-5-20250929',
-            movement_balance_summary: {
-              push_horizontal: 24,
-              pull_horizontal: 24,
-              squat: 16,
-              hinge: 16,
-              core: 12,
-            },
-            status: 'active',
-            created_at: '2025-11-10T14:20:00Z',
-            updated_at: '2025-11-14T08:15:00Z',
-          },
-          {
-            id: '3',
-            trainer_id: 'trainer-1',
-            client_profile_id: '3',
-            program_name: "Emily's Fat Loss Program",
-            description: 'Metabolic conditioning with minimal equipment',
-            total_weeks: 6,
-            sessions_per_week: 3,
-            session_duration_minutes: 30,
-            primary_goal: 'fat_loss',
-            experience_level: 'beginner',
-            ai_model: 'claude-sonnet-4-5-20250929',
-            status: 'active',
-            created_at: '2025-11-08T09:45:00Z',
-            updated_at: '2025-11-13T16:30:00Z',
-          },
-          {
-            id: '4',
-            trainer_id: 'trainer-1',
-            program_name: 'Generic 4-Week Upper/Lower Split',
-            description: 'Classic upper/lower split for intermediate lifters',
-            total_weeks: 4,
-            sessions_per_week: 4,
-            session_duration_minutes: 45,
-            primary_goal: 'hypertrophy',
-            experience_level: 'intermediate',
-            ai_model: 'claude-sonnet-4-5-20250929',
-            status: 'completed',
-            created_at: '2025-10-15T11:00:00Z',
-            updated_at: '2025-11-12T14:20:00Z',
-          },
-        ];
-
-        setPrograms(mockPrograms);
+        const data = await response.json();
+        setPrograms(data.programs || []);
       } catch (err) {
         console.error('Failed to load programs:', err);
+        setPrograms([]); // Set empty array on error
+        toast({
+          variant: 'destructive',
+          title: 'Error Loading Programs',
+          description: 'Failed to load AI programs. Please try refreshing the page.',
+        });
       } finally {
         setLoading(false);
       }

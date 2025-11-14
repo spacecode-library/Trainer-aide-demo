@@ -11,11 +11,13 @@ import { Badge } from '@/components/ui/badge';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { ExerciseImageViewer, ExerciseImageButton } from '@/components/shared/ExerciseImageViewer';
 import { AITemplateCard } from '@/components/templates/AITemplateCard';
+import { useToast } from '@/hooks/use-toast';
 import { Search, FileText, ChevronDown, ChevronUp, Play, Sparkles } from 'lucide-react';
 import { WorkoutTemplate } from '@/lib/types';
 import type { AIProgram } from '@/lib/types/ai-program';
 
 export default function TrainerTemplates() {
+  const { toast } = useToast();
   const templates = useTemplateStore((state) => state.templates);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedType, setSelectedType] = useState<'all' | 'standard' | 'resistance_only'>('all');
@@ -40,13 +42,18 @@ export default function TrainerTemplates() {
       } catch (error) {
         console.error('Error fetching AI templates:', error);
         setAITemplates([]);
+        toast({
+          variant: 'destructive',
+          title: 'Error Loading AI Templates',
+          description: 'Failed to load AI-generated templates. Please try refreshing the page.',
+        });
       } finally {
         setLoadingAITemplates(false);
       }
     }
 
     fetchAITemplates();
-  }, []);
+  }, [toast]);
 
   // Filter templates
   const filteredTemplates = templates.filter((template) => {
