@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { useSessionStore } from '@/lib/stores/session-store';
 import { useTimerStore } from '@/lib/stores/timer-store';
-import { getExerciseById } from '@/lib/mock-data';
+import { getExerciseByIdSync } from '@/lib/mock-data';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -48,7 +48,7 @@ export default function SessionRunner() {
   useSessionAlerts({
     isActive: isTimerActive() && !isPaused,
     elapsedSeconds,
-    alertIntervalMinutes: session?.template.alertIntervalMinutes || 10,
+    alertIntervalMinutes: session?.template?.alertIntervalMinutes || 10,
   });
 
   const [currentBlockIndex, setCurrentBlockIndex] = useState(0);
@@ -186,7 +186,7 @@ export default function SessionRunner() {
             </CardHeader>
             <CardContent className="space-y-4">
               {block.exercises.map((exercise) => {
-                const exerciseData = getExerciseById(exercise.exerciseId);
+                const exerciseData = getExerciseByIdSync(exercise.exerciseId);
                 if (!exerciseData) return null;
 
                 return (
@@ -409,7 +409,7 @@ export default function SessionRunner() {
           </CardHeader>
           <CardContent className="space-y-4">
             {currentBlock.exercises.map((exercise) => {
-              const exerciseData = getExerciseById(exercise.exerciseId);
+              const exerciseData = getExerciseByIdSync(exercise.exerciseId);
               if (!exerciseData) return null;
 
               return (
@@ -626,7 +626,7 @@ export default function SessionRunner() {
       return null;
     }
 
-    const exerciseData = getExerciseById(currentExercise.exerciseId);
+    const exerciseData = getExerciseByIdSync(currentExercise.exerciseId);
     if (!exerciseData) {
       return null;
     }
@@ -855,7 +855,7 @@ export default function SessionRunner() {
       <div className="pt-36 lg:pt-0 px-4 lg:px-0 mb-4 lg:mb-6">
         <div className="flex items-center gap-2 mb-2 text-sm text-gray-600 dark:text-gray-400">
           <FileText size={16} />
-          <span>{session.template.name}</span>
+          <span>{session.template?.name || 'Custom Session'}</span>
           {session.client && (
             <>
               <span>•</span>

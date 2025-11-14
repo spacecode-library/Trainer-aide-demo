@@ -7,11 +7,11 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { GripVertical, ChevronDown, ChevronUp, Trash2, ArrowUp, ArrowDown } from 'lucide-react';
-import type { AIExercise } from '@/lib/types/ai-program';
+import type { AIWorkoutExerciseWithDetails } from '@/lib/types/ai-program-editor';
 
 interface ExerciseEditorProps {
-  exercise: AIExercise;
-  onChange: (exercise: AIExercise) => void;
+  exercise: AIWorkoutExerciseWithDetails;
+  onChange: (exercise: AIWorkoutExerciseWithDetails) => void;
   onRemove: () => void;
   onMoveUp?: () => void;
   onMoveDown?: () => void;
@@ -20,7 +20,7 @@ interface ExerciseEditorProps {
 export function ExerciseEditor({ exercise, onChange, onRemove, onMoveUp, onMoveDown }: ExerciseEditorProps) {
   const [isExpanded, setIsExpanded] = useState(false);
 
-  const handleChange = (field: keyof AIExercise, value: any) => {
+  const handleChange = (field: keyof AIWorkoutExerciseWithDetails, value: any) => {
     onChange({ ...exercise, [field]: value });
   };
 
@@ -115,7 +115,7 @@ export function ExerciseEditor({ exercise, onChange, onRemove, onMoveUp, onMoveD
                   type="number"
                   min={1}
                   max={10}
-                  value={exercise.sets}
+                  value={exercise.sets || ''}
                   onChange={(e) => handleChange('sets', parseInt(e.target.value))}
                   className="bg-white dark:bg-gray-800"
                 />
@@ -150,7 +150,7 @@ export function ExerciseEditor({ exercise, onChange, onRemove, onMoveUp, onMoveD
                   type="number"
                   min={0}
                   max={600}
-                  value={exercise.rest_seconds}
+                  value={exercise.rest_seconds || ''}
                   onChange={(e) => handleChange('rest_seconds', parseInt(e.target.value))}
                   className="bg-white dark:bg-gray-800"
                 />

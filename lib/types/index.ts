@@ -258,7 +258,7 @@ export interface Session {
   clientId?: string;
   client?: Client;
   templateId: string;
-  template: WorkoutTemplate;
+  template?: WorkoutTemplate;
   sessionName: string;
   signOffMode: SignOffMode;
   blocks: SessionBlock[];

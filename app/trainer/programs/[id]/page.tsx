@@ -37,6 +37,7 @@ export default function ProgramViewerPage() {
         const mockProgram: AIProgram = {
           id: programId,
           trainer_id: 'trainer-1',
+          created_by: 'trainer-1',
           client_profile_id: '1',
           program_name: "Sarah's 8-Week Muscle Builder",
           description: 'Complete hypertrophy-focused program',
@@ -44,6 +45,7 @@ export default function ProgramViewerPage() {
           sessions_per_week: 3,
           session_duration_minutes: 45,
           primary_goal: 'hypertrophy',
+          secondary_goals: ['strength'],
           experience_level: 'beginner',
           ai_model: 'claude-sonnet-4-5-20250929',
           ai_rationale: 'This program is designed for a beginner trainee with muscle gain goals using limited equipment (dumbbells and bench). The structure follows a 3-day full-body split to maximize frequency for muscle protein synthesis while allowing adequate recovery. Each session targets all major movement patterns with 8-12 rep ranges optimal for hypertrophy. Week 1 establishes baseline volume with conservative RPE (6-7), while progressive weeks increase intensity slightly (RPE 7-8) to introduce progressive overload.',
@@ -57,6 +59,11 @@ export default function ProgramViewerPage() {
             mobility: 24,
           },
           status: 'draft',
+          completion_percentage: 0,
+          sessions_completed: 0,
+          is_template: false,
+          is_published: false,
+          allow_client_modifications: false,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
         };

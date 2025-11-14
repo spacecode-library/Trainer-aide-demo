@@ -117,7 +117,7 @@ export default function ClientDashboard() {
             <div className="space-y-3">
               <div>
                 <h3 className="font-semibold text-gray-900 mb-1">{inProgressSession.sessionName}</h3>
-                <p className="text-sm text-gray-600">{inProgressSession.template.name}</p>
+                <p className="text-sm text-gray-600">{inProgressSession.template?.name || 'Custom Session'}</p>
               </div>
               <div className="flex items-center gap-4 text-sm text-gray-600">
                 <span className="flex items-center gap-1">
@@ -193,7 +193,7 @@ export default function ClientDashboard() {
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1">
                       <h3 className="font-semibold text-gray-900 mb-1">{session.sessionName}</h3>
-                      <p className="text-sm text-gray-600 mb-2">{session.template.name}</p>
+                      <p className="text-sm text-gray-600 mb-2">{session.template?.name || 'Custom Session'}</p>
                       <div className="flex items-center gap-4 text-xs text-gray-500">
                         <span className="flex items-center gap-1">
                           <Calendar size={12} />

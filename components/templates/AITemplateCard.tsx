@@ -105,7 +105,7 @@ export function AITemplateCard({ template, onUpdate }: AITemplateCardProps) {
                 <span className="text-xs text-gray-500 dark:text-gray-400">Patterns:</span>
                 <div className="flex flex-wrap gap-1">
                   {Object.entries(template.movement_balance_summary).map(([pattern, count]) => (
-                    count > 0 && (
+                    count && count > 0 && (
                       <span
                         key={pattern}
                         className="text-xs px-2 py-0.5 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded"

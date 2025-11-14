@@ -1,12 +1,24 @@
 'use client';
 
+import type { MovementBalanceSummary } from '@/lib/types/ai-program';
+
 interface MovementBalanceChartProps {
-  balance: Record<string, number>;
+  balance: MovementBalanceSummary | null;
 }
 
 export function MovementBalanceChart({ balance }: MovementBalanceChartProps) {
+  if (!balance) return null;
+
+  // Filter out undefined values
+  const filteredBalance = Object.entries(balance)
+    .filter((entry): entry is [string, number] => typeof entry[1] === 'number')
+    .reduce((acc, [pattern, count]) => {
+      acc[pattern] = count;
+      return acc;
+    }, {} as Record<string, number>);
+
   // Calculate max value for scaling
-  const maxValue = Math.max(...Object.values(balance));
+  const maxValue = Math.max(...Object.values(filteredBalance));
 
   const getPatternLabel = (pattern: string) => {
     const labels: Record<string, string> = {
@@ -26,7 +38,7 @@ export function MovementBalanceChart({ balance }: MovementBalanceChartProps) {
 
   return (
     <div className="space-y-3">
-      {Object.entries(balance).map(([pattern, count]) => {
+      {Object.entries(filteredBalance).map(([pattern, count]) => {
         const percentage = (count / maxValue) * 100;
 
         return (

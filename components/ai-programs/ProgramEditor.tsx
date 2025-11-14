@@ -6,18 +6,18 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { WorkoutEditor } from './WorkoutEditor';
-import type { AIProgram } from '@/lib/types/ai-program';
+import type { AIProgramWithWorkouts } from '@/lib/types/ai-program-editor';
 
 interface ProgramEditorProps {
-  program: AIProgram;
-  onChange: (program: AIProgram) => void;
-  onSave: (program: AIProgram) => void;
+  program: AIProgramWithWorkouts;
+  onChange: (program: AIProgramWithWorkouts) => void;
+  onSave: (program: AIProgramWithWorkouts) => void;
 }
 
 export function ProgramEditor({ program, onChange, onSave }: ProgramEditorProps) {
   const [editedProgram, setEditedProgram] = useState(program);
 
-  const handleProgramChange = (field: keyof AIProgram, value: any) => {
+  const handleProgramChange = (field: keyof AIProgramWithWorkouts, value: any) => {
     const updated = { ...editedProgram, [field]: value };
     setEditedProgram(updated);
     onChange(updated);
@@ -109,7 +109,7 @@ export function ProgramEditor({ program, onChange, onSave }: ProgramEditorProps)
                 type="number"
                 min={15}
                 max={180}
-                value={editedProgram.session_duration_minutes}
+                value={editedProgram.session_duration_minutes || ''}
                 onChange={(e) => handleProgramChange('session_duration_minutes', parseInt(e.target.value))}
                 className="bg-white dark:bg-gray-900"
               />

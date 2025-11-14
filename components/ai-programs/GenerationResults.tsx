@@ -171,7 +171,7 @@ export function GenerationResults({
           </CardHeader>
           <CardContent>
             <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
-              "{program.ai_rationale}"
+              &quot;{program.ai_rationale}&quot;
             </p>
           </CardContent>
         </Card>

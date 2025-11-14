@@ -23,7 +23,7 @@ export default function AllSessionsPage() {
   const filteredSessions = sessions.filter((session) => {
     const matchesSearch =
       session.sessionName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      session.template.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      session.template?.name || 'Custom Session'.toLowerCase().includes(searchQuery.toLowerCase()) ||
       session.client?.firstName.toLowerCase().includes(searchQuery.toLowerCase()) ||
       session.client?.lastName.toLowerCase().includes(searchQuery.toLowerCase());
 
@@ -210,7 +210,7 @@ export default function AllSessionsPage() {
 
                     {/* Template Info */}
                     <div className="text-sm text-gray-600 mb-2">
-                      <span className="font-medium">Template:</span> {session.template.name}
+                      <span className="font-medium">Template:</span> {session.template?.name || 'Custom Session'}
                     </div>
 
                     {/* Notes */}

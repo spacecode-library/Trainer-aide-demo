@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useTemplateStore } from '@/lib/stores/template-store';
-import { getExerciseById } from '@/lib/mock-data';
+import { getExerciseByIdSync } from '@/lib/mock-data';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
@@ -221,7 +221,7 @@ export default function TrainerTemplates() {
                           <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-3">{block.name}</h3>
                           <div className="space-y-2">
                             {block.exercises.map((templateExercise) => {
-                              const exercise = getExerciseById(templateExercise.exerciseId);
+                              const exercise = getExerciseByIdSync(templateExercise.exerciseId);
                               if (!exercise) return null;
 
                               return (

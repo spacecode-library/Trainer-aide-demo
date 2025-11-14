@@ -17,10 +17,11 @@ import {
   createAINutritionPlan,
   logAIGeneration,
   createProgramRevision,
+  getCompleteProgramData,
 } from '@/lib/services/ai-program-service';
 import { getClientProfileById } from '@/lib/services/client-profile-service';
-import { extractWorkoutConstraints } from '@/lib/types/client-profile';
-import type { GenerateProgramRequest } from '@/lib/types/ai-program';
+import { extractWorkoutConstraints, GoalType, ExperienceLevel } from '@/lib/types/client-profile';
+import type { GenerateProgramRequest, SessionType } from '@/lib/types/ai-program';
 
 /**
  * AI Program Generation Request
@@ -156,8 +157,8 @@ export async function POST(request: NextRequest) {
         total_weeks: body.total_weeks,
         sessions_per_week: body.sessions_per_week,
         session_duration_minutes: body.session_duration_minutes,
-        primary_goal: body.primary_goal,
-        experience_level: body.experience_level,
+        primary_goal: body.primary_goal as GoalType,
+        experience_level: body.experience_level as ExperienceLevel,
         available_equipment: body.available_equipment,
         injuries: body.injuries,
         exercise_aversions: body.exercise_aversions,
@@ -263,11 +264,15 @@ export async function POST(request: NextRequest) {
       sessions_per_week: aiProgram.sessions_per_week,
       session_duration_minutes: body.session_duration_minutes,
       primary_goal: generationRequest.primary_goal,
+      secondary_goals: generationRequest.secondary_goals || [],
       experience_level: generationRequest.experience_level,
       ai_model: raw?.model || 'claude-sonnet-4-5-20250929',
       ai_rationale: aiProgram.ai_rationale,
       movement_balance_summary: aiProgram.movement_balance_summary,
       status: 'draft',
+      is_template: false,
+      is_published: false,
+      allow_client_modifications: false,
     });
 
     if (programError || !savedProgram) {
@@ -282,16 +287,24 @@ export async function POST(request: NextRequest) {
 
     // Create workouts
     const workoutsToCreate = aiProgram.weekly_structure.flatMap((week) =>
-      week.workouts.map((workout) => ({
+      week.workouts.map((workout, index) => ({
         program_id: savedProgram.id,
         week_number: week.week_number,
         day_number: workout.day_number,
+        session_order: index + 1,
         workout_name: workout.workout_name,
         workout_focus: workout.workout_focus,
-        session_type: workout.session_type,
+        session_type: workout.session_type as SessionType,
+        scheduled_date: null,
+        planned_duration_minutes: body.session_duration_minutes,
         movement_patterns_covered: workout.movement_patterns_covered,
         planes_of_motion_covered: workout.planes_of_motion_covered,
+        primary_muscle_groups: [],
         ai_rationale: workout.ai_rationale,
+        exercise_selection_criteria: null,
+        overall_rpe: null,
+        trainer_notes: null,
+        client_feedback: null,
       }))
     );
 
@@ -332,12 +345,31 @@ export async function POST(request: NextRequest) {
           exercise_order: ex.exercise_order,
           block_label: ex.block_label || null,
           sets: ex.sets,
+          reps_min: null,
+          reps_max: null,
           reps_target: ex.reps_target,
+          target_load_kg: null,
+          target_load_percentage: null,
           target_rpe: ex.target_rpe,
+          target_rir: null,
           tempo: ex.tempo,
           rest_seconds: ex.rest_seconds,
+          target_duration_seconds: null,
+          target_distance_meters: null,
+          is_unilateral: false,
+          is_bodyweight: false,
+          is_timed: false,
           coaching_cues: ex.coaching_cues,
+          common_mistakes: [],
           modifications: ex.modifications || [],
+          actual_sets: null,
+          actual_reps: null,
+          actual_load_kg: null,
+          actual_rpe: null,
+          actual_duration_seconds: null,
+          actual_distance_meters: null,
+          performance_notes: null,
+          skip_reason: null,
         }));
 
         const { data: savedExercises, error: exercisesError } = await createAIWorkoutExercises(exercisesToCreate);
@@ -362,11 +394,25 @@ export async function POST(request: NextRequest) {
       const { data: nutritionPlan, error: nutritionError } = await createAINutritionPlan({
         program_id: savedProgram.id,
         daily_calories: null,
-        macros_json: {},
-        meal_timing_recommendations: [],
+        protein_grams: null,
+        carbs_grams: null,
+        fats_grams: null,
+        fiber_grams: null,
+        calculation_method: null,
+        tdee_estimated: null,
+        calorie_adjustment_percentage: null,
+        meals_per_day: null,
+        meal_timing_notes: null,
+        pre_workout_nutrition: null,
+        post_workout_nutrition: null,
+        meal_templates: null,
+        daily_water_liters: null,
         supplement_recommendations: [],
-        hydration_guidelines: 'Drink at least 2-3 liters of water daily',
+        dietary_restrictions: [],
+        dietary_preferences: [],
         ai_rationale: 'Nutrition plan to be customized based on client goals',
+        generated_at: null,
+        disclaimer: 'This nutrition plan is AI-generated and should be reviewed by a qualified nutritionist or dietitian before implementation.',
       });
 
       if (nutritionError) {
@@ -380,12 +426,17 @@ export async function POST(request: NextRequest) {
     const generationLog = {
       entity_id: savedProgram.id,
       entity_type: 'ai_program',
+      status: 'completed',
+      ai_model: raw?.model || 'claude-sonnet-4-5-20250929',
+      generation_type: 'program' as const,
+      ai_provider: 'anthropic',
       model_name: raw?.model || 'claude-sonnet-4-5-20250929',
       prompt_version: 'v1.0.0',
       input_tokens: raw?.usage.input_tokens || 0,
       output_tokens: raw?.usage.output_tokens || 0,
       total_cost_usd: raw ? estimateCost(raw) : 0,
       latency_ms: Date.now() - startTime,
+      retry_count: 0,
       success: true,
       metadata: {
         total_weeks: body.total_weeks,
@@ -397,12 +448,18 @@ export async function POST(request: NextRequest) {
     await logAIGeneration(generationLog);
 
     // Step 8: Create initial program revision
+    const { program, workouts: allWorkouts, exercises: allExercises } = await getCompleteProgramData(savedProgram.id);
+
     await createProgramRevision({
       program_id: savedProgram.id,
       revision_number: 1,
-      program_snapshot: aiProgram,
+      program_snapshot: {
+        program: program || savedProgram,
+        workouts: allWorkouts || [],
+        exercises: allExercises || [],
+      },
       change_description: 'Initial AI-generated program',
-      revised_by: body.trainer_id,
+      created_by: body.trainer_id,
     });
 
     // Step 9: Return success response

@@ -1,13 +1,15 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { ChevronDown, ChevronUp, Plus, GripVertical } from 'lucide-react';
 import { ExerciseEditor } from './ExerciseEditor';
-import type { AIWorkout } from '@/lib/types/ai-program';
+import { enrichExerciseWithDetails, stripEnrichment } from '@/lib/types/ai-program-editor';
+import type { AIWorkout, AIWorkoutExercise } from '@/lib/types/ai-program';
+import type { AIWorkoutExerciseWithDetails } from '@/lib/types/ai-program-editor';
 
 interface WorkoutEditorProps {
   workout: AIWorkout;
@@ -17,13 +19,21 @@ interface WorkoutEditorProps {
 export function WorkoutEditor({ workout, onChange }: WorkoutEditorProps) {
   const [isExpanded, setIsExpanded] = useState(false);
 
+  // Enrich exercises with exercise library details for editing
+  const enrichedExercises = useMemo(() => {
+    if (!workout.exercises) return [];
+    return workout.exercises.map(ex => enrichExerciseWithDetails(ex));
+  }, [workout.exercises]);
+
   const handleWorkoutChange = (field: keyof AIWorkout, value: any) => {
     onChange({ ...workout, [field]: value });
   };
 
-  const handleExerciseChange = (exerciseId: string, updatedExercise: any) => {
+  const handleExerciseChange = (exerciseId: string, updatedExercise: AIWorkoutExerciseWithDetails) => {
+    // Strip enrichment before saving
+    const strippedExercise = stripEnrichment(updatedExercise);
     const updatedExercises = workout.exercises?.map(ex =>
-      ex.id === exerciseId ? updatedExercise : ex
+      ex.id === exerciseId ? { ...ex, ...strippedExercise } as AIWorkoutExercise : ex
     );
     handleWorkoutChange('exercises', updatedExercises);
   };
@@ -50,9 +60,9 @@ export function WorkoutEditor({ workout, onChange }: WorkoutEditorProps) {
     const newExercises = [...workout.exercises];
     [newExercises[currentIndex], newExercises[newIndex]] = [newExercises[newIndex], newExercises[currentIndex]];
 
-    // Update order_index for both exercises
-    newExercises[currentIndex] = { ...newExercises[currentIndex], order_index: currentIndex };
-    newExercises[newIndex] = { ...newExercises[newIndex], order_index: newIndex };
+    // Update exercise_order for both exercises
+    newExercises[currentIndex] = { ...newExercises[currentIndex], exercise_order: currentIndex };
+    newExercises[newIndex] = { ...newExercises[newIndex], exercise_order: newIndex };
 
     handleWorkoutChange('exercises', newExercises);
   };
@@ -94,11 +104,11 @@ export function WorkoutEditor({ workout, onChange }: WorkoutEditorProps) {
         <CardContent className="space-y-4">
           {/* Workout Notes */}
           <div className="space-y-2">
-            <Label htmlFor={`notes-${workout.id}`}>Workout Notes</Label>
+            <Label htmlFor={`trainer-notes-${workout.id}`}>Workout Notes</Label>
             <Input
-              id={`notes-${workout.id}`}
-              value={workout.notes || ''}
-              onChange={(e) => handleWorkoutChange('notes', e.target.value)}
+              id={`trainer-notes-${workout.id}`}
+              value={workout.trainer_notes || ''}
+              onChange={(e) => handleWorkoutChange('trainer_notes', e.target.value)}
               placeholder="Special instructions or warm-up notes..."
               className="bg-white dark:bg-gray-900"
             />
@@ -119,23 +129,23 @@ export function WorkoutEditor({ workout, onChange }: WorkoutEditorProps) {
               </Button>
             </div>
 
-            {workout.exercises && workout.exercises.length > 0 ? (
+            {enrichedExercises && enrichedExercises.length > 0 ? (
               <div className="space-y-3">
-                {workout.exercises.map((exercise, index) => (
+                {enrichedExercises.map((exercise, index) => (
                   <ExerciseEditor
                     key={exercise.id}
                     exercise={exercise}
                     onChange={(updatedExercise) => handleExerciseChange(exercise.id, updatedExercise)}
                     onRemove={() => handleRemoveExercise(exercise.id)}
                     onMoveUp={index > 0 ? () => handleReorderExercise(exercise.id, 'up') : undefined}
-                    onMoveDown={index < workout.exercises!.length - 1 ? () => handleReorderExercise(exercise.id, 'down') : undefined}
+                    onMoveDown={index < enrichedExercises.length - 1 ? () => handleReorderExercise(exercise.id, 'down') : undefined}
                   />
                 ))}
               </div>
             ) : (
               <div className="text-center p-8 bg-gray-50 dark:bg-gray-900/50 rounded-lg border border-dashed border-gray-300 dark:border-gray-700">
                 <p className="text-sm text-gray-600 dark:text-gray-400">
-                  No exercises yet. Click "Add Exercise" to get started.
+                  No exercises yet. Click &quot;Add Exercise&quot; to get started.
                 </p>
               </div>
             )}

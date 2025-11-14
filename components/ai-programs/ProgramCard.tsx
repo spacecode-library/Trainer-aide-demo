@@ -189,7 +189,9 @@ export function ProgramCard({ program, onUpdate }: ProgramCardProps) {
 
   const getTotalExercises = () => {
     if (!program.movement_balance_summary) return 0;
-    return Object.values(program.movement_balance_summary).reduce((sum, count) => sum + count, 0);
+    return Object.values(program.movement_balance_summary)
+      .filter((count): count is number => typeof count === 'number')
+      .reduce((sum, count) => sum + count, 0);
   };
 
   return (

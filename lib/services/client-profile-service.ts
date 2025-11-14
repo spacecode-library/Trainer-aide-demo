@@ -406,14 +406,14 @@ export function validateClientProfile(input: Partial<CreateClientProfileInput>):
   }
 
   // Validate training frequency
-  if (input.preferred_training_frequency !== undefined) {
+  if (input.preferred_training_frequency !== undefined && input.preferred_training_frequency !== null) {
     if (input.preferred_training_frequency < 1 || input.preferred_training_frequency > 7) {
       errors.push('Training frequency must be between 1 and 7 days per week');
     }
   }
 
   // Validate session duration
-  if (input.preferred_session_duration_minutes !== undefined) {
+  if (input.preferred_session_duration_minutes !== undefined && input.preferred_session_duration_minutes !== null) {
     if (input.preferred_session_duration_minutes < 15 || input.preferred_session_duration_minutes > 180) {
       errors.push('Session duration must be between 15 and 180 minutes');
     }

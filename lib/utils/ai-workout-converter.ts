@@ -10,28 +10,30 @@ export function convertAIWorkoutToSessionBlocks(workout: AIWorkout): SessionBloc
     return [];
   }
 
-  // Group exercises by block number (AI workouts may have exercises in different blocks)
+  // Group exercises by block label (AI workouts may have exercises in different blocks like A1, A2, B1, etc.)
   const exercisesByBlock = workout.exercises.reduce((acc, exercise) => {
-    const blockNum = exercise.block_number || 1;
-    if (!acc[blockNum]) {
-      acc[blockNum] = [];
+    // Extract block identifier from block_label (e.g., "A1" -> "A", "B1" -> "B")
+    const blockLabel = exercise.block_label || 'A';
+    const blockId = blockLabel.charAt(0); // Get first character as block ID
+    if (!acc[blockId]) {
+      acc[blockId] = [];
     }
-    acc[blockNum].push(exercise);
+    acc[blockId].push(exercise);
     return acc;
-  }, {} as Record<number, AIWorkoutExercise[]>);
+  }, {} as Record<string, AIWorkoutExercise[]>);
 
   // Convert to session blocks
   const blocks: SessionBlock[] = Object.entries(exercisesByBlock)
-    .sort(([a], [b]) => Number(a) - Number(b))
-    .map(([blockNum, exercises]) => {
+    .sort(([a], [b]) => a.localeCompare(b)) // Sort alphabetically (A, B, C, etc.)
+    .map(([blockId, exercises], index) => {
       const sortedExercises = exercises.sort((a, b) => (a.exercise_order || 0) - (b.exercise_order || 0));
 
       return {
-        id: `ai_block_${workout.id}_${blockNum}`,
-        blockNumber: Number(blockNum),
-        name: `Block ${blockNum}`,
-        exercises: sortedExercises.map((exercise, index) =>
-          convertAIExerciseToSessionExercise(exercise, index + 1)
+        id: `ai_block_${workout.id}_${blockId}`,
+        blockNumber: index + 1, // Use array index as block number
+        name: `Block ${blockId}`,
+        exercises: sortedExercises.map((exercise, exerciseIndex) =>
+          convertAIExerciseToSessionExercise(exercise, exerciseIndex + 1)
         ),
         rpe: undefined,
         completed: false,
@@ -48,40 +50,41 @@ export function convertAIExerciseToSessionExercise(
   aiExercise: AIWorkoutExercise,
   position: number
 ): SessionExercise {
-  // Determine muscle group from exercise name or default to 'other'
-  const muscleGroup = determineMuscleGroup(aiExercise.exercise_name);
+  // Default muscle group - would need exercise library to determine from exercise_id
+  const muscleGroup = 'full_body'; // Use full_body as default when we don't have exercise details
 
   // Determine resistance type based on AI exercise data
-  const resistanceType = aiExercise.load_type === 'bodyweight'
+  const resistanceType = aiExercise.is_bodyweight
     ? 'bodyweight'
     : 'weight';
 
-  // Parse reps from AI format (e.g., "10-12" or "10")
-  const { repsMin, repsMax } = parseReps(aiExercise.reps || '0');
+  // Get reps from AI format
+  const repsMin = aiExercise.reps_min || 0;
+  const repsMax = aiExercise.reps_max || aiExercise.reps_min || 0;
 
   return {
     id: `ai_ex_${aiExercise.id}`,
-    exerciseId: aiExercise.exercise_id || `custom_${aiExercise.id}`,
+    exerciseId: aiExercise.exercise_id,
     position,
     muscleGroup,
     resistanceType,
-    resistanceValue: parseFloat(aiExercise.load_amount || '0'),
+    resistanceValue: aiExercise.target_load_kg || 0,
     repsMin,
     repsMax,
     sets: aiExercise.sets || 1,
-    cardioDuration: undefined, // AI exercises don't typically have cardio duration
+    cardioDuration: aiExercise.target_duration_seconds ? Math.floor(aiExercise.target_duration_seconds / 60) : undefined,
     cardioIntensity: undefined,
-    completed: false,
-    actualResistance: undefined,
-    actualReps: undefined,
-    actualDuration: undefined,
-    rpe: undefined,
+    completed: aiExercise.is_completed,
+    actualResistance: aiExercise.actual_load_kg ?? undefined,
+    actualReps: aiExercise.actual_reps ?? undefined,
+    actualDuration: aiExercise.actual_duration_seconds ? Math.floor(aiExercise.actual_duration_seconds / 60) : undefined,
+    rpe: aiExercise.actual_rpe ?? undefined,
     // Store AI-specific fields in a way that can be accessed during the session
-    tempo: aiExercise.tempo,
-    restSeconds: aiExercise.rest_seconds,
-    rir: aiExercise.rir,
+    tempo: aiExercise.tempo ?? undefined,
+    restSeconds: aiExercise.rest_seconds ?? undefined,
+    rir: aiExercise.target_rir ?? undefined,
     coachingCues: aiExercise.coaching_cues,
-    notes: aiExercise.notes,
+    notes: aiExercise.performance_notes ?? undefined,
   };
 }
 
@@ -89,7 +92,7 @@ export function convertAIExerciseToSessionExercise(
  * Determines muscle group from exercise name
  * This is a simple heuristic - in production you'd want a proper mapping
  */
-function determineMuscleGroup(exerciseName: string): string {
+function determineMuscleGroup(exerciseName: string): 'chest' | 'back' | 'legs' | 'shoulders' | 'biceps' | 'triceps' | 'core' | 'cardio' | 'stretch' | 'full_body' {
   const name = exerciseName.toLowerCase();
 
   if (name.includes('chest') || name.includes('press') || name.includes('pushup')) {
@@ -120,7 +123,7 @@ function determineMuscleGroup(exerciseName: string): string {
     return 'stretch';
   }
 
-  return 'other';
+  return 'full_body';
 }
 
 /**

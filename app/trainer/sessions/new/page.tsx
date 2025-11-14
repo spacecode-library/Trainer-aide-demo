@@ -6,7 +6,7 @@ import { useTemplateStore } from '@/lib/stores/template-store';
 import { useSessionStore } from '@/lib/stores/session-store';
 import { useUserStore } from '@/lib/stores/user-store';
 import { MOCK_CLIENTS } from '@/lib/mock-data';
-import { getExerciseById } from '@/lib/mock-data';
+import { getExerciseByIdSync } from '@/lib/mock-data';
 import { generateId } from '@/lib/utils/generators';
 import { convertAIWorkoutToSessionBlocks, getAIWorkoutSessionName } from '@/lib/utils/ai-workout-converter';
 import { Button } from '@/components/ui/button';

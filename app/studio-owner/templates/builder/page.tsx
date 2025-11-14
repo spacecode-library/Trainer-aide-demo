@@ -3,7 +3,7 @@
 import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useTemplateStore } from '@/lib/stores/template-store';
-import { getExerciseById } from '@/lib/mock-data';
+import { getExerciseByIdSync } from '@/lib/mock-data';
 import { generateId } from '@/lib/utils/generators';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -487,7 +487,7 @@ function TemplateBuilderContent() {
                   )}
 
                   {block.exercises.map((templateExercise, exerciseIndex) => {
-                    const exercise = getExerciseById(templateExercise.exerciseId);
+                    const exercise = getExerciseByIdSync(templateExercise.exerciseId);
                     if (!exercise) return null;
 
                     const isFirst = exerciseIndex === 0;

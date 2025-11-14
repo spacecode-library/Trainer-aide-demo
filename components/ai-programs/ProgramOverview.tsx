@@ -89,7 +89,7 @@ export function ProgramOverview({ program }: ProgramOverviewProps) {
           </CardHeader>
           <CardContent>
             <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
-              "{program.ai_rationale}"
+              &quot;{program.ai_rationale}&quot;
             </p>
           </CardContent>
         </Card>
@@ -107,8 +107,8 @@ export function ProgramOverview({ program }: ProgramOverviewProps) {
         </Card>
       )}
 
-      {/* Equipment Required */}
-      {program.available_equipment && program.available_equipment.length > 0 && (
+      {/* Equipment Required - commented out as available_equipment is not stored in AIProgram */}
+      {/* {program.available_equipment && program.available_equipment.length > 0 && (
         <Card>
           <CardHeader>
             <CardTitle>Equipment Required</CardTitle>
@@ -126,7 +126,7 @@ export function ProgramOverview({ program }: ProgramOverviewProps) {
             </div>
           </CardContent>
         </Card>
-      )}
+      )} */}
 
       {/* Generation Metadata */}
       {program.ai_model && (
@@ -142,7 +142,8 @@ export function ProgramOverview({ program }: ProgramOverviewProps) {
                   {program.ai_model === 'claude-sonnet-4-5-20250929' ? 'Claude Sonnet 4.5' : program.ai_model}
                 </span>
               </div>
-              {program.tokens_used && (
+              {/* Commented out - these fields don't exist on AIProgram type */}
+              {/* {program.tokens_used && (
                 <div className="flex justify-between">
                   <span className="text-gray-600 dark:text-gray-400">Tokens Used:</span>
                   <span className="font-medium text-gray-900 dark:text-gray-100">
@@ -165,7 +166,7 @@ export function ProgramOverview({ program }: ProgramOverviewProps) {
                     {Math.round(program.generation_time_ms / 1000)}s
                   </span>
                 </div>
-              )}
+              )} */}
             </div>
           </CardContent>
         </Card>

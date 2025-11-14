@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useSessionStore } from '@/lib/stores/session-store';
-import { getExerciseById } from '@/lib/mock-data';
+import { getExerciseByIdSync } from '@/lib/mock-data';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -50,7 +50,7 @@ export default function ClientSessionHistory() {
                         <CardTitle className="text-xl">{session.sessionName}</CardTitle>
                         <Badge variant="success">Completed</Badge>
                       </div>
-                      <p className="text-sm text-gray-600 mb-3">{session.template.name}</p>
+                      <p className="text-sm text-gray-600 mb-3">{session.template?.name || 'Custom Session'}</p>
 
                       {/* Session Stats */}
                       <div className="flex items-center gap-4 text-sm text-gray-600 flex-wrap">
@@ -124,7 +124,7 @@ export default function ClientSessionHistory() {
 
                           <div className="space-y-3">
                             {block.exercises.map((exercise) => {
-                              const exerciseData = getExerciseById(exercise.exerciseId);
+                              const exerciseData = getExerciseByIdSync(exercise.exerciseId);
                               if (!exerciseData) return null;
 
                               return (
