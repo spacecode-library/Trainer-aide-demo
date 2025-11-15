@@ -80,6 +80,12 @@ interface AIGeneratedProgram {
   suggestions?: string[];
 }
 
+// Configure maximum duration for this API route
+// Vercel Pro: max 60s, Vercel Enterprise: max 300s
+// Railway/other platforms: Configure via platform settings
+export const maxDuration = 300; // 5 minutes
+export const dynamic = 'force-dynamic'; // Disable static optimization
+
 export async function POST(request: NextRequest) {
   const startTime = Date.now();
   let body!: WorkerRequest;  // Non-null assertion - will be assigned in try block
@@ -177,10 +183,15 @@ export async function POST(request: NextRequest) {
     console.log('🧠 Generating program in chunks to avoid token limits...');
 
     const totalWeeks = body.total_weeks;
-    const CHUNK_SIZE = 1; // Generate 1 week at a time to avoid timeout (90s per chunk vs 150s for 2-week chunks)
+
+    // Dynamic chunk sizing based on program length for optimal performance:
+    // - Small programs (1-3 weeks): Single chunk is faster despite longer processing time
+    // - Medium programs (4-8 weeks): 2-week chunks balance speed and quality
+    // - Large programs (9+ weeks): 2-week chunks to stay within token/timeout limits
+    const CHUNK_SIZE = totalWeeks <= 3 ? totalWeeks : 2;
     const chunks = Math.ceil(totalWeeks / CHUNK_SIZE);
 
-    console.log(`📊 Will generate ${chunks} chunks (${CHUNK_SIZE} week per chunk)`);
+    console.log(`📊 Will generate ${chunks} chunks (${CHUNK_SIZE} week${CHUNK_SIZE > 1 ? 's' : ''} per chunk)`);
 
     let combinedProgram: AIGeneratedProgram | null = null;
     let totalTokensUsed = 0;
