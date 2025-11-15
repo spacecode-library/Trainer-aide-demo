@@ -58,7 +58,13 @@ export function ProgramGeneratorWizard() {
   const [selectedClient, setSelectedClient] = useState<ClientProfile | null>(null);
   const [programConfig, setProgramConfig] = useState<ProgramConfig | null>(null);
   const [generationResult, setGenerationResult] = useState<GenerationResult | null>(null);
-  const [progress, setProgress] = useState<string[]>([]);
+
+  // Real-time progress tracking
+  const [progressMessage, setProgressMessage] = useState<string | null>(null);
+  const [progressPercentage, setProgressPercentage] = useState<number>(0);
+  const [currentProgressStep, setCurrentProgressStep] = useState<number>(0);
+  const [totalProgressSteps, setTotalProgressSteps] = useState<number>(0);
+  const [progressLog, setProgressLog] = useState<string[]>([]);
 
   // Navigation handlers
   const handleMethodSelect = (selectedMethod: 'ai' | 'manual') => {
@@ -84,14 +90,12 @@ export function ProgramGeneratorWizard() {
   };
 
   const startGeneration = async (config: ProgramConfig) => {
-    setProgress(['Filtering exercises...']);
+    // Initialize progress tracking
+    setProgressMessage('Submitting program request...');
+    setProgressPercentage(0);
+    setProgressLog(['Submitting program request...']);
 
     try {
-      // Simulate progress updates (API call is one-shot)
-      setTimeout(() => setProgress(prev => [...prev, 'Analyzing movement patterns...']), 5000);
-      setTimeout(() => setProgress(prev => [...prev, 'Generating workouts...']), 30000);
-      setTimeout(() => setProgress(prev => [...prev, 'Saving to database...']), 80000);
-
       // Prepare API request
       const requestBody = {
         trainer_id: currentUser.id,
@@ -111,6 +115,7 @@ export function ProgramGeneratorWizard() {
         }),
       };
 
+      // Step 1: Submit generation request (returns immediately with program_id)
       const response = await fetch('/api/ai/generate-program', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -122,9 +127,88 @@ export function ProgramGeneratorWizard() {
         throw new Error(errorData.error || 'Generation failed');
       }
 
-      const result = await response.json();
-      setGenerationResult(result);
-      setCurrentStep('results');
+      const { program_id } = await response.json();
+
+      // Step 2: Poll for status every 2 seconds
+      // Calculate timeout based on program size
+      // Chunked generation: ~90s per 1-week chunk
+      const estimatedChunks = Math.ceil(config.total_weeks / 1); // 1 week per chunk now
+      const estimatedSeconds = 60 + (estimatedChunks * 90); // Base + chunks (90s per 1-week chunk)
+      const maxPollAttempts = Math.max(120, Math.ceil(estimatedSeconds / 2)); // At least 4 minutes
+
+      console.log(`⏱️  Polling timeout: ${maxPollAttempts * 2}s (estimated ${estimatedSeconds}s for ${estimatedChunks} chunks)`);
+
+      let pollAttempts = 0;
+
+      const pollInterval = setInterval(async () => {
+        try {
+          pollAttempts++;
+
+          // Timeout after max attempts
+          if (pollAttempts > maxPollAttempts) {
+            clearInterval(pollInterval);
+            console.error(`❌ Polling timeout after ${pollAttempts * 2} seconds`);
+            throw new Error(`Generation is taking longer than expected (${Math.floor(maxPollAttempts * 2 / 60)} minutes). The program may still be generating in the background. Check your programs list in a few minutes.`);
+          }
+
+          const statusResponse = await fetch(`/api/ai-programs/${program_id}`);
+
+          if (!statusResponse.ok) {
+            clearInterval(pollInterval);
+            throw new Error('Failed to check generation status');
+          }
+
+          const response = await statusResponse.json();
+          // API returns { program: { ...fields } }, so we need to unwrap it
+          const programData = response.program || response;
+
+          // Extract real-time progress data
+          const message = programData?.progress_message || 'Generating...';
+          const percentage = programData?.progress_percentage || 0;
+          const currentStep = programData?.current_step || 0;
+          const totalSteps = programData?.total_steps || 0;
+
+          // Update progress state
+          setProgressMessage(message);
+          setProgressPercentage(percentage);
+          setCurrentProgressStep(currentStep);
+          setTotalProgressSteps(totalSteps);
+
+          // Add to progress log if message changed
+          setProgressLog(prev => {
+            const lastMessage = prev[prev.length - 1];
+            if (lastMessage !== message && message) {
+              return [...prev, message];
+            }
+            return prev;
+          });
+
+          // Debug logging
+          if (pollAttempts % 10 === 0) {
+            console.log(`Poll #${pollAttempts}: status = ${programData?.generation_status}, progress = ${percentage}%, ${message}`);
+          }
+
+          if (programData?.generation_status === 'completed') {
+            clearInterval(pollInterval);
+            console.log('✅ Generation completed successfully');
+
+            setGenerationResult({
+              success: true,
+              program_id: program_id,
+              program: programData,
+            });
+            setCurrentStep('results');
+          } else if (programData?.generation_status === 'failed') {
+            clearInterval(pollInterval);
+            console.error('❌ Generation failed:', programData.generation_error);
+            throw new Error(programData.generation_error || 'Generation failed');
+          }
+        } catch (pollError) {
+          clearInterval(pollInterval);
+          throw pollError;
+        }
+      }, 2000); // Poll every 2 seconds
+
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
       setGenerationResult({
@@ -142,7 +226,13 @@ export function ProgramGeneratorWizard() {
     setSelectedClient(null);
     setProgramConfig(null);
     setGenerationResult(null);
-    setProgress([]);
+
+    // Reset progress tracking
+    setProgressMessage(null);
+    setProgressPercentage(0);
+    setCurrentProgressStep(0);
+    setTotalProgressSteps(0);
+    setProgressLog([]);
   };
 
   const handleViewProgram = () => {
@@ -210,7 +300,13 @@ export function ProgramGeneratorWizard() {
       )}
 
       {currentStep === 'generating' && (
-        <GenerationProgress progress={progress} />
+        <GenerationProgress
+          progressMessage={progressMessage}
+          progressPercentage={progressPercentage}
+          currentStep={currentProgressStep}
+          totalSteps={totalProgressSteps}
+          progressLog={progressLog}
+        />
       )}
 
       {currentStep === 'results' && generationResult && (

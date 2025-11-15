@@ -387,18 +387,18 @@ export function ProgramCard({ program, onUpdate }: ProgramCardProps) {
       </CardContent>
     </Card>
 
-      {/* Assign Client Modal */}
-      {showAssignModal && (
-        <AssignClientModal
-          programId={program.id}
-          programName={program.program_name}
-          onClose={() => setShowAssignModal(false)}
-          onAssigned={() => {
-            setShowAssignModal(false);
-            if (onUpdate) onUpdate();
-          }}
-        />
-      )}
+    {/* Assign Client Modal */}
+    {showAssignModal && (
+      <AssignClientModal
+        programId={program.id}
+        programName={program.program_name}
+        onClose={() => setShowAssignModal(false)}
+        onAssigned={() => {
+          setShowAssignModal(false);
+          if (onUpdate) onUpdate();
+        }}
+      />
+    )}
     </>
   );
 }

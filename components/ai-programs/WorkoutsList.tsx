@@ -46,14 +46,37 @@ export function WorkoutsList({ programId, program }: WorkoutsListProps) {
     async function fetchWorkouts() {
       try {
         setLoading(true);
-        // TODO: Replace with actual API call
-        // const response = await fetch(`/api/programs/${programId}/workouts?week=${selectedWeek}`);
-        // const data = await response.json();
 
-        // Mock data for now
-        await new Promise(resolve => setTimeout(resolve, 300));
+        // Fetch real workouts from API
+        const response = await fetch(`/api/ai-programs/${programId}/workouts`);
+        if (!response.ok) {
+          throw new Error('Failed to fetch workouts');
+        }
 
-        const mockWorkouts: Workout[] = [
+        const data = await response.json();
+
+        // Filter workouts for selected week
+        const weekWorkouts = data.workouts.filter(
+          (w: Workout) => w.week_number === selectedWeek
+        );
+
+        setWorkouts(weekWorkouts);
+        // Auto-expand first workout
+        setExpandedWorkouts(new Set([weekWorkouts[0]?.id].filter(Boolean)));
+      } catch (err) {
+        console.error('Failed to load workouts:', err);
+        setWorkouts([]);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchWorkouts();
+  }, [programId, selectedWeek]);
+
+  // Remove unused mock data
+  /*
+  const mockWorkouts: Workout[] = [
           {
             id: '1',
             week_number: selectedWeek,
@@ -225,6 +248,7 @@ export function WorkoutsList({ programId, program }: WorkoutsListProps) {
 
     fetchWorkouts();
   }, [programId, selectedWeek]);
+  */
 
   const toggleWorkout = (workoutId: string) => {
     setExpandedWorkouts(prev => {

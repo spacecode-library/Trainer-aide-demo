@@ -184,36 +184,11 @@ export function GenerationResults({
             <CardTitle className="text-base">Generation Metadata</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-              <div>
-                <p className="text-gray-600 dark:text-gray-400 mb-1">Model</p>
-                <p className="font-medium text-gray-900 dark:text-gray-100">
-                  Claude Sonnet 4.5
-                </p>
-              </div>
-              <div>
-                <p className="text-gray-600 dark:text-gray-400 mb-1">Tokens Used</p>
-                <p className="font-medium text-gray-900 dark:text-gray-100">
-                  {generationLog.tokens_used?.toLocaleString() || 'N/A'}
-                </p>
-                <p className="text-xs text-gray-500">
-                  ({generationLog.input_tokens?.toLocaleString()} in /{' '}
-                  {generationLog.output_tokens?.toLocaleString()} out)
-                </p>
-              </div>
-              <div>
-                <p className="text-gray-600 dark:text-gray-400 mb-1 flex items-center gap-1">
-                  <DollarSign size={14} />
-                  Cost
-                </p>
-                <p className="font-medium text-gray-900 dark:text-gray-100">
-                  ${generationLog.cost_usd?.toFixed(2) || '0.00'}
-                </p>
-              </div>
+            <div className="flex items-center gap-2 text-sm">
               <div>
                 <p className="text-gray-600 dark:text-gray-400 mb-1 flex items-center gap-1">
                   <Clock size={14} />
-                  Time
+                  Generation Time
                 </p>
                 <p className="font-medium text-gray-900 dark:text-gray-100">
                   {generationLog.latency_ms

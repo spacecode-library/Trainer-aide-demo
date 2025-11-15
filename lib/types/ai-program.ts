@@ -12,6 +12,8 @@ import type { GoalType, ExperienceLevel } from './client-profile';
 
 export type ProgramStatus = 'draft' | 'active' | 'paused' | 'completed' | 'archived';
 
+export type GenerationStatus = 'generating' | 'completed' | 'failed';
+
 export type SessionType = 'strength' | 'hypertrophy' | 'conditioning' | 'mobility' | 'recovery' | 'mixed';
 
 export type GenerationType = 'program' | 'workout' | 'exercise_block' | 'nutrition' | 'progression';
@@ -34,6 +36,16 @@ export interface AIProgram {
   program_name: string;
   description?: string | null;
   status: ProgramStatus;
+
+  // Generation Status (for async background processing)
+  generation_status: GenerationStatus;
+  generation_error?: string | null;
+
+  // Progress Tracking (for real-time updates)
+  progress_message?: string | null;
+  current_step?: number | null;
+  total_steps?: number | null;
+  progress_percentage?: number | null;
 
   // Structure
   total_weeks: number;
@@ -357,8 +369,14 @@ export interface RevisionChanges {
 // CREATE/UPDATE INPUT TYPES
 // ========================================
 
-export type CreateAIProgramInput = Omit<AIProgram, 'id' | 'created_at' | 'updated_at' | 'completion_percentage' | 'sessions_completed'> & {
+export type CreateAIProgramInput = Omit<AIProgram, 'id' | 'created_at' | 'updated_at' | 'completion_percentage' | 'sessions_completed' | 'generation_status' | 'generation_error' | 'progress_message' | 'current_step' | 'total_steps' | 'progress_percentage'> & {
   id?: string;
+  generation_status?: GenerationStatus;
+  generation_error?: string | null;
+  progress_message?: string | null;
+  current_step?: number | null;
+  total_steps?: number | null;
+  progress_percentage?: number | null;
 };
 
 export type UpdateAIProgramInput = Partial<Omit<AIProgram, 'id' | 'created_at'>>;

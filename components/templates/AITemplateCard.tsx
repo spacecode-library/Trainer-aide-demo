@@ -123,7 +123,7 @@ export function AITemplateCard({ template, onUpdate }: AITemplateCardProps) {
           <div className="bg-purple-50 dark:bg-purple-900/20 rounded-lg p-3 mb-4">
             <p className="text-sm text-center text-purple-900 dark:text-purple-200">
               <span className="font-semibold">{totalSessions}</span> total workouts •
-              <span className="font-semibold"> {template.ai_model?.includes('claude') ? 'Claude' : 'AI'}</span> generated
+              <span className="font-semibold"> AI</span> generated
             </p>
           </div>
 

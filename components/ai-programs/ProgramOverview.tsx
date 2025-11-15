@@ -139,7 +139,7 @@ export function ProgramOverview({ program }: ProgramOverviewProps) {
               <div className="flex justify-between">
                 <span className="text-gray-600 dark:text-gray-400">AI Model:</span>
                 <span className="font-medium text-gray-900 dark:text-gray-100">
-                  {program.ai_model === 'claude-sonnet-4-5-20250929' ? 'Claude Sonnet 4.5' : program.ai_model}
+                  Wondrous AI
                 </span>
               </div>
               {/* Commented out - these fields don't exist on AIProgram type */}

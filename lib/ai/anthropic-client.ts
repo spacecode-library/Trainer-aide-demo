@@ -120,6 +120,13 @@ export async function callClaude(params: {
     console.log(`   Output tokens: ${result.usage.output_tokens}`);
     console.log(`   Estimated cost: $${estimateCost(result).toFixed(4)}`);
 
+    // Warning: Check if response was truncated due to max_tokens
+    if (response.stop_reason === 'max_tokens') {
+      console.warn('⚠️  WARNING: Response truncated due to max_tokens limit!');
+      console.warn(`   Requested: ${maxTokens}, Used: ${result.usage.output_tokens}`);
+      console.warn('   This may result in incomplete JSON. Consider increasing maxTokens.');
+    }
+
     return { data: result, error: null };
   } catch (err: any) {
     console.error('❌ Claude API error:', err.message);
@@ -189,7 +196,21 @@ ${jsonSchema ? `\nExpected JSON structure:\n${jsonSchema}` : ''}`;
     return { data: parsed, error: null, raw: data };
   } catch (parseError: any) {
     console.error('❌ Failed to parse JSON response:', parseError.message);
-    console.error('Raw response (first 500 chars):', data.content.substring(0, 500));
+    console.error('Stop reason:', data.stop_reason);
+    console.error('Tokens used:', data.usage.output_tokens);
+
+    const contentLength = data.content.length;
+    console.error(`Response length: ${contentLength} characters`);
+    console.error('First 1000 chars:', data.content.substring(0, 1000));
+    console.error('Last 1000 chars:', data.content.substring(Math.max(0, contentLength - 1000)));
+
+    // If truncated, provide specific guidance
+    if (data.stop_reason === 'max_tokens') {
+      console.error('');
+      console.error('🔍 DIAGNOSIS: Response was truncated due to max_tokens limit');
+      console.error('   This is why JSON parsing failed - the response is incomplete');
+      console.error('   SOLUTION: Increase the maxTokens parameter in the API call');
+    }
 
     return {
       data: null,

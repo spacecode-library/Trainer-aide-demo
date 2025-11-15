@@ -76,7 +76,7 @@ export async function PATCH(
         if (workout.exercises && Array.isArray(workout.exercises)) {
           for (const exercise of workout.exercises) {
             await supabaseServer
-              .from('ai_exercises')
+              .from('ai_workout_exercises')
               .update({
                 exercise_name: exercise.exercise_name,
                 sets: exercise.sets,

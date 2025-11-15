@@ -53,27 +53,29 @@ export function MethodSelection({ selectedMethod, onSelect, onCancel }: MethodSe
                   </h3>
                 </div>
                 <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
-                  Let Claude Sonnet 4.5 create a personalized, science-backed program
-                  based on client goals and available equipment.
+                  Craft a personalised, evidence-based training plan in minutes using our intelligent program builder. Designed to reflect real strength-and-conditioning logic — tailored to your client's goals, history, and available equipment.
                 </p>
                 <ul className="space-y-1 text-sm text-gray-600 dark:text-gray-400">
                   <li className="flex items-center gap-2">
                     <span className="text-wondrous-magenta">•</span>
-                    Takes ~2 minutes
+                    Generates in &lt;2mins
                   </li>
                   <li className="flex items-center gap-2">
                     <span className="text-wondrous-magenta">•</span>
-                    Fully customizable after generation
+                    Fully editable
                   </li>
                   <li className="flex items-center gap-2">
                     <span className="text-wondrous-magenta">•</span>
-                    Includes movement balance and AI rationale
+                    Balanced movement patterns & structured progression
                   </li>
                   <li className="flex items-center gap-2">
                     <span className="text-wondrous-magenta">•</span>
-                    Cost: ~$0.15 per program
+                    Includes clear rationale for each block
                   </li>
                 </ul>
+                <p className="text-xs text-gray-500 dark:text-gray-400 italic mt-3">
+                  Powered by Wondrous Movement Intelligence™️
+                </p>
               </div>
             </div>
           </CardContent>
@@ -112,23 +114,25 @@ export function MethodSelection({ selectedMethod, onSelect, onCancel }: MethodSe
                   </h3>
                 </div>
                 <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
-                  Build a program from scratch with full control over every exercise,
-                  set, and rep.
+                  Build a programme entirely from scratch with full creative control. Ideal for coaches who prefer to design every exercise, set, and progression themselves.
                 </p>
                 <ul className="space-y-1 text-sm text-gray-600 dark:text-gray-400">
                   <li className="flex items-center gap-2">
                     <span className="text-gray-400">•</span>
-                    Complete creative control
+                    Total control over structure and flow
                   </li>
                   <li className="flex items-center gap-2">
                     <span className="text-gray-400">•</span>
-                    No AI costs
+                    Uses our full Session Builder toolkit
                   </li>
                   <li className="flex items-center gap-2">
                     <span className="text-gray-400">•</span>
-                    Uses existing session builder
+                    Perfect for advanced or highly specific programming
                   </li>
                 </ul>
+                <p className="text-xs text-gray-500 dark:text-gray-400 italic mt-3">
+                  Your expertise. Your way.
+                </p>
               </div>
             </div>
           </CardContent>

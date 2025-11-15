@@ -16,22 +16,33 @@ export async function GET(
     // Fetch workouts for the program
     const workouts = await getAIWorkoutsByProgram(id);
 
-    // Fetch exercises for each workout
+    // Fetch exercises for each workout with exercise names from library
     const workoutsWithExercises = await Promise.all(
       workouts.map(async (workout) => {
         const { data: exercises, error: exercisesError } = await supabaseServer
-          .from('ai_exercises')
-          .select('*')
-          .eq('ai_workout_id', workout.id)
+          .from('ai_workout_exercises')
+          .select(`
+            *,
+            exercise:ta_exercise_library_original (
+              name
+            )
+          `)
+          .eq('workout_id', workout.id)
           .order('exercise_order', { ascending: true });
 
         if (exercisesError) {
           console.error(`Error fetching exercises for workout ${workout.id}:`, exercisesError);
         }
 
+        // Map exercise data to include exercise_name from the joined table
+        const exercisesWithNames = exercises?.map(ex => ({
+          ...ex,
+          exercise_name: ex.exercise?.name || 'Unknown Exercise'
+        })) || [];
+
         return {
           ...workout,
-          exercises: exercises || [],
+          exercises: exercisesWithNames,
         };
       })
     );

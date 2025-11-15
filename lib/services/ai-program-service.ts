@@ -222,6 +222,7 @@ export async function createAIWorkout(
 
 /**
  * Create multiple AI workouts (batch)
+ * Uses upsert to handle duplicates (idempotent for retries/regeneration)
  */
 export async function createAIWorkouts(
   inputs: CreateAIWorkoutInput[]
@@ -229,7 +230,10 @@ export async function createAIWorkouts(
   try {
     const { data, error } = await supabase
       .from('ai_workouts')
-      .insert(inputs)
+      .upsert(inputs, {
+        onConflict: 'program_id,week_number,day_number',
+        ignoreDuplicates: false
+      })
       .select();
 
     if (error) {
@@ -301,6 +305,31 @@ export async function getAIWorkoutsByWeek(
   }
 
   return data || [];
+}
+
+/**
+ * Delete all workouts for a program (exercises cascade delete)
+ * Used for cleanup before regenerating workouts
+ */
+export async function deleteAIWorkoutsByProgram(
+  programId: string
+): Promise<{ success: boolean; error: Error | null }> {
+  try {
+    const { error } = await supabase
+      .from('ai_workouts')
+      .delete()
+      .eq('program_id', programId);
+
+    if (error) {
+      console.error('Error deleting AI workouts:', error);
+      return { success: false, error: new Error(error.message) };
+    }
+
+    return { success: true, error: null };
+  } catch (err: any) {
+    console.error('Exception deleting AI workouts:', err);
+    return { success: false, error: err };
+  }
 }
 
 // ========================================
