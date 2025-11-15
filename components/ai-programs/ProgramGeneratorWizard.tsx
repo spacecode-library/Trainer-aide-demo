@@ -192,11 +192,48 @@ export function ProgramGeneratorWizard() {
             clearInterval(pollInterval);
             console.log('✅ Generation completed successfully');
 
-            setGenerationResult({
-              success: true,
-              program_id: program_id,
-              program: programData,
-            });
+            // Fetch workouts to get accurate counts
+            try {
+              const workoutsResponse = await fetch(`/api/ai-programs/${program_id}/workouts`);
+              if (workoutsResponse.ok) {
+                const workoutsData = await workoutsResponse.json();
+                const workouts = workoutsData.workouts || [];
+                const totalExercises = workouts.reduce((sum: number, workout: any) => {
+                  return sum + (workout.exercises?.length || 0);
+                }, 0);
+
+                console.log(`📊 Program stats: ${workouts.length} workouts, ${totalExercises} exercises`);
+
+                setGenerationResult({
+                  success: true,
+                  program_id: program_id,
+                  program: programData,
+                  workouts_count: workouts.length,
+                  exercises_count: totalExercises,
+                });
+              } else {
+                // Fallback if workouts fetch fails
+                console.warn('⚠️ Could not fetch workout counts, using defaults');
+                setGenerationResult({
+                  success: true,
+                  program_id: program_id,
+                  program: programData,
+                  workouts_count: 0,
+                  exercises_count: 0,
+                });
+              }
+            } catch (fetchError) {
+              console.error('❌ Error fetching workouts:', fetchError);
+              // Still show success, just without counts
+              setGenerationResult({
+                success: true,
+                program_id: program_id,
+                program: programData,
+                workouts_count: 0,
+                exercises_count: 0,
+              });
+            }
+
             setCurrentStep('results');
           } else if (programData?.generation_status === 'failed') {
             clearInterval(pollInterval);

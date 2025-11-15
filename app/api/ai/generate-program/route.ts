@@ -93,11 +93,23 @@ export async function POST(request: NextRequest) {
       experienceLevel = body.experience_level;
     }
 
+    // Debug logging for Netlify deployment
+    console.log('🔍 DEBUG - Environment check:');
+    console.log(`   SUPABASE_URL exists: ${!!process.env.NEXT_PUBLIC_SUPABASE_URL}`);
+    console.log(`   SUPABASE_URL length: ${process.env.NEXT_PUBLIC_SUPABASE_URL?.length || 0}`);
+    console.log(`   SERVICE_ROLE_KEY exists: ${!!process.env.SUPABASE_SERVICE_ROLE_KEY}`);
+    console.log(`   SERVICE_ROLE_KEY length: ${process.env.SUPABASE_SERVICE_ROLE_KEY?.length || 0}`);
+    console.log(`   ANTHROPIC_KEY exists: ${!!process.env.ANTHROPIC_API_KEY}`);
+
     console.log('🤖 Creating program record...');
     console.log(`   Duration: ${body.total_weeks} weeks x ${body.sessions_per_week} sessions/week`);
+    console.log(`   Trainer ID: ${body.trainer_id}`);
+    console.log(`   Client Profile ID: ${body.client_profile_id || 'none'}`);
+    console.log(`   Primary Goal: ${primaryGoal}`);
+    console.log(`   Experience Level: ${experienceLevel}`);
 
     // Create master program record with "generating" status
-    const { data: savedProgram, error: programError } = await createAIProgram({
+    const programData = {
       client_profile_id: body.client_profile_id || null,
       trainer_id: body.trainer_id,
       created_by: body.trainer_id,
@@ -118,12 +130,41 @@ export async function POST(request: NextRequest) {
       allow_client_modifications: false,
       generation_status: 'generating', // Set to generating
       generation_error: null,
-    });
+    };
+
+    console.log('🔍 DEBUG - Program data to insert:', JSON.stringify(programData, null, 2));
+
+    let savedProgram, programError;
+    try {
+      const result = await createAIProgram(programData);
+      savedProgram = result.data;
+      programError = result.error;
+      console.log('🔍 DEBUG - createAIProgram result:', {
+        hasData: !!savedProgram,
+        hasError: !!programError,
+        errorDetails: programError ? JSON.stringify(programError, null, 2) : null
+      });
+    } catch (err) {
+      console.error('🔍 DEBUG - createAIProgram threw exception:', err);
+      programError = err;
+    }
 
     if (programError || !savedProgram) {
-      console.error('❌ Failed to create program:', programError);
+      console.error('❌ Failed to create program - full error object:', JSON.stringify(programError, null, 2));
+      console.error('❌ Error type:', programError?.constructor?.name);
+      console.error('❌ Error message:', programError?.message);
+      console.error('❌ Error code:', (programError as any)?.code);
+      console.error('❌ Error details:', (programError as any)?.details);
+      console.error('❌ Error hint:', (programError as any)?.hint);
+
       return NextResponse.json(
-        { error: 'Failed to create program record', details: programError?.message },
+        {
+          error: 'Failed to create program record',
+          details: programError?.message,
+          errorCode: (programError as any)?.code,
+          errorHint: (programError as any)?.hint,
+          fullError: JSON.stringify(programError)
+        },
         { status: 500 }
       );
     }

@@ -30,20 +30,50 @@ export async function createAIProgram(
   input: CreateAIProgramInput
 ): Promise<{ data: AIProgram | null; error: Error | null }> {
   try {
+    console.log('🔍 DEBUG - createAIProgram called with input:', {
+      trainer_id: input.trainer_id,
+      client_profile_id: input.client_profile_id,
+      program_name: input.program_name,
+      total_weeks: input.total_weeks,
+      sessions_per_week: input.sessions_per_week,
+      generation_status: input.generation_status,
+    });
+
+    console.log('🔍 DEBUG - Supabase client available:', !!supabase);
+    console.log('🔍 DEBUG - About to insert into ai_programs table...');
+
     const { data, error } = await supabase
       .from('ai_programs')
       .insert(input)
       .select()
       .single();
 
+    console.log('🔍 DEBUG - Insert result:', {
+      hasData: !!data,
+      hasError: !!error,
+      dataId: data?.id,
+    });
+
     if (error) {
-      console.error('Error creating AI program:', error);
+      console.error('❌ ERROR creating AI program:', {
+        message: error.message,
+        details: error.details,
+        hint: error.hint,
+        code: error.code,
+        fullError: JSON.stringify(error, null, 2),
+      });
       return { data: null, error: new Error(error.message) };
     }
 
+    console.log('✅ Program created successfully:', data?.id);
     return { data, error: null };
   } catch (err: any) {
-    console.error('Exception creating AI program:', err);
+    console.error('❌ EXCEPTION creating AI program:', {
+      message: err.message,
+      name: err.name,
+      stack: err.stack,
+      fullError: JSON.stringify(err, null, 2),
+    });
     return { data: null, error: err };
   }
 }
