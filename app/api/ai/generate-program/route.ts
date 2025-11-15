@@ -124,11 +124,11 @@ export async function POST(request: NextRequest) {
       ai_model: 'claude-sonnet-4-5-20250929',
       ai_rationale: null,
       movement_balance_summary: null,
-      status: 'draft',
+      status: 'draft' as const,
       is_template: false,
       is_published: false,
       allow_client_modifications: false,
-      generation_status: 'generating', // Set to generating
+      generation_status: 'generating' as const, // Set to generating
       generation_error: null,
     };
 
@@ -151,8 +151,8 @@ export async function POST(request: NextRequest) {
 
     if (programError || !savedProgram) {
       console.error('❌ Failed to create program - full error object:', JSON.stringify(programError, null, 2));
-      console.error('❌ Error type:', programError?.constructor?.name);
-      console.error('❌ Error message:', programError?.message);
+      console.error('❌ Error type:', (programError as any)?.constructor?.name);
+      console.error('❌ Error message:', (programError as any)?.message);
       console.error('❌ Error code:', (programError as any)?.code);
       console.error('❌ Error details:', (programError as any)?.details);
       console.error('❌ Error hint:', (programError as any)?.hint);
@@ -160,7 +160,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         {
           error: 'Failed to create program record',
-          details: programError?.message,
+          details: (programError as any)?.message,
           errorCode: (programError as any)?.code,
           errorHint: (programError as any)?.hint,
           fullError: JSON.stringify(programError)
