@@ -82,9 +82,10 @@ interface AIGeneratedProgram {
 
 export async function POST(request: NextRequest) {
   const startTime = Date.now();
+  let body!: WorkerRequest;  // Non-null assertion - will be assigned in try block
 
   try {
-    const body: WorkerRequest = await request.json();
+    body = await request.json();
 
     console.log(`🤖 Starting background generation for program ${body.program_id}...`);
 
@@ -498,15 +499,12 @@ IMPORTANT: Generate weeks ${startWeek} through ${endWeek} as the NEXT progressio
       ai_model: raw?.model || 'claude-sonnet-4-5-20250929',
       generation_type: 'program',
       ai_provider: 'anthropic',
-      model_name: raw?.model || 'claude-sonnet-4-5-20250929',
       prompt_version: 'v1.0.0',
       input_tokens: raw?.usage.input_tokens || 0,
       output_tokens: raw?.usage.output_tokens || 0,
-      total_cost_usd: raw ? estimateCost(raw) : 0,
+      estimated_cost_usd: raw ? estimateCost(raw) : 0,
       latency_ms: Date.now() - startTime,
       retry_count: 0,
-      success: true,
-      metadata: { total_weeks: body.total_weeks, sessions_per_week: body.sessions_per_week },
     });
 
     // Step 10: Create revision

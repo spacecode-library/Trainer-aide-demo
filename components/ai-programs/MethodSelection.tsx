@@ -53,7 +53,7 @@ export function MethodSelection({ selectedMethod, onSelect, onCancel }: MethodSe
                   </h3>
                 </div>
                 <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
-                  Craft a personalised, evidence-based training plan in minutes using our intelligent program builder. Designed to reflect real strength-and-conditioning logic — tailored to your client's goals, history, and available equipment.
+                  Craft a personalised, evidence-based training plan in minutes using our intelligent program builder. Designed to reflect real strength-and-conditioning logic — tailored to your client&apos;s goals, history, and available equipment.
                 </p>
                 <ul className="space-y-1 text-sm text-gray-600 dark:text-gray-400">
                   <li className="flex items-center gap-2">

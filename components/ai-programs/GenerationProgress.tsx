@@ -67,7 +67,7 @@ export function GenerationProgress({
                 style={{ width: `${percentage}%` }}
               />
             </div>
-            {currentStep > 0 && totalSteps > 0 && (
+            {currentStep != null && totalSteps != null && currentStep > 0 && totalSteps > 0 && (
               <div className="text-xs text-gray-500 dark:text-gray-400">
                 Step {currentStep} of {totalSteps}
               </div>
