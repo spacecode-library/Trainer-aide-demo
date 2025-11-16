@@ -8,6 +8,7 @@ import { Card } from '@/components/ui/card';
 import { ProgramOverview } from '@/components/ai-programs/ProgramOverview';
 import { WorkoutsList } from '@/components/ai-programs/WorkoutsList';
 import { ShareProgramModal } from '@/components/ai-programs/ShareProgramModal';
+import { useUserStore } from '@/lib/stores/user-store';
 import type { AIProgram } from '@/lib/types/ai-program';
 
 type TabType = 'overview' | 'workouts' | 'progress';
@@ -15,6 +16,7 @@ type TabType = 'overview' | 'workouts' | 'progress';
 export default function ProgramViewerPage() {
   const params = useParams();
   const router = useRouter();
+  const { canCreateAIPrograms } = useUserStore();
   const programId = params.id as string;
 
   const [activeTab, setActiveTab] = useState<TabType>('overview');
@@ -22,6 +24,13 @@ export default function ProgramViewerPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showShareModal, setShowShareModal] = useState(false);
+
+  // Redirect trainers to solo route - AI Programs only for solo practitioners
+  useEffect(() => {
+    if (!canCreateAIPrograms()) {
+      router.replace(`/solo/programs/${programId}`);
+    }
+  }, [canCreateAIPrograms, router, programId]);
 
   useEffect(() => {
     async function fetchProgram() {

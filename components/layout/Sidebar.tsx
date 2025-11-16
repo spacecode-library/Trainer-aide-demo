@@ -39,7 +39,6 @@ const studioOwnerLinks: NavLink[] = [
 const trainerLinks: NavLink[] = [
   { href: '/trainer', label: 'Dashboard', icon: <LayoutDashboard size={20} /> },
   { href: '/trainer/templates', label: 'Templates', icon: <FileText size={20} /> },
-  { href: '/trainer/programs', label: 'AI Programs', icon: <Sparkles size={20} /> },
   { href: '/trainer/sessions', label: 'My Sessions', icon: <Dumbbell size={20} /> },
   { href: '/trainer/calendar', label: 'Calendar', icon: <Calendar size={20} /> },
   { href: '/settings', label: 'Settings', icon: <Settings size={20} /> },
@@ -53,6 +52,7 @@ const clientLinks: NavLink[] = [
 
 const soloPractitionerLinks: NavLink[] = [
   { href: '/solo', label: 'Dashboard', icon: <Home size={20} /> },
+  { href: '/solo/programs', label: 'AI Programs', icon: <Sparkles size={20} /> },
   { href: '/solo/sessions', label: 'Sessions', icon: <Dumbbell size={20} /> },
   { href: '/solo/calendar', label: 'Calendar', icon: <Calendar size={20} /> },
   { href: '/solo/templates', label: 'Templates', icon: <FileText size={20} /> },

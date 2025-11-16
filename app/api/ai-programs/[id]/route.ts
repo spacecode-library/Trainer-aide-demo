@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseServer } from '@/lib/supabase-server';
 import { updateAIProgram, deleteAIProgram, getAIProgramById } from '@/lib/services/ai-program-service';
+import { getUserById } from '@/lib/mock-data/users';
 
 /**
  * GET /api/ai-programs/[id]
@@ -42,6 +43,23 @@ export async function PATCH(
   try {
     const { id } = await params;
     const body = await request.json();
+
+    // Role-based access control: Verify program belongs to a solo practitioner
+    const existingProgram = await getAIProgramById(id);
+    if (!existingProgram) {
+      return NextResponse.json(
+        { error: 'Program not found' },
+        { status: 404 }
+      );
+    }
+
+    const user = getUserById(existingProgram.trainer_id);
+    if (!user || user.role !== 'solo_practitioner') {
+      return NextResponse.json(
+        { error: 'Unauthorized: AI Programs are only available to solo practitioners' },
+        { status: 403 }
+      );
+    }
 
     // Update program metadata
     const { data: updatedProgram, error } = await updateAIProgram(id, {
@@ -122,6 +140,24 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params;
+
+    // Role-based access control: Verify program belongs to a solo practitioner
+    const existingProgram = await getAIProgramById(id);
+    if (!existingProgram) {
+      return NextResponse.json(
+        { error: 'Program not found' },
+        { status: 404 }
+      );
+    }
+
+    const user = getUserById(existingProgram.trainer_id);
+    if (!user || user.role !== 'solo_practitioner') {
+      return NextResponse.json(
+        { error: 'Unauthorized: AI Programs are only available to solo practitioners' },
+        { status: 403 }
+      );
+    }
+
     const { success, error } = await deleteAIProgram(id);
 
     if (!success || error) {

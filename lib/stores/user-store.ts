@@ -17,6 +17,7 @@ interface UserState {
   canPushToClients: () => boolean;
   canViewStudioOwnerFeatures: () => boolean;
   canViewTrainerFeatures: () => boolean;
+  canCreateAIPrograms: () => boolean;
 }
 
 export const useUserStore = create<UserState>()(
@@ -86,6 +87,11 @@ export const useUserStore = create<UserState>()(
       canViewTrainerFeatures: (): boolean => {
         const state = useUserStore.getState();
         return state.currentRole === 'trainer' || state.currentRole === 'solo_practitioner';
+      },
+
+      canCreateAIPrograms: (): boolean => {
+        const state = useUserStore.getState();
+        return state.currentRole === 'solo_practitioner';
       },
     }),
     {

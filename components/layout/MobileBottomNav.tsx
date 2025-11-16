@@ -48,12 +48,6 @@ const trainerNavItems: NavItem[] = [
     route: "/trainer",
   },
   {
-    id: "programs",
-    label: "Programs",
-    icon: Sparkles,
-    route: "/trainer/programs",
-  },
-  {
     id: "sessions",
     label: "Sessions",
     icon: Dumbbell,
@@ -94,6 +88,12 @@ const soloPractitionerNavItems: NavItem[] = [
     label: "Dashboard",
     icon: Home,
     route: "/solo",
+  },
+  {
+    id: "programs",
+    label: "Programs",
+    icon: Sparkles,
+    route: "/solo/programs",
   },
   {
     id: "sessions",

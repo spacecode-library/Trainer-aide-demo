@@ -723,7 +723,7 @@
     "id": "ex_biceps_ball_leg_curl",
     "exerciseId": "ball-leg-curl",
     "name": "Ball Leg Curl",
-    "category": "biceps",
+    "category": "legs",
     "equipment": "Exercise Ball",
     "level": "intermediate",
     "instructions": [
@@ -1098,7 +1098,7 @@
     "id": "ex_chest_barbell_incline_shoulder",
     "exerciseId": "barbell-incline-shoulder-raise",
     "name": "Barbell Incline Shoulder Raise",
-    "category": "chest",
+    "category": "shoulders",
     "equipment": "Barbell",
     "level": "intermediate",
     "instructions": [
@@ -2208,7 +2208,7 @@
     "id": "ex_chest_cable_incline_triceps",
     "exerciseId": "cable-incline-triceps-extension",
     "name": "Cable Incline Triceps Extension",
-    "category": "chest",
+    "category": "triceps",
     "equipment": "Cable Machine",
     "level": "intermediate",
     "instructions": [
@@ -3653,7 +3653,7 @@
     "id": "ex_chest_decline_dumbbell_triceps",
     "exerciseId": "decline-dumbbell-triceps-extension",
     "name": "Decline Dumbbell Triceps Extension",
-    "category": "chest",
+    "category": "triceps",
     "equipment": "Dumbbell",
     "level": "intermediate",
     "instructions": [
@@ -3671,7 +3671,7 @@
     "id": "ex_chest_decline_e_z",
     "exerciseId": "decline-e-z-bar-triceps-extension",
     "name": "Decline E Z Bar Triceps Extension",
-    "category": "chest",
+    "category": "triceps",
     "level": "intermediate",
     "instructions": [
       "Start in proper position",
@@ -4161,7 +4161,7 @@
     "id": "ex_chest_dumbbell_incline_shoulder",
     "exerciseId": "dumbbell-incline-shoulder-raise",
     "name": "Dumbbell Incline Shoulder Raise",
-    "category": "chest",
+    "category": "shoulders",
     "equipment": "Dumbbell",
     "level": "intermediate",
     "instructions": [
@@ -6019,7 +6019,7 @@
     "id": "ex_chest_incline_barbell_triceps",
     "exerciseId": "incline-barbell-triceps-extension",
     "name": "Incline Barbell Triceps Extension",
-    "category": "chest",
+    "category": "triceps",
     "equipment": "Barbell",
     "level": "intermediate",
     "instructions": [
@@ -6198,7 +6198,7 @@
     "id": "ex_chest_incline_inner_biceps",
     "exerciseId": "incline-inner-biceps-curl",
     "name": "Incline Inner Biceps Curl",
-    "category": "chest",
+    "category": "biceps",
     "level": "intermediate",
     "instructions": [
       "Start in proper position",
@@ -7978,7 +7978,7 @@
     "id": "ex_biceps_lying_leg_curls",
     "exerciseId": "lying-leg-curls",
     "name": "Lying Leg Curls",
-    "category": "biceps",
+    "category": "legs",
     "level": "intermediate",
     "instructions": [
       "Start in proper position",
@@ -10561,7 +10561,7 @@
     "id": "ex_chest_reverse_triceps_bench",
     "exerciseId": "reverse-triceps-bench-press",
     "name": "Reverse Triceps Bench Press",
-    "category": "chest",
+    "category": "triceps",
     "equipment": "Bench",
     "level": "intermediate",
     "instructions": [
@@ -10965,7 +10965,7 @@
     "id": "ex_biceps_seated_band_hamstring",
     "exerciseId": "seated-band-hamstring-curl",
     "name": "Seated Band Hamstring Curl",
-    "category": "biceps",
+    "category": "legs",
     "equipment": "Resistance Band",
     "level": "intermediate",
     "instructions": [
@@ -11404,7 +11404,7 @@
     "id": "ex_biceps_seated_leg_curl",
     "exerciseId": "seated-leg-curl",
     "name": "Seated Leg Curl",
-    "category": "biceps",
+    "category": "legs",
     "level": "intermediate",
     "instructions": [
       "Start in proper position",
@@ -12313,7 +12313,7 @@
     "id": "ex_chest_smith_incline_shoulder",
     "exerciseId": "smith-incline-shoulder-raise",
     "name": "Smith Incline Shoulder Raise",
-    "category": "chest",
+    "category": "shoulders",
     "level": "intermediate",
     "instructions": [
       "Start in proper position",
@@ -13557,7 +13557,7 @@
     "id": "ex_biceps_standing_leg_curl",
     "exerciseId": "standing-leg-curl",
     "name": "Standing Leg Curl",
-    "category": "biceps",
+    "category": "legs",
     "level": "intermediate",
     "instructions": [
       "Start in proper position",

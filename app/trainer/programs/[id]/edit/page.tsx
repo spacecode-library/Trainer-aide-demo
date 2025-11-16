@@ -5,17 +5,26 @@ import { useParams, useRouter } from 'next/navigation';
 import { ArrowLeft, Save, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ProgramEditor } from '@/components/ai-programs/ProgramEditor';
+import { useUserStore } from '@/lib/stores/user-store';
 import type { AIProgram } from '@/lib/types/ai-program';
 
 export default function ProgramEditPage() {
   const params = useParams();
   const router = useRouter();
+  const { canCreateAIPrograms } = useUserStore();
   const programId = params.id as string;
 
   const [program, setProgram] = useState<AIProgram | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Redirect trainers to solo route - AI Programs only for solo practitioners
+  useEffect(() => {
+    if (!canCreateAIPrograms()) {
+      router.replace(`/solo/programs/${programId}/edit`);
+    }
+  }, [canCreateAIPrograms, router, programId]);
 
   useEffect(() => {
     async function fetchProgram() {

@@ -11,6 +11,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createAIProgram } from '@/lib/services/ai-program-service';
 import { getClientProfileById } from '@/lib/services/client-profile-service';
 import { extractWorkoutConstraints, GoalType, ExperienceLevel } from '@/lib/types/client-profile';
+import { getUserById } from '@/lib/mock-data/users';
 
 /**
  * AI Program Generation Request
@@ -42,6 +43,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: 'trainer_id is required' },
         { status: 400 }
+      );
+    }
+
+    // Role-based access control: Only solo practitioners can create AI programs
+    const user = getUserById(body.trainer_id);
+    if (!user || user.role !== 'solo_practitioner') {
+      return NextResponse.json(
+        { error: 'Unauthorized: AI Programs are only available to solo practitioners' },
+        { status: 403 }
       );
     }
 

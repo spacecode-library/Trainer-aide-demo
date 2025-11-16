@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ProgramCard } from '@/components/ai-programs/ProgramCard';
 import { useToast } from '@/hooks/use-toast';
+import { useUserStore } from '@/lib/stores/user-store';
 import type { AIProgram } from '@/lib/types/ai-program';
 
 type FilterType = 'all' | 'draft' | 'active' | 'completed' | 'archived';
@@ -14,10 +15,18 @@ type FilterType = 'all' | 'draft' | 'active' | 'completed' | 'archived';
 export default function ProgramsListPage() {
   const router = useRouter();
   const { toast } = useToast();
+  const { canCreateAIPrograms } = useUserStore();
   const [programs, setPrograms] = useState<AIProgram[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filter, setFilter] = useState<FilterType>('all');
+
+  // Redirect trainers to solo route - AI Programs only for solo practitioners
+  useEffect(() => {
+    if (!canCreateAIPrograms()) {
+      router.replace('/solo/programs');
+    }
+  }, [canCreateAIPrograms, router]);
 
   useEffect(() => {
     async function fetchPrograms() {

@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { MOCK_EXERCISES, getExercisesByCategory } from '@/lib/mock-data';
 import { Exercise, MuscleGroup } from '@/lib/types';
-import { Search, Dumbbell, ArrowLeft } from 'lucide-react';
+import { Search, Dumbbell, ArrowLeft, ChevronDown, ChevronUp } from 'lucide-react';
 
 export interface ExerciseCustomParams {
   resistanceValue?: number;
@@ -49,6 +49,11 @@ export function ExerciseLibrary({
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<MuscleGroup | 'all'>('all');
   const [selectedExercise, setSelectedExercise] = useState<Exercise | null>(null);
+  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
+    instructions: false,
+    mistakes: false,
+    modifications: false,
+  });
 
   // Customization parameters with intelligent defaults
   const [resistanceValue, setResistanceValue] = useState(20);
@@ -106,9 +111,16 @@ export function ExerciseLibrary({
     setSelectedExercise(null);
   };
 
+  const toggleSection = (section: string) => {
+    setExpandedSections(prev => ({
+      ...prev,
+      [section]: !prev[section],
+    }));
+  };
+
   return (
     <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
-      <DialogContent className="max-w-4xl max-h-[85vh] sm:max-h-[80vh] flex flex-col">
+      <DialogContent className="sm:max-w-lg md:max-w-2xl lg:max-w-4xl max-h-[85vh] sm:max-h-[80vh] flex flex-col p-4 sm:p-6">
         <DialogHeader>
           <div className="flex items-center gap-2">
             {selectedExercise && (
@@ -202,7 +214,7 @@ export function ExerciseLibrary({
                         {exercise.instructions[0]}
                       </p>
                     </div>
-                    <Button size="sm" onClick={() => handleSelectExercise(exercise)}>
+                    <Button size="sm" onClick={() => handleSelectExercise(exercise)} className="flex-shrink-0">
                       Customize
                     </Button>
                   </div>
@@ -235,6 +247,139 @@ export function ExerciseLibrary({
                 </p>
               )}
             </div>
+
+            {/* Muscle Groups Display */}
+            {(selectedExercise.primaryMuscles || selectedExercise.secondaryMuscles) && (
+              <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-3">
+                <h5 className="font-semibold text-sm text-gray-900 dark:text-gray-100 mb-2">
+                  Muscles Worked
+                </h5>
+                <ul className="space-y-1 text-sm text-gray-700 dark:text-gray-300">
+                  {selectedExercise.primaryMuscles && (
+                    <li className="flex items-start">
+                      <span className="font-medium mr-2">Primary:</span>
+                      <span>{selectedExercise.primaryMuscles}</span>
+                    </li>
+                  )}
+                  {selectedExercise.secondaryMuscles && (
+                    <li className="flex items-start">
+                      <span className="font-medium mr-2">Secondary:</span>
+                      <span>{selectedExercise.secondaryMuscles}</span>
+                    </li>
+                  )}
+                </ul>
+              </div>
+            )}
+
+            {/* Form Cues - Red Traffic Light */}
+            {selectedExercise.instructions && selectedExercise.instructions.length > 0 && (
+              <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+                <button
+                  onClick={() => toggleSection('instructions')}
+                  className="w-full flex items-center justify-between p-3 hover:bg-gray-100 dark:hover:bg-gray-800/50 transition-colors"
+                >
+                  <div className="flex items-center gap-2">
+                    <div className="w-5 h-5 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
+                      <div className="w-2.5 h-2.5 rounded-full bg-red-600" />
+                    </div>
+                    <span className="font-semibold text-sm text-gray-900 dark:text-gray-100">
+                      Form Cues
+                    </span>
+                  </div>
+                  {expandedSections.instructions ? (
+                    <ChevronUp size={18} className="text-gray-600 dark:text-gray-400" />
+                  ) : (
+                    <ChevronDown size={18} className="text-gray-600 dark:text-gray-400" />
+                  )}
+                </button>
+                {expandedSections.instructions && (
+                  <div className="px-3 pb-3 pt-1">
+                    <ul className="space-y-2 text-sm text-gray-700 dark:text-gray-300">
+                      {selectedExercise.instructions.map((instruction, idx) => (
+                        <li key={idx} className="flex items-start gap-2">
+                          <span className="font-medium text-gray-500 dark:text-gray-400 mt-0.5">
+                            {idx + 1}.
+                          </span>
+                          <span>{instruction}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Common Mistakes - Amber Traffic Light */}
+            {selectedExercise.commonMistakes && selectedExercise.commonMistakes.length > 0 && (
+              <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+                <button
+                  onClick={() => toggleSection('mistakes')}
+                  className="w-full flex items-center justify-between p-3 hover:bg-gray-100 dark:hover:bg-gray-800/50 transition-colors"
+                >
+                  <div className="flex items-center gap-2">
+                    <div className="w-5 h-5 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
+                      <div className="w-2.5 h-2.5 rounded-full bg-amber-600" />
+                    </div>
+                    <span className="font-semibold text-sm text-gray-900 dark:text-gray-100">
+                      Common Mistakes
+                    </span>
+                  </div>
+                  {expandedSections.mistakes ? (
+                    <ChevronUp size={18} className="text-gray-600 dark:text-gray-400" />
+                  ) : (
+                    <ChevronDown size={18} className="text-gray-600 dark:text-gray-400" />
+                  )}
+                </button>
+                {expandedSections.mistakes && (
+                  <div className="px-3 pb-3 pt-1">
+                    <ul className="space-y-2 text-sm text-gray-700 dark:text-gray-300">
+                      {selectedExercise.commonMistakes.map((mistake, idx) => (
+                        <li key={idx} className="flex items-start gap-2">
+                          <span className="text-amber-600 dark:text-amber-400 mt-0.5">•</span>
+                          <span>{mistake}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Modifications - Green Traffic Light */}
+            {selectedExercise.modifications && selectedExercise.modifications.length > 0 && (
+              <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+                <button
+                  onClick={() => toggleSection('modifications')}
+                  className="w-full flex items-center justify-between p-3 hover:bg-gray-100 dark:hover:bg-gray-800/50 transition-colors"
+                >
+                  <div className="flex items-center gap-2">
+                    <div className="w-5 h-5 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
+                      <div className="w-2.5 h-2.5 rounded-full bg-green-600" />
+                    </div>
+                    <span className="font-semibold text-sm text-gray-900 dark:text-gray-100">
+                      Modifications
+                    </span>
+                  </div>
+                  {expandedSections.modifications ? (
+                    <ChevronUp size={18} className="text-gray-600 dark:text-gray-400" />
+                  ) : (
+                    <ChevronDown size={18} className="text-gray-600 dark:text-gray-400" />
+                  )}
+                </button>
+                {expandedSections.modifications && (
+                  <div className="px-3 pb-3 pt-1">
+                    <ul className="space-y-2 text-sm text-gray-700 dark:text-gray-300">
+                      {selectedExercise.modifications.map((mod, idx) => (
+                        <li key={idx} className="flex items-start gap-2">
+                          <span className="text-green-600 dark:text-green-400 mt-0.5">•</span>
+                          <span>{mod}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Parameter Inputs */}
             {selectedExercise.category === 'cardio' ? (
@@ -301,7 +446,7 @@ export function ExerciseLibrary({
                     Default weight for this exercise
                   </p>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <Label>Min Reps</Label>
                     <Input

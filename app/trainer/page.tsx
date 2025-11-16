@@ -107,17 +107,6 @@ export default function TrainerDashboard() {
               </div>
             </div>
           </Link>
-          <Link href="/trainer/programs/new" className="group">
-            <div className="relative overflow-hidden backdrop-blur-md bg-white/90 dark:bg-gray-800/90 border border-purple-200/50 dark:border-purple-800/50 rounded-xl lg:rounded-2xl p-4 lg:p-6 hover:shadow-lg active:scale-[0.98] transition-all duration-200 cursor-pointer">
-              <div className="absolute top-0 right-0 w-24 h-24 lg:w-32 lg:h-32 bg-gradient-to-bl from-purple-500/10 to-transparent opacity-50" />
-              <div className="relative flex flex-col items-center gap-2 lg:gap-3 text-center">
-                <div className="w-11 h-11 lg:w-14 lg:h-14 rounded-xl bg-gradient-to-br from-purple-500/20 to-purple-600/20 flex items-center justify-center group-hover:scale-110 transition-transform">
-                  <Sparkles className="text-wondrous-magenta" size={22} strokeWidth={2.5} />
-                </div>
-                <span className="font-semibold text-gray-900 dark:text-gray-100 text-sm lg:text-base">AI Program</span>
-              </div>
-            </div>
-          </Link>
           <Link href="/trainer/templates" className="group">
             <div className="relative overflow-hidden backdrop-blur-md bg-white/90 dark:bg-gray-800/90 border border-pink-200/50 dark:border-pink-800/50 rounded-xl lg:rounded-2xl p-4 lg:p-6 hover:shadow-lg active:scale-[0.98] transition-all duration-200 cursor-pointer">
               <div className="absolute top-0 right-0 w-24 h-24 lg:w-32 lg:h-32 bg-gradient-to-bl from-pink-500/10 to-transparent opacity-50" />
