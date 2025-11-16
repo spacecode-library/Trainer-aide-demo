@@ -12,22 +12,34 @@ export const supabase = createClient(
 
 /**
  * Constructs the public URL for an exercise image from Supabase storage
- * @param exerciseId - The exercise folder name (e.g., '3-4-sit-up')
+ * Uses fuzzy matching to find the correct folder name
+ * @param exerciseId - The exercise ID or slug
+ * @param exerciseName - Optional exercise name for better matching
  * @param imageType - Either 'start' or 'end'
  * @returns The public URL to the image
  */
 export function getExerciseImageUrl(
   exerciseId: string,
-  imageType: 'start' | 'end'
+  imageType: 'start' | 'end',
+  exerciseName?: string
 ): string {
   // Return placeholder if Supabase is not configured
   if (!supabaseUrl || supabaseUrl === 'https://placeholder.supabase.co') {
     return ''
   }
 
+  // Use fuzzy matching to find the correct folder name
+  const { getExerciseFolderName, AVAILABLE_SUPABASE_FOLDERS } = require('./utils/exercise-image-mapping')
+
+  const folderName = getExerciseFolderName(
+    exerciseId,
+    exerciseName,
+    AVAILABLE_SUPABASE_FOLDERS
+  )
+
   const { data } = supabase.storage
     .from('exercise-images')
-    .getPublicUrl(`${exerciseId}/${imageType}.webp`)
+    .getPublicUrl(`${folderName}/${imageType}.webp`)
 
   return data.publicUrl
 }
@@ -63,13 +75,15 @@ export async function exerciseImageExists(
 
 /**
  * Gets both start and end image URLs for an exercise
- * @param exerciseId - The exercise folder name
+ * Uses fuzzy matching to find the correct folder name
+ * @param exerciseId - The exercise ID or slug
+ * @param exerciseName - Optional exercise name for better matching
  * @returns Object with startUrl and endUrl
  */
-export function getExerciseImages(exerciseId: string) {
+export function getExerciseImages(exerciseId: string, exerciseName?: string) {
   return {
-    startUrl: getExerciseImageUrl(exerciseId, 'start'),
-    endUrl: getExerciseImageUrl(exerciseId, 'end'),
+    startUrl: getExerciseImageUrl(exerciseId, 'start', exerciseName),
+    endUrl: getExerciseImageUrl(exerciseId, 'end', exerciseName),
   }
 }
 

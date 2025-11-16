@@ -24,7 +24,7 @@ export function ExerciseImageViewer({
   const [imagesLoaded, setImagesLoaded] = useState(false)
   const [hasError, setHasError] = useState(false)
 
-  const images = getExerciseImages(exerciseId)
+  const images = getExerciseImages(exerciseId, exerciseName)
 
   // Auto-play effect with slower timing (2.5 seconds per image)
   useEffect(() => {
