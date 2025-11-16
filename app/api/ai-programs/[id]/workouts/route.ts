@@ -24,7 +24,9 @@ export async function GET(
           .select(`
             *,
             exercise:ta_exercise_library_original (
-              name
+              name,
+              slug,
+              image_folder
             )
           `)
           .eq('workout_id', workout.id)
@@ -34,10 +36,12 @@ export async function GET(
           console.error(`Error fetching exercises for workout ${workout.id}:`, exercisesError);
         }
 
-        // Map exercise data to include exercise_name from the joined table
+        // Map exercise data to include exercise_name, slug, and image_folder from the joined table
         const exercisesWithNames = exercises?.map(ex => ({
           ...ex,
-          exercise_name: ex.exercise?.name || 'Unknown Exercise'
+          exercise_name: ex.exercise?.name || 'Unknown Exercise',
+          exercise_slug: ex.exercise?.slug || null,
+          exercise_image_folder: ex.exercise?.image_folder || null,
         })) || [];
 
         return {

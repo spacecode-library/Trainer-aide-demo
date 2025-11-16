@@ -1,11 +1,16 @@
 'use client';
 
-import { Lightbulb } from 'lucide-react';
+import { useState } from 'react';
+import { Lightbulb, Image as ImageIcon } from 'lucide-react';
+import { ExerciseImageViewer } from '@/components/shared/ExerciseImageViewer';
+import { Button } from '@/components/ui/button';
 
 interface WorkoutExercise {
   id: string;
   exercise_id: string;
   exercise_name: string;
+  exercise_slug?: string | null;
+  exercise_image_folder?: string | null;
   exercise_order: number;
   sets: number;
   reps_min?: number;
@@ -22,6 +27,10 @@ interface ExerciseCardProps {
 }
 
 export function ExerciseCard({ exercise }: ExerciseCardProps) {
+  const [showImages, setShowImages] = useState(false);
+
+  // Use slug first, fallback to image_folder, then exercise_id (UUID) as last resort
+  const imageId = exercise.exercise_slug || exercise.exercise_image_folder || exercise.exercise_id;
   const formatReps = () => {
     if (exercise.reps_min && exercise.reps_max) {
       return `${exercise.reps_min}-${exercise.reps_max} reps`;
@@ -66,6 +75,18 @@ export function ExerciseCard({ exercise }: ExerciseCardProps) {
             </h4>
           </div>
         </div>
+        {/* View Images Button */}
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => setShowImages(!showImages)}
+          className="flex items-center gap-1 text-wondrous-magenta hover:text-purple-700 hover:bg-purple-50 dark:hover:bg-purple-900/20"
+        >
+          <ImageIcon size={16} />
+          <span className="text-xs">
+            {showImages ? 'Hide' : 'View'} Images
+          </span>
+        </Button>
       </div>
 
       {/* Sets, Reps, RPE */}
@@ -112,6 +133,14 @@ export function ExerciseCard({ exercise }: ExerciseCardProps) {
           </p>
         </div>
       )}
+
+      {/* Exercise Images Viewer */}
+      <ExerciseImageViewer
+        exerciseId={imageId}
+        exerciseName={exercise.exercise_name}
+        isOpen={showImages}
+        onClose={() => setShowImages(false)}
+      />
     </div>
   );
 }
