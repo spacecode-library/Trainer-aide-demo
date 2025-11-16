@@ -152,7 +152,6 @@ export function getExerciseFolderName(
   if (exerciseName && availableFolders && availableFolders.length > 0) {
     const match = findBestMatch(exerciseId, exerciseName, availableFolders);
     if (match) {
-      console.log(`Fuzzy matched ${exerciseId} (${exerciseName}) → ${match}`);
       return match;
     }
   }

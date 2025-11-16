@@ -17,6 +17,7 @@ import {
   createAINutritionPlan,
   logAIGeneration,
   createProgramRevision,
+  getProgramRevisions,
   getCompleteProgramData,
   updateAIProgram,
 } from '@/lib/services/ai-program-service';
@@ -518,19 +519,27 @@ IMPORTANT: Generate weeks ${startWeek} through ${endWeek} as the NEXT progressio
       retry_count: 0,
     });
 
-    // Step 10: Create revision
-    const { program, workouts, exercises } = await getCompleteProgramData(body.program_id);
-    await createProgramRevision({
-      program_id: body.program_id,
-      revision_number: 1,
-      program_snapshot: {
-        program: program!,
-        workouts: workouts || [],
-        exercises: exercises || [],
-      },
-      change_description: 'Initial AI-generated program',
-      created_by: body.trainer_id,
-    });
+    // Step 10: Create revision (only if it doesn't exist)
+    const existingRevisions = await getProgramRevisions(body.program_id);
+    if (existingRevisions.length === 0) {
+      const { program, workouts, exercises } = await getCompleteProgramData(body.program_id);
+      const { error: revisionError } = await createProgramRevision({
+        program_id: body.program_id,
+        revision_number: 1,
+        program_snapshot: {
+          program: program!,
+          workouts: workouts || [],
+          exercises: exercises || [],
+        },
+        change_description: 'Initial AI-generated program',
+        created_by: body.trainer_id,
+      });
+
+      if (revisionError) {
+        console.error('Error creating program revision:', revisionError);
+        // Continue anyway - revision is not critical for program generation
+      }
+    }
 
     // Step 11: Mark as completed
     await updateAIProgram(body.program_id, {
