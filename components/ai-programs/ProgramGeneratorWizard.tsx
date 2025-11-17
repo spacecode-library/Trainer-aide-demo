@@ -130,17 +130,24 @@ export function ProgramGeneratorWizard() {
       const { program_id } = await response.json();
 
       // Step 2: Poll for status every 2 seconds
-      // Calculate timeout based on program size
-      // Match worker's chunking strategy:
-      // - Programs ≤3 weeks: Single chunk (~100s)
-      // - Programs >3 weeks: 2-week chunks (~100s per chunk)
-      // Worker timeout increased to 120s to accommodate Anthropic API latency
-      const CHUNK_SIZE = config.total_weeks <= 3 ? config.total_weeks : 2;
-      const estimatedChunks = Math.ceil(config.total_weeks / CHUNK_SIZE);
-      const estimatedSeconds = 80 + (estimatedChunks * 100); // Base 80s + ~100s per chunk
-      const maxPollAttempts = Math.ceil(estimatedSeconds / 2); // Poll every 2s
+      // Calculate timeout based on program size and platform
+      // Dynamic timeout matches backend: baseTimeout + (weeks × timeoutPerWeek)
+      // Netlify: 58s max, Vercel: 300s max
+      const baseTimeoutSec = 25;
+      const timeoutPerWeek = 5;
+      const idealTimeoutSec = baseTimeoutSec + (config.total_weeks * timeoutPerWeek);
 
-      console.log(`⏱️  Polling timeout: ${maxPollAttempts * 2}s (estimated ${estimatedSeconds}s for ${estimatedChunks} chunk${estimatedChunks > 1 ? 's' : ''} at ${CHUNK_SIZE} week${CHUNK_SIZE > 1 ? 's' : ''}/chunk)`);
+      // Estimate platform (Netlify has tighter limits)
+      // In production, Netlify sets process.env.NETLIFY
+      // For client-side, we'll use conservative estimate (assume Netlify if short program recommended)
+      const estimatedPlatformMax = config.total_weeks > 6 ? 300 : 60; // Assume Vercel for >6 weeks, Netlify otherwise
+      const estimatedTimeoutSec = Math.min(idealTimeoutSec, estimatedPlatformMax);
+
+      // Add buffer for polling (20% extra to catch stragglers)
+      const pollTimeoutSec = Math.ceil(estimatedTimeoutSec * 1.2);
+      const maxPollAttempts = Math.ceil(pollTimeoutSec / 2); // Poll every 2s
+
+      console.log(`⏱️  Polling timeout: ${pollTimeoutSec}s (estimated backend: ${estimatedTimeoutSec}s for ${config.total_weeks}-week program)`);
 
       let pollAttempts = 0;
 

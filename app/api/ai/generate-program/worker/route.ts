@@ -91,34 +91,54 @@ export async function POST(request: NextRequest) {
   const startTime = Date.now();
   let body!: WorkerRequest;  // Non-null assertion - will be assigned in try block
 
-  // Worker timeout: 120 seconds (Anthropic API can take 50-90s for large programs)
-  // Platform allows up to 300s (configured via maxDuration export)
-  const WORKER_TIMEOUT_MS = 120000;
   let timeoutId: NodeJS.Timeout | null = null;
 
   try {
     body = await request.json();
 
+    // Dynamic timeout based on program duration
+    // Netlify Business: 60s hard limit (cannot be overridden)
+    // Vercel Pro: 60s default, 300s with maxDuration
+    // Strategy: Calculate optimal timeout per week, but cap at platform limits
+    const baseTimeoutMs = 25000; // 25 seconds base for setup/validation
+    const timeoutPerWeek = 5000; // 5 seconds per week for AI generation
+    const idealTimeoutMs = baseTimeoutMs + (body.total_weeks * timeoutPerWeek);
+
+    // Platform detection: Check if on Netlify (hard 60s limit) or Vercel (configurable)
+    const isNetlify = process.env.NETLIFY === 'true' || process.env.CONTEXT !== undefined;
+    const platformMaxTimeout = isNetlify ? 58000 : 300000; // Netlify: 58s (buffer), Vercel: 300s
+    const WORKER_TIMEOUT_MS = Math.min(idealTimeoutMs, platformMaxTimeout);
+
     console.log(`🤖 Starting background generation for program ${body.program_id}...`);
-    console.log(`⏱️  Worker timeout: ${WORKER_TIMEOUT_MS / 1000}s (platform max: 300s)`);
+    console.log(`   Program: ${body.total_weeks} weeks × ${body.sessions_per_week} sessions/week`);
+    console.log(`⏱️  Timeout: ${Math.round(WORKER_TIMEOUT_MS / 1000)}s (ideal: ${Math.round(idealTimeoutMs / 1000)}s, platform: ${isNetlify ? 'Netlify 60s' : 'Vercel 300s'})`);
+
+    // Warn if program duration exceeds platform capabilities
+    if (isNetlify && body.total_weeks > 6) {
+      console.warn(`⚠️  Warning: ${body.total_weeks}-week program may timeout on Netlify (60s limit). Recommended: ≤6 weeks on Netlify, or deploy to Vercel for longer programs.`);
+    }
 
     // Create timeout promise that will reject if generation takes too long
     const timeoutPromise = new Promise<never>((_, reject) => {
       timeoutId = setTimeout(async () => {
-        console.error(`❌ Worker timeout after ${WORKER_TIMEOUT_MS / 1000}s`);
+        console.error(`❌ Worker timeout after ${Math.round(WORKER_TIMEOUT_MS / 1000)}s`);
 
         // Update program status to failed before timeout kills the worker
         try {
+          const timeoutMessage = isNetlify && idealTimeoutMs > platformMaxTimeout
+            ? `This ${body.total_weeks}-week program needs ${Math.round(idealTimeoutMs / 1000)}s but Netlify limits us to 60s. Try a shorter program (1-2 weeks) or contact support about deploying to Vercel for longer programs.`
+            : `The AI coach took a bit too long on this one. Try creating a shorter program or breaking it into smaller chunks.`;
+
           await updateAIProgram(body.program_id, {
             generation_status: 'failed',
-            generation_error: `The AI coach took a bit too long on this one. Try creating a shorter program or breaking it into smaller chunks.`,
+            generation_error: timeoutMessage,
             progress_message: 'Taking longer than expected… please try again',
           });
         } catch (updateError) {
           console.error('Failed to update program status on timeout:', updateError);
         }
 
-        reject(new Error(`Worker timeout after ${WORKER_TIMEOUT_MS / 1000} seconds`));
+        reject(new Error(`Worker timeout after ${Math.round(WORKER_TIMEOUT_MS / 1000)} seconds`));
       }, WORKER_TIMEOUT_MS);
     });
 
@@ -319,22 +339,28 @@ IMPORTANT: Generate weeks ${startWeek} through ${endWeek} as the NEXT progressio
 
       // Estimate tokens for this chunk
       const estimatedTokens = 5000 + (weeksInChunk * body.sessions_per_week * 6 * 180);
-      // Reduced from 16384 to 8192 to prevent API timeouts on large programs
-      const maxTokens = Math.min(8192, Math.max(6000, estimatedTokens));
 
-      console.log(`   Token allocation: ${maxTokens} (estimated: ${estimatedTokens})`);
+      // Platform-specific token limits to ensure completion within timeout
+      // Netlify (60s): Lower token limit = faster generation
+      // Vercel (300s): Higher token limit = more detailed programs
+      const platformMaxTokens = isNetlify ? 6000 : 8192;
+      const maxTokens = Math.min(platformMaxTokens, Math.max(4000, estimatedTokens));
+
+      console.log(`   Token allocation: ${maxTokens} (estimated: ${estimatedTokens}, platform: ${isNetlify ? 'Netlify' : 'Vercel'})`);
 
       // Update progress before API call to give user feedback during long wait
       const apiProgressPercentage = Math.round(12 + ((chunkIndex / chunks) * 70)); // 12% to 82%
+      const estimatedApiTime = isNetlify ? 45 : 90; // Netlify: shorter estimate, Vercel: longer OK
       await updateAIProgram(body.program_id, {
-        progress_message: 'Consulting the AI coach… this may take up to 90 seconds',
+        progress_message: `Consulting the AI coach… this may take up to ${estimatedApiTime} seconds`,
         progress_percentage: apiProgressPercentage,
       });
 
       // Log API call start with timestamp for timeout debugging
       const apiCallStart = Date.now();
       const elapsedTotal = Math.round((apiCallStart - startTime) / 1000);
-      console.log(`   ⏳ Starting Anthropic API call... (elapsed: ${elapsedTotal}s, timeout in: ${Math.max(0, 120 - elapsedTotal)}s)`);
+      const remainingTimeout = Math.max(0, Math.round(WORKER_TIMEOUT_MS / 1000) - elapsedTotal);
+      console.log(`   ⏳ Starting Anthropic API call... (elapsed: ${elapsedTotal}s, timeout in: ${remainingTimeout}s)`);
 
       const { data: chunkProgram, error: chunkError, raw: chunkRaw } = await callClaudeJSON<AIGeneratedProgram>({
         systemPrompt,
