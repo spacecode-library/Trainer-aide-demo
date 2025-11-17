@@ -3,8 +3,7 @@
   publish = ".next"
 
 [functions]
-  # Increase timeout for AI generation (max is 60s on Business plan)
-  timeout = 80
+  # Timeout controlled by Netlify plan tier (Business = 60s max, cannot be configured)
   node_bundler = "esbuild"
 
 [[plugins]]
