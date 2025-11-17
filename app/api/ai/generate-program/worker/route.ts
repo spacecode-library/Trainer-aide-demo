@@ -96,26 +96,21 @@ export async function POST(request: NextRequest) {
   try {
     body = await request.json();
 
-    // Dynamic timeout based on program duration
-    // Netlify Business: 60s hard limit (cannot be overridden)
-    // Vercel Pro: 60s default, 300s with maxDuration
-    // Strategy: Calculate optimal timeout per week, but cap at platform limits
-    const baseTimeoutMs = 25000; // 25 seconds base for setup/validation
-    const timeoutPerWeek = 5000; // 5 seconds per week for AI generation
-    const idealTimeoutMs = baseTimeoutMs + (body.total_weeks * timeoutPerWeek);
-
     // Platform detection: Check if on Netlify (hard 60s limit) or Vercel (configurable)
     const isNetlify = process.env.NETLIFY === 'true' || process.env.CONTEXT !== undefined;
-    const platformMaxTimeout = isNetlify ? 58000 : 300000; // Netlify: 58s (buffer), Vercel: 300s
-    const WORKER_TIMEOUT_MS = Math.min(idealTimeoutMs, platformMaxTimeout);
+
+    // Worker timeout: Set to maximum safe value for each platform
+    // Netlify Business: 60s hard limit - use 58s for safety buffer
+    // Vercel Pro: 300s with maxDuration export
+    const WORKER_TIMEOUT_MS = isNetlify ? 58000 : 300000;
 
     console.log(`🤖 Starting background generation for program ${body.program_id}...`);
     console.log(`   Program: ${body.total_weeks} weeks × ${body.sessions_per_week} sessions/week`);
-    console.log(`⏱️  Timeout: ${Math.round(WORKER_TIMEOUT_MS / 1000)}s (ideal: ${Math.round(idealTimeoutMs / 1000)}s, platform: ${isNetlify ? 'Netlify 60s' : 'Vercel 300s'})`);
+    console.log(`⏱️  Timeout: ${Math.round(WORKER_TIMEOUT_MS / 1000)}s (platform: ${isNetlify ? 'Netlify' : 'Vercel'})`);
 
-    // Warn if program duration exceeds platform capabilities
-    if (isNetlify && body.total_weeks > 6) {
-      console.warn(`⚠️  Warning: ${body.total_weeks}-week program may timeout on Netlify (60s limit). Recommended: ≤6 weeks on Netlify, or deploy to Vercel for longer programs.`);
+    // Warn if program duration may exceed platform capabilities
+    if (isNetlify && body.total_weeks > 4) {
+      console.warn(`⚠️  Warning: ${body.total_weeks}-week program may timeout on Netlify (60s limit). Recommended: ≤4 weeks on Netlify, or deploy to Vercel for longer programs.`);
     }
 
     // Create timeout promise that will reject if generation takes too long
@@ -125,8 +120,8 @@ export async function POST(request: NextRequest) {
 
         // Update program status to failed before timeout kills the worker
         try {
-          const timeoutMessage = isNetlify && idealTimeoutMs > platformMaxTimeout
-            ? `This ${body.total_weeks}-week program needs ${Math.round(idealTimeoutMs / 1000)}s but Netlify limits us to 60s. Try a shorter program (1-2 weeks) or contact support about deploying to Vercel for longer programs.`
+          const timeoutMessage = isNetlify
+            ? `This ${body.total_weeks}-week program exceeded Netlify's 60s timeout limit. Try a shorter program (1-3 weeks) or contact support about deploying to Vercel for longer programs.`
             : `The AI coach took a bit too long on this one. Try creating a shorter program or breaking it into smaller chunks.`;
 
           await updateAIProgram(body.program_id, {

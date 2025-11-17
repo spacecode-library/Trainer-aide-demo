@@ -130,24 +130,14 @@ export function ProgramGeneratorWizard() {
       const { program_id } = await response.json();
 
       // Step 2: Poll for status every 2 seconds
-      // Calculate timeout based on program size and platform
-      // Dynamic timeout matches backend: baseTimeout + (weeks × timeoutPerWeek)
-      // Netlify: 58s max, Vercel: 300s max
-      const baseTimeoutSec = 25;
-      const timeoutPerWeek = 5;
-      const idealTimeoutSec = baseTimeoutSec + (config.total_weeks * timeoutPerWeek);
-
-      // Estimate platform (Netlify has tighter limits)
-      // In production, Netlify sets process.env.NETLIFY
-      // For client-side, we'll use conservative estimate (assume Netlify if short program recommended)
-      const estimatedPlatformMax = config.total_weeks > 6 ? 300 : 60; // Assume Vercel for >6 weeks, Netlify otherwise
-      const estimatedTimeoutSec = Math.min(idealTimeoutSec, estimatedPlatformMax);
-
-      // Add buffer for polling (20% extra to catch stragglers)
-      const pollTimeoutSec = Math.ceil(estimatedTimeoutSec * 1.2);
+      // Frontend polling timeout matches backend worker timeout:
+      // Netlify: 58s worker timeout, so poll for 70s (buffer for stragglers)
+      // Vercel: 300s worker timeout, so poll for 360s (buffer for stragglers)
+      // Conservative estimate: assume Netlify deployment (can adjust if Vercel)
+      const pollTimeoutSec = 70; // Assumes Netlify (58s worker + 12s buffer)
       const maxPollAttempts = Math.ceil(pollTimeoutSec / 2); // Poll every 2s
 
-      console.log(`⏱️  Polling timeout: ${pollTimeoutSec}s (estimated backend: ${estimatedTimeoutSec}s for ${config.total_weeks}-week program)`);
+      console.log(`⏱️  Polling timeout: ${pollTimeoutSec}s for ${config.total_weeks}-week program`);
 
       let pollAttempts = 0;
 

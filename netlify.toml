@@ -3,15 +3,9 @@
   publish = ".next"
 
 [functions]
-  # Increase timeout for AI generation worker (default is 10s, max is 26s on Pro)
-  # Note: This requires Netlify Pro plan for timeouts >10s
+  # Increase timeout for AI generation (max is 60s on Business plan)
+  timeout = 80
   node_bundler = "esbuild"
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"
-
-# Next.js API routes timeout configuration
-[[headers]]
-  for = "/api/*"
-  [headers.values]
-    X-Function-Timeout = "300"
