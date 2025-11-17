@@ -6,8 +6,23 @@ import { SessionBlock, SessionExercise } from '@/lib/types';
  * This allows AI-generated workouts to be used in training sessions
  */
 export function convertAIWorkoutToSessionBlocks(workout: AIWorkout): SessionBlock[] {
+  // Validate workout has exercises
+  if (!workout) {
+    console.error('AI workout converter: Workout is null or undefined');
+    throw new Error('Invalid workout data. Please try selecting a different workout.');
+  }
+
   if (!workout.exercises || workout.exercises.length === 0) {
-    return [];
+    console.error('AI workout converter: Workout has no exercises', {
+      workout_id: workout.id,
+      workout_name: workout.workout_name,
+      week: workout.week_number,
+      day: workout.day_number
+    });
+    throw new Error(
+      `This workout (${workout.workout_name}) has no exercises. ` +
+      'The program may not have generated correctly. Please regenerate the program or select a different workout.'
+    );
   }
 
   // Group exercises by block label (AI workouts may have exercises in different blocks like A1, A2, B1, etc.)

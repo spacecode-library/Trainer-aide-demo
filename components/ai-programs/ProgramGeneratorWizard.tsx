@@ -132,11 +132,12 @@ export function ProgramGeneratorWizard() {
       // Step 2: Poll for status every 2 seconds
       // Calculate timeout based on program size
       // Match worker's chunking strategy:
-      // - Programs ≤3 weeks: Single chunk (~90s)
-      // - Programs >3 weeks: 2-week chunks (~90s per chunk)
+      // - Programs ≤3 weeks: Single chunk (~100s)
+      // - Programs >3 weeks: 2-week chunks (~100s per chunk)
+      // Worker timeout increased to 120s to accommodate Anthropic API latency
       const CHUNK_SIZE = config.total_weeks <= 3 ? config.total_weeks : 2;
       const estimatedChunks = Math.ceil(config.total_weeks / CHUNK_SIZE);
-      const estimatedSeconds = 60 + (estimatedChunks * 90); // Base 60s + ~90s per chunk
+      const estimatedSeconds = 80 + (estimatedChunks * 100); // Base 80s + ~100s per chunk
       const maxPollAttempts = Math.ceil(estimatedSeconds / 2); // Poll every 2s
 
       console.log(`⏱️  Polling timeout: ${maxPollAttempts * 2}s (estimated ${estimatedSeconds}s for ${estimatedChunks} chunk${estimatedChunks > 1 ? 's' : ''} at ${CHUNK_SIZE} week${CHUNK_SIZE > 1 ? 's' : ''}/chunk)`);

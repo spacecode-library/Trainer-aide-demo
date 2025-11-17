@@ -128,18 +128,24 @@ function StartNewSessionContent() {
     let template: WorkoutTemplate | undefined;
 
     if (sourceType === 'ai' && aiWorkout) {
-      // Convert AI workout to session blocks
-      sessionBlocks = convertAIWorkoutToSessionBlocks(aiWorkout);
-      sessionName = getAIWorkoutSessionName(
-        aiWorkout,
-        selectedClient ? `${selectedClient.firstName} ${selectedClient.lastName}` : undefined
-      );
-      // Use AI workout ID as template ID (for tracking purposes)
-      templateId = aiWorkout.id;
-      template = undefined; // AI workouts don't have a manual template
-
-      // Start session with planned duration from AI workout
+      // Convert AI workout to session blocks with error handling
       try {
+        sessionBlocks = convertAIWorkoutToSessionBlocks(aiWorkout);
+
+        // Validate we got blocks back
+        if (sessionBlocks.length === 0) {
+          throw new Error('The workout conversion produced no exercise blocks. Please try a different workout.');
+        }
+
+        sessionName = getAIWorkoutSessionName(
+          aiWorkout,
+          selectedClient ? `${selectedClient.firstName} ${selectedClient.lastName}` : undefined
+        );
+        // Use AI workout ID as template ID (for tracking purposes)
+        templateId = aiWorkout.id;
+        template = undefined; // AI workouts don't have a manual template
+
+        // Start session with planned duration from AI workout
         const sessionId = startSession({
           trainerId: currentUser.id,
           clientId: selectedClient?.id,
@@ -154,6 +160,7 @@ function StartNewSessionContent() {
 
         router.push(`/trainer/sessions/${sessionId}`);
       } catch (error) {
+        console.error('Error creating session from AI workout:', error);
         toast({
           variant: "destructive",
           title: "Cannot Start Session",

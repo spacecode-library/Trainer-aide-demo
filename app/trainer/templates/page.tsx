@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useTemplateStore } from '@/lib/stores/template-store';
+import { useUserStore } from '@/lib/stores/user-store';
 import { getExerciseByIdSync } from '@/lib/mock-data';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -18,6 +19,7 @@ import type { AIProgram } from '@/lib/types/ai-program';
 
 export default function TrainerTemplates() {
   const { toast } = useToast();
+  const currentUser = useUserStore((state) => state.currentUser);
   const templates = useTemplateStore((state) => state.templates);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedType, setSelectedType] = useState<'all' | 'standard' | 'resistance_only'>('all');
@@ -26,9 +28,16 @@ export default function TrainerTemplates() {
   const [aiTemplates, setAITemplates] = useState<AIProgram[]>([]);
   const [loadingAITemplates, setLoadingAITemplates] = useState(true);
 
-  // Fetch AI templates
+  // Fetch AI templates (only for solo practitioners)
   useEffect(() => {
     async function fetchAITemplates() {
+      // AI templates are only available to solo practitioners
+      if (currentUser.role !== 'solo_practitioner') {
+        setLoadingAITemplates(false);
+        setAITemplates([]);
+        return;
+      }
+
       try {
         setLoadingAITemplates(true);
         const response = await fetch('/api/ai-programs/templates');
@@ -53,7 +62,7 @@ export default function TrainerTemplates() {
     }
 
     fetchAITemplates();
-  }, [toast]);
+  }, [toast, currentUser.role]);
 
   // Filter templates
   const filteredTemplates = templates.filter((template) => {

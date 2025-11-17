@@ -91,16 +91,16 @@ export async function POST(request: NextRequest) {
   const startTime = Date.now();
   let body!: WorkerRequest;  // Non-null assertion - will be assigned in try block
 
-  // Worker timeout: 55 seconds (before 60s platform limit)
-  // This ensures we can gracefully handle errors and update DB before platform kills us
-  const WORKER_TIMEOUT_MS = 55000;
+  // Worker timeout: 120 seconds (Anthropic API can take 50-90s for large programs)
+  // Platform allows up to 300s (configured via maxDuration export)
+  const WORKER_TIMEOUT_MS = 120000;
   let timeoutId: NodeJS.Timeout | null = null;
 
   try {
     body = await request.json();
 
     console.log(`🤖 Starting background generation for program ${body.program_id}...`);
-    console.log(`⏱️  Worker timeout: ${WORKER_TIMEOUT_MS / 1000}s (platform limit: 60s)`);
+    console.log(`⏱️  Worker timeout: ${WORKER_TIMEOUT_MS / 1000}s (platform max: 300s)`);
 
     // Create timeout promise that will reject if generation takes too long
     const timeoutPromise = new Promise<never>((_, reject) => {
@@ -319,14 +319,22 @@ IMPORTANT: Generate weeks ${startWeek} through ${endWeek} as the NEXT progressio
 
       // Estimate tokens for this chunk
       const estimatedTokens = 5000 + (weeksInChunk * body.sessions_per_week * 6 * 180);
-      const maxTokens = Math.min(16384, Math.max(10000, estimatedTokens));
+      // Reduced from 16384 to 8192 to prevent API timeouts on large programs
+      const maxTokens = Math.min(8192, Math.max(6000, estimatedTokens));
 
       console.log(`   Token allocation: ${maxTokens} (estimated: ${estimatedTokens})`);
+
+      // Update progress before API call to give user feedback during long wait
+      const apiProgressPercentage = Math.round(12 + ((chunkIndex / chunks) * 70)); // 12% to 82%
+      await updateAIProgram(body.program_id, {
+        progress_message: 'Consulting the AI coach… this may take up to 90 seconds',
+        progress_percentage: apiProgressPercentage,
+      });
 
       // Log API call start with timestamp for timeout debugging
       const apiCallStart = Date.now();
       const elapsedTotal = Math.round((apiCallStart - startTime) / 1000);
-      console.log(`   ⏳ Starting Anthropic API call... (elapsed: ${elapsedTotal}s, timeout in: ${Math.max(0, 55 - elapsedTotal)}s)`);
+      console.log(`   ⏳ Starting Anthropic API call... (elapsed: ${elapsedTotal}s, timeout in: ${Math.max(0, 120 - elapsedTotal)}s)`);
 
       const { data: chunkProgram, error: chunkError, raw: chunkRaw } = await callClaudeJSON<AIGeneratedProgram>({
         systemPrompt,
