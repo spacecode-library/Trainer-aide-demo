@@ -264,7 +264,8 @@ export interface Session {
   blocks: SessionBlock[];
   startedAt: string;
   completedAt?: string;
-  duration?: number; // in seconds
+  duration?: number; // in seconds (actual duration)
+  plannedDurationMinutes?: number; // Estimated/planned duration in minutes (from AI workout or template)
   overallRpe?: number;
   privateNotes?: string; // Trainer only - not shared with client
   publicNotes?: string; // Shared with client in their dashboard

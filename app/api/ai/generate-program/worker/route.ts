@@ -91,13 +91,41 @@ export async function POST(request: NextRequest) {
   const startTime = Date.now();
   let body!: WorkerRequest;  // Non-null assertion - will be assigned in try block
 
+  // Worker timeout: 55 seconds (before 60s platform limit)
+  // This ensures we can gracefully handle errors and update DB before platform kills us
+  const WORKER_TIMEOUT_MS = 55000;
+  let timeoutId: NodeJS.Timeout | null = null;
+
   try {
     body = await request.json();
 
     console.log(`🤖 Starting background generation for program ${body.program_id}...`);
+    console.log(`⏱️  Worker timeout: ${WORKER_TIMEOUT_MS / 1000}s (platform limit: 60s)`);
 
-    // Build generation request
-    let generationRequest: GenerateProgramRequest;
+    // Create timeout promise that will reject if generation takes too long
+    const timeoutPromise = new Promise<never>((_, reject) => {
+      timeoutId = setTimeout(async () => {
+        console.error(`❌ Worker timeout after ${WORKER_TIMEOUT_MS / 1000}s`);
+
+        // Update program status to failed before timeout kills the worker
+        try {
+          await updateAIProgram(body.program_id, {
+            generation_status: 'failed',
+            generation_error: `The AI coach took a bit too long on this one. Try creating a shorter program or breaking it into smaller chunks.`,
+            progress_message: 'Taking longer than expected… please try again',
+          });
+        } catch (updateError) {
+          console.error('Failed to update program status on timeout:', updateError);
+        }
+
+        reject(new Error(`Worker timeout after ${WORKER_TIMEOUT_MS / 1000} seconds`));
+      }, WORKER_TIMEOUT_MS);
+    });
+
+    // Wrap the main generation logic to run with timeout
+    const generationPromise = (async () => {
+      // Build generation request
+      let generationRequest: GenerateProgramRequest;
 
     if (body.client_profile_id) {
       const clientProfile = await getClientProfileById(body.client_profile_id);
@@ -149,7 +177,7 @@ export async function POST(request: NextRequest) {
     const totalStepsEstimate = 2 + (body.total_weeks * 2) + 3; // Filter + Prompts + (Before+After each week) + Validate + Save + Complete
 
     await updateAIProgram(body.program_id, {
-      progress_message: `Filtering exercises from library...`,
+      progress_message: `Submitting goals to the AI coach…`,
       current_step: 1,
       total_steps: totalStepsEstimate,
       progress_percentage: 5,
@@ -168,7 +196,7 @@ export async function POST(request: NextRequest) {
     console.log(`✅ ${filteredExercises.length} exercises available`);
 
     await updateAIProgram(body.program_id, {
-      progress_message: `✅ Filtered to ${filteredExercises.length} exercises`,
+      progress_message: `Warm-up builder is stretching itself…`,
       current_step: 2,
       progress_percentage: 10,
     });
@@ -194,6 +222,43 @@ export async function POST(request: NextRequest) {
 
     console.log(`📊 Will generate ${chunks} chunks (${CHUNK_SIZE} week${CHUNK_SIZE > 1 ? 's' : ''} per chunk)`);
 
+    // Wondrous Build Sequence - Creative progress messages for week generation
+    const weekBuildMessages = [
+      "AI coach is lacing up their metaphorical sneakers…",      // Pre-week prep
+      "Spotting your goals from a mile away…",                    // Pre-week prep
+      "Loading dumbbells of data…",                               // Pre-week prep
+      "Checking form… AI style.",                                 // Pre-week prep
+      "Week 1 workout blueprint loading…",                        // Week 1
+      "Sculpting your first week like a masterpiece…",           // Week 1 complete
+      "Week 2 tricep dips into the schedule…",                   // Week 2
+      "Week 3 is flexing its muscles…",                          // Week 3
+      "Resistance bands of logic wrapping around Week 4…",       // Week 4
+      "Week 5 has entered the chat… with kettlebells.",          // Week 5
+      "Week 6 lunges into position…",                            // Week 6
+      "We're halfway there! Week 7 is finding its balance…",     // Week 7
+      "Week 8 burpees past the competition…",                    // Week 8
+      "Final reps loading… almost there!",                       // Final weeks
+    ];
+
+    // Helper function to get creative message for chunk generation
+    const getChunkMessage = (chunkIndex: number, isComplete: boolean, startWeek: number, endWeek: number) => {
+      if (isComplete) {
+        // Completion messages - alternate between creative completions
+        const completeMessages = [
+          "Sculpting your first week like a masterpiece…",
+          "Hydrating… metaphorically.",
+          "Progress tracking engaged!",
+          "Getting stronger already…",
+          "Muscles are taking notes…",
+        ];
+        return completeMessages[chunkIndex % completeMessages.length];
+      } else {
+        // Start messages - use week-specific messages or cycle through them
+        const messageIndex = Math.min(chunkIndex, weekBuildMessages.length - 1);
+        return weekBuildMessages[messageIndex];
+      }
+    };
+
     let combinedProgram: AIGeneratedProgram | null = null;
     let totalTokensUsed = 0;
 
@@ -209,7 +274,7 @@ export async function POST(request: NextRequest) {
       const progressPercentage = Math.round(10 + ((chunkIndex / chunks) * 75)); // 10% to 85%
 
       await updateAIProgram(body.program_id, {
-        progress_message: `Generating week ${startWeek}${endWeek > startWeek ? `-${endWeek}` : ''} (chunk ${chunkIndex + 1}/${chunks})...`,
+        progress_message: getChunkMessage(chunkIndex, false, startWeek, endWeek),
         current_step: currentStep,
         total_steps: totalStepsEstimate,
         progress_percentage: progressPercentage,
@@ -258,6 +323,11 @@ IMPORTANT: Generate weeks ${startWeek} through ${endWeek} as the NEXT progressio
 
       console.log(`   Token allocation: ${maxTokens} (estimated: ${estimatedTokens})`);
 
+      // Log API call start with timestamp for timeout debugging
+      const apiCallStart = Date.now();
+      const elapsedTotal = Math.round((apiCallStart - startTime) / 1000);
+      console.log(`   ⏳ Starting Anthropic API call... (elapsed: ${elapsedTotal}s, timeout in: ${Math.max(0, 55 - elapsedTotal)}s)`);
+
       const { data: chunkProgram, error: chunkError, raw: chunkRaw } = await callClaudeJSON<AIGeneratedProgram>({
         systemPrompt,
         userPrompt: chunkUserPrompt,
@@ -265,6 +335,17 @@ IMPORTANT: Generate weeks ${startWeek} through ${endWeek} as the NEXT progressio
         maxTokens,
         temperature: 0.7,
       });
+
+      // Log API call completion with timing and token details
+      const apiCallDuration = Math.round((Date.now() - apiCallStart) / 1000);
+      if (chunkRaw) {
+        console.log(`   ✅ Anthropic API completed (${apiCallDuration}s)`);
+        console.log(`      Input tokens: ${chunkRaw.usage.input_tokens}`);
+        console.log(`      Output tokens: ${chunkRaw.usage.output_tokens}`);
+        console.log(`      Stop reason: ${chunkRaw.stop_reason}`);
+      } else if (chunkError) {
+        console.error(`   ❌ Anthropic API failed (${apiCallDuration}s): ${chunkError.message}`);
+      }
 
       if (chunkError || !chunkProgram) {
         const errorMsg = chunkError?.message || 'Failed to generate chunk';
@@ -298,7 +379,7 @@ IMPORTANT: Generate weeks ${startWeek} through ${endWeek} as the NEXT progressio
       const completedPercentage = Math.round(10 + (((chunkIndex + 1) / chunks) * 75)); // 10% to 85%
 
       await updateAIProgram(body.program_id, {
-        progress_message: `✅ Week ${startWeek}${endWeek > startWeek ? `-${endWeek}` : ''} complete`,
+        progress_message: getChunkMessage(chunkIndex, true, startWeek, endWeek),
         current_step: completedStep,
         total_steps: totalStepsEstimate,
         progress_percentage: completedPercentage,
@@ -331,7 +412,7 @@ IMPORTANT: Generate weeks ${startWeek} through ${endWeek} as the NEXT progressio
 
     // Update progress: Validating
     await updateAIProgram(body.program_id, {
-      progress_message: 'Validating program structure...',
+      progress_message: 'AI coach doing a post-workout stretch…',
       current_step: totalStepsEstimate - 2,
       progress_percentage: 87,
     });
@@ -421,7 +502,7 @@ IMPORTANT: Generate weeks ${startWeek} through ${endWeek} as the NEXT progressio
 
     // Update progress: Saving workouts
     await updateAIProgram(body.program_id, {
-      progress_message: `Saving ${savedWorkouts.length} workouts and exercises...`,
+      progress_message: `Cross-checking movement patterns…`,
       current_step: totalStepsEstimate - 1,
       progress_percentage: 93,
     });
@@ -545,16 +626,31 @@ IMPORTANT: Generate weeks ${startWeek} through ${endWeek} as the NEXT progressio
     await updateAIProgram(body.program_id, {
       generation_status: 'completed',
       generation_error: null,
-      progress_message: '✅ Program generation complete!',
+      progress_message: 'Boom! Your program is ready to crush goals.',
       current_step: totalStepsEstimate,
       progress_percentage: 100,
     });
 
-    console.log(`✅ Generation complete! Time: ${Date.now() - startTime}ms`);
+      console.log(`✅ Generation complete! Time: ${Date.now() - startTime}ms`);
 
-    return NextResponse.json({ success: true, program_id: body.program_id });
+      return NextResponse.json({ success: true, program_id: body.program_id });
+    })(); // Close generationPromise async function
+
+    // Race between generation and timeout
+    const result = await Promise.race([generationPromise, timeoutPromise]);
+
+    // Clear timeout if generation completed successfully
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+    }
+
+    return result;
 
   } catch (error: any) {
+    // Clear timeout on error
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+    }
     console.error('❌ Worker error:', error);
 
     if (body?.program_id) {

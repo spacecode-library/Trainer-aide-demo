@@ -150,12 +150,18 @@ export async function DELETE(
       );
     }
 
-    const user = getUserById(existingProgram.trainer_id);
-    if (!user || user.role !== 'solo_practitioner') {
-      return NextResponse.json(
-        { error: 'Unauthorized: AI Programs are only available to solo practitioners' },
-        { status: 403 }
-      );
+    // Allow deletion of failed/stuck programs regardless of role for cleanup
+    const isFailed = existingProgram.generation_status === 'failed' ||
+                    existingProgram.generation_status === 'generating'; // stuck programs
+
+    if (!isFailed) {
+      const user = getUserById(existingProgram.trainer_id);
+      if (!user || user.role !== 'solo_practitioner') {
+        return NextResponse.json(
+          { error: 'Unauthorized: AI Programs are only available to solo practitioners' },
+          { status: 403 }
+        );
+      }
     }
 
     const { success, error } = await deleteAIProgram(id);

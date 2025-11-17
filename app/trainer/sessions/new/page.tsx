@@ -137,6 +137,30 @@ function StartNewSessionContent() {
       // Use AI workout ID as template ID (for tracking purposes)
       templateId = aiWorkout.id;
       template = undefined; // AI workouts don't have a manual template
+
+      // Start session with planned duration from AI workout
+      try {
+        const sessionId = startSession({
+          trainerId: currentUser.id,
+          clientId: selectedClient?.id,
+          client: selectedClient || undefined,
+          templateId,
+          template,
+          sessionName,
+          signOffMode: selectedSignOffMode,
+          blocks: sessionBlocks,
+          plannedDurationMinutes: aiWorkout.planned_duration_minutes || undefined,
+        });
+
+        router.push(`/trainer/sessions/${sessionId}`);
+      } catch (error) {
+        toast({
+          variant: "destructive",
+          title: "Cannot Start Session",
+          description: error instanceof Error ? error.message : "An error occurred while starting the session.",
+        });
+      }
+      return;
     } else if (sourceType === 'manual' && selectedTemplate) {
       // Create session blocks from manual template
       sessionBlocks = selectedTemplate.blocks.map((block) => ({
@@ -165,33 +189,33 @@ function StartNewSessionContent() {
       sessionName = `${selectedTemplate.name} - ${selectedClient ? `${selectedClient.firstName} ${selectedClient.lastName}` : 'Walk-in'}`;
       templateId = selectedTemplate.id;
       template = selectedTemplate;
+
+      // Start manual template session
+      try {
+        const sessionId = startSession({
+          trainerId: currentUser.id,
+          clientId: selectedClient?.id,
+          client: selectedClient || undefined,
+          templateId,
+          template,
+          sessionName,
+          signOffMode: selectedSignOffMode,
+          blocks: sessionBlocks,
+        });
+
+        router.push(`/trainer/sessions/${sessionId}`);
+      } catch (error) {
+        toast({
+          variant: "destructive",
+          title: "Cannot Start Session",
+          description: error instanceof Error ? error.message : "An error occurred while starting the session.",
+        });
+      }
     } else {
       toast({
         variant: "destructive",
         title: "Template Required",
         description: "Please select a workout template before starting the session.",
-      });
-      return;
-    }
-
-    try {
-      const sessionId = startSession({
-        trainerId: currentUser.id,
-        clientId: selectedClient?.id,
-        client: selectedClient || undefined,
-        templateId,
-        template,
-        sessionName,
-        signOffMode: selectedSignOffMode,
-        blocks: sessionBlocks,
-      });
-
-      router.push(`/trainer/sessions/${sessionId}`);
-    } catch (error) {
-      toast({
-        variant: "destructive",
-        title: "Cannot Start Session",
-        description: error instanceof Error ? error.message : "An error occurred while starting the session.",
       });
     }
   };
@@ -206,8 +230,32 @@ function StartNewSessionContent() {
         </p>
       </div>
 
+      {/* AI Workout Loading State */}
+      {sourceType === 'ai' && loadingAiWorkout && (
+        <Card className="mb-6 bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 border-wondrous-magenta/30">
+          <CardContent className="p-4">
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-wondrous-magenta/20 to-wondrous-blue/20 flex items-center justify-center flex-shrink-0">
+                <Sparkles size={20} className="text-wondrous-magenta animate-pulse" />
+              </div>
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-1">
+                  <h3 className="font-semibold text-gray-900 dark:text-gray-100">
+                    Loading AI Workout...
+                  </h3>
+                </div>
+                <div className="space-y-2">
+                  <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse w-3/4"></div>
+                  <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse w-1/2"></div>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* AI Workout Banner */}
-      {sourceType === 'ai' && aiWorkout && (
+      {sourceType === 'ai' && aiWorkout && !loadingAiWorkout && (
         <Card className="mb-6 bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 border-wondrous-magenta/30">
           <CardContent className="p-4">
             <div className="flex items-start gap-3">
@@ -234,31 +282,33 @@ function StartNewSessionContent() {
       )}
 
       {/* Progress Steps */}
-      <div className="flex items-center gap-2 mb-8">
-        <div className={`flex items-center gap-2 ${step >= 1 ? 'text-wondrous-primary' : 'text-gray-400 dark:text-gray-500'}`}>
-          <div className={`w-8 h-8 rounded-full flex items-center justify-center font-semibold ${step >= 1 ? 'bg-wondrous-primary text-white' : 'bg-gray-200 dark:bg-gray-600 dark:text-gray-300'}`}>
-            1
+      {!loadingAiWorkout && (
+        <div className="flex items-center gap-2 mb-8">
+          <div className={`flex items-center gap-2 ${step >= 1 ? 'text-wondrous-primary' : 'text-gray-400 dark:text-gray-500'}`}>
+            <div className={`w-8 h-8 rounded-full flex items-center justify-center font-semibold ${step >= 1 ? 'bg-wondrous-primary text-white' : 'bg-gray-200 dark:bg-gray-600 dark:text-gray-300'}`}>
+              1
+            </div>
+            <span className="text-sm font-medium hidden sm:inline">Template</span>
           </div>
-          <span className="text-sm font-medium hidden sm:inline">Template</span>
-        </div>
-        <ChevronRight className="text-gray-400 dark:text-gray-500" size={20} />
-        <div className={`flex items-center gap-2 ${step >= 2 ? 'text-wondrous-primary' : 'text-gray-400 dark:text-gray-500'}`}>
-          <div className={`w-8 h-8 rounded-full flex items-center justify-center font-semibold ${step >= 2 ? 'bg-wondrous-primary text-white' : 'bg-gray-200 dark:bg-gray-600 dark:text-gray-300'}`}>
-            2
+          <ChevronRight className="text-gray-400 dark:text-gray-500" size={20} />
+          <div className={`flex items-center gap-2 ${step >= 2 ? 'text-wondrous-primary' : 'text-gray-400 dark:text-gray-500'}`}>
+            <div className={`w-8 h-8 rounded-full flex items-center justify-center font-semibold ${step >= 2 ? 'bg-wondrous-primary text-white' : 'bg-gray-200 dark:bg-gray-600 dark:text-gray-300'}`}>
+              2
+            </div>
+            <span className="text-sm font-medium hidden sm:inline">Client</span>
           </div>
-          <span className="text-sm font-medium hidden sm:inline">Client</span>
-        </div>
-        <ChevronRight className="text-gray-400 dark:text-gray-500" size={20} />
-        <div className={`flex items-center gap-2 ${step >= 3 ? 'text-wondrous-primary' : 'text-gray-400 dark:text-gray-500'}`}>
-          <div className={`w-8 h-8 rounded-full flex items-center justify-center font-semibold ${step >= 3 ? 'bg-wondrous-primary text-white' : 'bg-gray-200 dark:bg-gray-600 dark:text-gray-300'}`}>
-            3
+          <ChevronRight className="text-gray-400 dark:text-gray-500" size={20} />
+          <div className={`flex items-center gap-2 ${step >= 3 ? 'text-wondrous-primary' : 'text-gray-400 dark:text-gray-500'}`}>
+            <div className={`w-8 h-8 rounded-full flex items-center justify-center font-semibold ${step >= 3 ? 'bg-wondrous-primary text-white' : 'bg-gray-200 dark:bg-gray-600 dark:text-gray-300'}`}>
+              3
+            </div>
+            <span className="text-sm font-medium hidden sm:inline">Sign-Off Mode</span>
           </div>
-          <span className="text-sm font-medium hidden sm:inline">Sign-Off Mode</span>
         </div>
-      </div>
+      )}
 
       {/* Step 1: Select Template */}
-      {step === 1 && (
+      {step === 1 && !loadingAiWorkout && (
         <div className="space-y-4">
           <div className="flex items-center gap-2 mb-4">
             <FileText className="text-wondrous-primary" size={24} />

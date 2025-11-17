@@ -131,12 +131,15 @@ export function ProgramGeneratorWizard() {
 
       // Step 2: Poll for status every 2 seconds
       // Calculate timeout based on program size
-      // Chunked generation: ~90s per 1-week chunk
-      const estimatedChunks = Math.ceil(config.total_weeks / 1); // 1 week per chunk now
-      const estimatedSeconds = 60 + (estimatedChunks * 90); // Base + chunks (90s per 1-week chunk)
-      const maxPollAttempts = Math.max(120, Math.ceil(estimatedSeconds / 2)); // At least 4 minutes
+      // Match worker's chunking strategy:
+      // - Programs ≤3 weeks: Single chunk (~90s)
+      // - Programs >3 weeks: 2-week chunks (~90s per chunk)
+      const CHUNK_SIZE = config.total_weeks <= 3 ? config.total_weeks : 2;
+      const estimatedChunks = Math.ceil(config.total_weeks / CHUNK_SIZE);
+      const estimatedSeconds = 60 + (estimatedChunks * 90); // Base 60s + ~90s per chunk
+      const maxPollAttempts = Math.ceil(estimatedSeconds / 2); // Poll every 2s
 
-      console.log(`⏱️  Polling timeout: ${maxPollAttempts * 2}s (estimated ${estimatedSeconds}s for ${estimatedChunks} chunks)`);
+      console.log(`⏱️  Polling timeout: ${maxPollAttempts * 2}s (estimated ${estimatedSeconds}s for ${estimatedChunks} chunk${estimatedChunks > 1 ? 's' : ''} at ${CHUNK_SIZE} week${CHUNK_SIZE > 1 ? 's' : ''}/chunk)`);
 
       let pollAttempts = 0;
 

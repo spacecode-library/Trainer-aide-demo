@@ -110,15 +110,18 @@ export function ExerciseEditor({ exercise, onChange, onRemove, onMoveUp, onMoveD
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               <div className="space-y-1">
                 <Label htmlFor={`sets-${exercise.id}`} className="text-xs">Sets</Label>
-                <Input
+                <select
                   id={`sets-${exercise.id}`}
-                  type="number"
-                  min={1}
-                  max={10}
-                  value={exercise.sets || ''}
+                  value={exercise.sets || 1}
                   onChange={(e) => handleChange('sets', parseInt(e.target.value))}
-                  className="bg-white dark:bg-gray-800"
-                />
+                  className="flex h-10 w-full rounded-md border border-input bg-white dark:bg-gray-800 px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((num) => (
+                    <option key={num} value={num}>
+                      {num}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div className="space-y-1">

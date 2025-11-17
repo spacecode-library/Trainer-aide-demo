@@ -6,9 +6,11 @@
 
 import Anthropic from '@anthropic-ai/sdk';
 
-// Initialize Anthropic client
+// Initialize Anthropic client with 50-second timeout
+// (Less than 60s platform limit to allow graceful error handling)
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY || '',
+  timeout: 50000, // 50 seconds
 });
 
 // Default model - Claude Sonnet 4.5 (latest and smartest)
@@ -226,6 +228,7 @@ ${jsonSchema ? `\nExpected JSON structure:\n${jsonSchema}` : ''}`;
 /**
  * Call Claude with streaming response
  * Returns an async iterator for streaming tokens
+ * Note: Respects the 50-second timeout configured on the Anthropic client
  */
 export async function* callClaudeStream(params: {
   systemPrompt: string;
@@ -233,6 +236,7 @@ export async function* callClaudeStream(params: {
   model?: string;
   maxTokens?: number;
   temperature?: number;
+  timeoutMs?: number; // Optional override for timeout
 }): AsyncGenerator<string, void, unknown> {
   const {
     systemPrompt,
@@ -240,29 +244,42 @@ export async function* callClaudeStream(params: {
     model = DEFAULT_MODEL,
     maxTokens = 4096,
     temperature = 1.0,
+    timeoutMs = 50000, // Default 50 seconds
   } = params;
 
   try {
-    const stream = await anthropic.messages.create({
-      model,
-      max_tokens: maxTokens,
-      temperature,
-      system: systemPrompt,
-      messages: [
-        {
-          role: 'user',
-          content: userPrompt,
-        },
-      ],
-      stream: true,
-    });
+    // Create AbortController for explicit timeout control
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
-    for await (const event of stream) {
-      if (event.type === 'content_block_delta' && event.delta.type === 'text_delta') {
-        yield event.delta.text;
+    try {
+      const stream = await anthropic.messages.create({
+        model,
+        max_tokens: maxTokens,
+        temperature,
+        system: systemPrompt,
+        messages: [
+          {
+            role: 'user',
+            content: userPrompt,
+          },
+        ],
+        stream: true,
+      });
+
+      for await (const event of stream) {
+        if (event.type === 'content_block_delta' && event.delta.type === 'text_delta') {
+          yield event.delta.text;
+        }
       }
+    } finally {
+      clearTimeout(timeoutId);
     }
   } catch (err: any) {
+    if (err.name === 'AbortError') {
+      console.error(`❌ Claude streaming timeout after ${timeoutMs}ms`);
+      throw new Error(`Claude API timeout after ${timeoutMs / 1000} seconds`);
+    }
     console.error('❌ Claude streaming error:', err.message);
     throw err;
   }
