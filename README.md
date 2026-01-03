@@ -2,7 +2,7 @@
 
 A standalone, high-quality demo of the Wondrous Trainer Aide system.
 
-## 🎯 Project Overview
+## Project Overview
 
 This is a **frontend-only demo** showcasing a complete redesign of the Trainer Aide feature for the Wondrous fitness platform. It demonstrates:
 
@@ -10,7 +10,7 @@ This is a **frontend-only demo** showcasing a complete redesign of the Trainer A
 - **Trainer** workflow: Run training sessions with clients using templates
 - **Client** view: View session history and progress
 
-## 🎨 Design Philosophy
+## Design Philosophy
 
 - ✅ **No gradients** - Clean, solid colors only
 - ✅ **Mobile-first** - Optimized for trainers working on phones in the gym
@@ -19,7 +19,6 @@ This is a **frontend-only demo** showcasing a complete redesign of the Trainer A
 
 ## 📋 Complete Requirements
 
-👉 **See [TRAINER_AIDE_DEMO_REQUIREMENTS.md](./TRAINER_AIDE_DEMO_REQUIREMENTS.md)** for the complete development guide.
 
 This comprehensive document includes:
 - Tech stack and project setup
@@ -104,7 +103,7 @@ trainer-aide-demo/
 └── styles/               # Global CSS
 ```
 
-## 🎯 Success Criteria
+## Success Criteria
 
 This demo is successful when:
 
@@ -118,11 +117,10 @@ This demo is successful when:
 
 **For the AI agent building this:**
 
-1. Read `TRAINER_AIDE_DEMO_REQUIREMENTS.md` thoroughly
-2. Follow the 7-day implementation workflow
-3. Use the provided mock data and component examples
-4. Maintain the design system consistently
-5. Test on mobile devices throughout development
+1. Follow the 7-day implementation workflow
+2. Use the provided mock data and component examples
+3. Maintain the design system consistently
+4. Test on mobile devices throughout development
 
 ## 🎬 Demo Flow
 
@@ -142,5 +140,3 @@ This demo is successful when:
 ---
 
 **Ready to build something amazing! 💪**
-
-For complete specifications, see: [TRAINER_AIDE_DEMO_REQUIREMENTS.md](./TRAINER_AIDE_DEMO_REQUIREMENTS.md)
